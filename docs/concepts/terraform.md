@@ -1,0 +1,7 @@
+# Terraform
+
+[Terraform](https://terraform.io/) is a tool for managing the lifecycle of cloud infrastructure based on declarative configuration files. In much the same way that a tool like Chef, Puppet, or Ansible defines the desired state of a system as code, Terraform does the same for the infrastructure systems run on.
+
+kaws uses Terraform as the blueprint for Kubernetes clusters. kaws includes a Terraform "module," a self-contained piece of infrastructure configuration, which declares all the AWS resources necessary to bootstrap a Kubernetes cluster. Terraform uses these configuration files to create a [directed acyclic graph](https://en.wikipedia.org/wiki/Directed_acyclic_graph) of all these AWS resources and their interconnected dependencies. The desired state as defined in the module forms a Terraform plan, which is then applied, creating all the AWS resources and running any necessary provisioning processes. The result of applying the plan is stored in a Terraform state file, which kaws keeps in a directory specific to each cluster. This allows the same Terraform module to be used for multiple isolated clusters.
+
+While a few components of the Kubernetes cluster toplogy defined in the Terraform module are configurable by the cluster administrator, it's not a goal of kaws for the module to be managed directly and customized (although this is possible using the `--terraform-source` option to `kaws init`).

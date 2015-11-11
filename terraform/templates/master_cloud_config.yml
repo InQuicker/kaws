@@ -1,0 +1,425 @@
+#cloud-config
+
+coreos:
+  etcd2:
+    proxy: on
+    initial_cluster: etcd_01=http://10.0.1.4:2380,etcd_02=http://10.0.1.5:2380,etcd_03=http://10.0.1.6:2380
+    listen-client-urls: http://127.0.0.1:2379
+  flannel:
+    etcd_endpoints: http://127.0.0.1:2379
+    interface: $private_ipv4
+  fleet:
+    etcd-servers: http://127.0.0.1:2379
+    metadata: etcd=proxy,kubernetes=master
+    public-ip: $private_ipv4
+  units:
+    - name: docker.service
+      command: start
+      drop-ins:
+        - name: 40-flannel.conf
+          content: |
+            [Unit]
+            Requires=flanneld.service
+            After=flanneld.service
+    - name: etcd2.service
+      command: start
+    - name: fleet.service
+      command: start
+    - name: flanneld.service
+      command: start
+      drop-ins:
+        - name: 50-network-config.conf
+          content: |
+            [Unit]
+            Requires=etcd2.service
+            [Service]
+            ExecStartPre=-/usr/bin/etcdctl mk /coreos.com/network/config "{\"Network\":\"10.2.0.0/16\"}"
+    - name: kubelet.service
+      content: |
+        [Unit]
+        Description=Kubernetes Kubelet
+        [Service]
+        ExecStart=/usr/bin/kubelet \
+          --api_servers=http://127.0.0.1:8080 \
+          --register-node=false \
+          --allow-privileged=true \
+          --config=/etc/kubernetes/manifests \
+          --cluster_dns=10.3.0.10 \
+          --cluster_domain=cluster.local \
+          --cadvisor-port=0 \
+          --hostname-override=$private_ipv4 \
+          --logtostderr=true \
+          --v=2
+        Restart=always
+        RestartSec=10
+        [Install]
+        WantedBy=multi-user.target
+    - name: start_kube_addons.service
+      content: |
+        [Unit]
+        Description=Kubernetes addons
+        [Service]
+        ExecStartPre=/bin/bash -c 'until curl --silent "http://127.0.0.1:8080/version"; do sleep 5; done'
+        ExecStartPre=-/bin/bash -c 'curl --silent -X POST -d @/srv/kubernetes/kube-system.json "http://127.0.0.1:8080/api/v1/namespaces" > /dev/null'
+        ExecStartPre=-/bin/bash -c 'curl --silent -X POST -d @/srv/kubernetes/kube-dns-rc.json "http://127.0.0.1:8080/api/v1/namespaces/kube-system/replicationcontrollers" > /dev/null'
+        ExecStartPre=-/bin/bash -c 'curl --silent -X POST -d @/srv/kubernetes/kube-dns-svc.json "http://127.0.0.1:8080/api/v1/namespaces/kube-system/services" > /dev/null'
+        ExecStart=/bin/echo Kubernetes addons submitted to the API!
+        Type=oneshot
+        RemainAfterExit=True
+write_files:
+  - path: /etc/kubernetes/manifests/kube-apiserver.yml
+    permissions: "0644"
+    owner: root
+    content: |
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: kube-apiserver
+        namespace: kube-system
+      spec:
+        hostNetwork: true
+        containers:
+        - name: kube-apiserver
+          image: gcr.io/google_containers/hyperkube:v${version}
+          command:
+          - /hyperkube
+          - apiserver
+          - --bind-address=0.0.0.0
+          - --etcd_servers=http://127.0.0.1:2379
+          - --external-hostname=https://kubernetes.${domain}
+          - --allow-privileged=true
+          - --service-cluster-ip-range=10.3.0.1/24
+          - --insecure-bind-address=0.0.0.0
+          - --secure_port=443
+          - --advertise-address=$private_ipv4
+          - --admission-control=NamespaceLifecycle,NamespaceExists,LimitRanger,SecurityContextDeny,ServiceAccount,ResourceQuota
+          - --tls-cert-file=/etc/kubernetes/ssl/apiserver.pem
+          - --tls-private-key-file=/etc/kubernetes/ssl/apiserver-key.pem
+          - --client-ca-file=/etc/kubernetes/ssl/ca.pem
+          - --service-account-key-file=/etc/kubernetes/ssl/apiserver-key.pem
+          - --cloud-provider=aws
+          ports:
+          - containerPort: 443
+            hostPort: 443
+            name: https
+          - containerPort: 8080
+            hostPort: 8080
+            name: local
+          volumeMounts:
+          - mountPath: /etc/kubernetes/ssl
+            name: ssl-certs-kubernetes
+            readOnly: true
+          - mountPath: /etc/ssl/certs
+            name: ssl-certs-host
+            readOnly: true
+        volumes:
+        - hostPath:
+            path: /etc/kubernetes/ssl
+          name: ssl-certs-kubernetes
+        - hostPath:
+            path: /usr/share/ca-certificates
+          name: ssl-certs-host
+  - path: /etc/kubernetes/manifests/kube-podmaster.yml
+    permissions: "0644"
+    owner: root
+    content: |
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: kube-podmaster
+        namespace: kube-system
+      spec:
+        hostNetwork: true
+        containers:
+        - name: scheduler-elector
+          image: gcr.io/google_containers/podmaster:1.1
+          command:
+          - /podmaster
+          - --etcd-servers=http://127.0.0.1:2379
+          - --key=scheduler
+          - --whoami=$private_ipv4
+          - --source-file=/src/manifests/kube-scheduler.yml
+          - --dest-file=/dst/manifests/kube-scheduler.yml
+          volumeMounts:
+          - mountPath: /src/manifests
+            name: manifest-src
+            readOnly: true
+          - mountPath: /dst/manifests
+            name: manifest-dst
+        - name: controller-manager-elector
+          image: gcr.io/google_containers/podmaster:1.1
+          command:
+          - /podmaster
+          - --etcd-servers=http://127.0.0.1:2379
+          - --key=controller
+          - --whoami=$private_ipv4
+          - --source-file=/src/manifests/kube-controller-manager.yml
+          - --dest-file=/dst/manifests/kube-controller-manager.yml
+          terminationMessagePath: /dev/termination-log
+          volumeMounts:
+          - mountPath: /src/manifests
+            name: manifest-src
+            readOnly: true
+          - mountPath: /dst/manifests
+            name: manifest-dst
+        volumes:
+        - hostPath:
+            path: /srv/kubernetes/manifests
+          name: manifest-src
+        - hostPath:
+            path: /etc/kubernetes/manifests
+          name: manifest-dst
+  - path: /etc/kubernetes/manifests/kube-proxy.yml
+    permissions: "0644"
+    owner: root
+    content: |
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: kube-proxy
+        namespace: kube-system
+      spec:
+        hostNetwork: true
+        containers:
+        - name: kube-proxy
+          image: gcr.io/google_containers/hyperkube:v${version}
+          command:
+          - /hyperkube
+          - proxy
+          - --master=http://127.0.0.1:8080
+          securityContext:
+            privileged: true
+          volumeMounts:
+          - mountPath: /etc/ssl/certs
+            name: ssl-certs-host
+            readOnly: true
+        volumes:
+        - hostPath:
+            path: /usr/share/ca-certificates
+          name: ssl-certs-host
+  - path: /srv/kubernetes/manifests/kube-controller-manager.yml
+    permissions: "0644"
+    owner: root
+    content: |
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: kube-controller-manager
+        namespace: kube-system
+      spec:
+        containers:
+        - name: kube-controller-manager
+          image: gcr.io/google_containers/hyperkube:v${version}
+          command:
+          - /hyperkube
+          - controller-manager
+          - --master=http://127.0.0.1:8080
+          - --service-account-private-key-file=/etc/kubernetes/ssl/apiserver-key.pem
+          - --root-ca-file=/etc/kubernetes/ssl/ca.pem
+          - --cloud-provider=aws
+          livenessProbe:
+            httpGet:
+              host: 127.0.0.1
+              path: /healthz
+              port: 10252
+            initialDelaySeconds: 15
+            timeoutSeconds: 1
+          volumeMounts:
+          - mountPath: /etc/kubernetes/ssl
+            name: ssl-certs-kubernetes
+            readOnly: true
+          - mountPath: /etc/ssl/certs
+            name: ssl-certs-host
+            readOnly: true
+        hostNetwork: true
+        volumes:
+        - hostPath:
+            path: /etc/kubernetes/ssl
+          name: ssl-certs-kubernetes
+        - hostPath:
+            path: /usr/share/ca-certificates
+          name: ssl-certs-host
+  - path: /srv/kubernetes/kube-dns-rc.json
+    permissions: "0644"
+    owner: root
+    content: |
+      {
+        "apiVersion": "v1",
+        "kind": "ReplicationController",
+        "metadata": {
+          "labels": {
+            "k8s-app": "kube-dns",
+            "kubernetes.io/cluster-service": "true",
+            "version": "v9"
+          },
+          "name": "kube-dns-v9",
+          "namespace": "kube-system"
+        },
+        "spec": {
+          "replicas": 1,
+          "selector": {
+            "k8s-app": "kube-dns",
+            "version": "v9"
+          },
+          "template": {
+            "metadata": {
+              "labels": {
+                "k8s-app": "kube-dns",
+                "kubernetes.io/cluster-service": "true",
+                "version": "v9"
+              }
+            },
+            "spec": {
+              "containers": [{
+                "command": ["/usr/local/bin/etcd", "-data-dir", "/var/etcd/data", "-listen-client-urls", "http://127.0.0.1:2379,http://127.0.0.1:4001", "-advertise-client-urls", "http://127.0.0.1:2379,http://127.0.0.1:4001", "-initial-cluster-token", "skydns-etcd"],
+                "image": "gcr.io/google_containers/etcd:2.0.9",
+                "name": "etcd",
+                "resources": {
+                  "limits": {
+                    "cpu": "100m",
+                    "memory": "50Mi"
+                  }
+                },
+                "volumeMounts": [{
+                  "mountPath": "/var/etcd/data",
+                  "name": "etcd-storage"
+                }]
+              }, {
+                "args": ["-domain=cluster.local"],
+                "image": "gcr.io/google_containers/kube2sky:1.11",
+                "name": "kube2sky",
+                "resources": {
+                  "limits": {
+                    "cpu": "100m",
+                    "memory": "50Mi"
+                  }
+                }
+              }, {
+                "args": ["-machines=http://localhost:4001", "-addr=0.0.0.0:53", "-domain=cluster.local."],
+                "image": "gcr.io/google_containers/skydns:2015-03-11-001",
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8080,
+                    "scheme": "HTTP"
+                  },
+                  "initialDelaySeconds": 30,
+                  "timeoutSeconds": 5
+                },
+                "name": "skydns",
+                "ports": [{
+                  "containerPort": 53,
+                  "name": "dns",
+                  "protocol": "UDP"
+                }, {
+                  "containerPort": 53,
+                  "name": "dns-tcp",
+                  "protocol": "TCP"
+                }],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8080,
+                    "scheme": "HTTP"
+                  },
+                  "initialDelaySeconds": 1,
+                  "timeoutSeconds": 5
+                },
+                "resources": {
+                  "limits": {
+                    "cpu": "100m",
+                    "memory": "50Mi"
+                  }
+                }
+              }, {
+                "args": ["-cmd=nslookup kubernetes.default.svc.cluster.local localhost", "-port=8080"],
+                "image": "gcr.io/google_containers/exechealthz:1.0",
+                "name": "healthz",
+                "ports": [{
+                  "containerPort": 8080,
+                  "protocol": "TCP"
+                }],
+                "resources": {
+                  "limits": {
+                    "cpu": "10m",
+                    "memory": "20Mi"
+                  }
+                }
+              }],
+              "dnsPolicy": "Default",
+              "volumes": [{
+                "emptyDir": {},
+                "name": "etcd-storage"
+              }]
+            }
+          }
+        }
+      }
+  - path: /srv/kubernetes/kube-dns-svc.json
+    permissions: "0644"
+    owner: root
+    content: |
+      {
+        "apiVersion": "v1",
+        "kind": "Service",
+        "metadata": {
+          "name": "kube-dns",
+          "namespace": "kube-system",
+          "labels": {
+            "k8s-app": "kube-dns",
+            "kubernetes.io/name": "KubeDNS",
+            "kubernetes.io/cluster-service": "true"
+          }
+        },
+        "spec": {
+          "clusterIP": "10.3.0.10",
+          "ports": [{
+            "protocol": "UDP",
+            "name": "dns",
+            "port": 53
+          }, {
+            "protocol": "TCP",
+            "name": "dns-tcp",
+            "port": 53
+          }],
+          "selector": {
+            "k8s-app": "kube-dns"
+          }
+        }
+      }
+  - path: /srv/kubernetes/manifests/kube-scheduler.yml
+    permissions: "0644"
+    owner: root
+    content: |
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: kube-scheduler
+        namespace: kube-system
+      spec:
+        hostNetwork: true
+        containers:
+        - name: kube-scheduler
+          image: gcr.io/google_containers/hyperkube:v${version}
+          command:
+          - /hyperkube
+          - scheduler
+          - --master=http://127.0.0.1:8080
+          livenessProbe:
+            httpGet:
+              host: 127.0.0.1
+              path: /healthz
+              port: 10251
+            initialDelaySeconds: 15
+            timeoutSeconds: 1
+  - path: /srv/kubernetes/kube-system.json
+    permissions: "0644"
+    owner: root
+    content: |
+      {
+        "apiVersion": "v1",
+        "kind": "Namespace",
+        "metadata": {
+          "name": "kube-system"
+        }
+      }

@@ -1,0 +1,109 @@
+#cloud-config
+
+coreos:
+  etcd2:
+    proxy: on
+    initial_cluster: etcd_01=http://10.0.1.4:2380,etcd_02=http://10.0.1.5:2380,etcd_03=http://10.0.1.6:2380
+    listen-client-urls: http://127.0.0.1:2379
+  flannel:
+    etcd_endpoints: http://127.0.0.1:2379
+    interface: $private_ipv4
+  fleet:
+    etcd-servers: http://127.0.0.1:2379
+    metadata: etcd=proxy,kubernetes=node
+    public-ip: $private_ipv4
+  units:
+    - name: etcd2.service
+      command: start
+    - name: docker.service
+      command: start
+      drop-ins:
+        - name: 40-flannel.conf
+          content: |
+            [Unit]
+            Requires=flanneld.service
+            AFter=flanneld.service
+    - name: fleet.service
+      command: start
+    - name: flanneld.service
+      command: start
+    - name: kubelet.service
+      content: |
+        [Unit]
+        Description=Kubernetes Kubelet
+        [Service]
+        ExecStart=/usr/bin/kubelet \
+          --allow-privileged=true \
+          --api-servers=https://${master_ip}:443 \
+          --cadvisor-port=0 \
+          --cluster-domain=cluster.local \
+          --cluster-dns=10.3.0.10 \
+          --config=/etc/kubernetes/manifests \
+          --hostname-override=$private_ipv4 \
+          --kubeconfig=/etc/kubernetes/node-kubeconfig.yml \
+          --tls-cert-file=/etc/kubernetes/ssl/node.pem \
+          --tls-private-key-file=/etc/kubernetes/ssl/node-key.pem \
+          --logtostderr=true \
+          --v=2
+        Restart=always
+        RestartSec=10
+        [Install]
+        WantedBy=multi-user.target
+write_files:
+  - path: /etc/kubernetes/manifests/kube-proxy.yml
+    content: |
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: kube-proxy
+        namespace: kube-system
+      spec:
+        hostNetwork: true
+        containers:
+        - name: kube-proxy
+          image: gcr.io/google_containers/hyperkube:v${version}
+          command:
+          - /hyperkube
+          - proxy
+          - --master=https://${master_ip}:443
+          - --kubeconfig=/etc/kubernetes/node-kubeconfig.yml
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - mountPath: /etc/ssl/certs
+              name: "ssl-certs"
+            - mountPath: /etc/kubernetes/node-kubeconfig.yml
+              name: "kubeconfig"
+              readOnly: true
+            - mountPath: /etc/kubernetes/ssl
+              name: "etc-kube-ssl"
+              readOnly: true
+        volumes:
+          - name: "ssl-certs"
+            hostPath:
+              path: "/usr/share/ca-certificates"
+          - name: "kubeconfig"
+            hostPath:
+              path: "/etc/kubernetes/node-kubeconfig.yml"
+          - name: "etc-kube-ssl"
+            hostPath:
+              path: "/etc/kubernetes/ssl"
+  - path: /etc/kubernetes/node-kubeconfig.yml
+    content: |
+      apiVersion: v1
+      kind: Config
+      clusters:
+        - name: local
+          cluster:
+            certificate-authority: /etc/kubernetes/ssl/ca.pem
+      contexts:
+        - context:
+            cluster: local
+            user: node
+          name: node-context
+      current-context: node-context
+      users:
+        - name: node
+          user:
+            client-certificate: /etc/kubernetes/ssl/node.pem
+            client-key: /etc/kubernetes/ssl/node-key.pem

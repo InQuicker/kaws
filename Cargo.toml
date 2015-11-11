@@ -1,0 +1,14 @@
+[package]
+name = "kaws"
+version = "0.1.0"
+authors = ["Jimmy Cuadra <jimmy@jimmycuadra.com>"]
+description = "A tool for installing and managing Kubernetes clusters."
+license = "MIT"
+readme = "README.md"
+keywords = ["kubernetes", "coreos", "aws", "terraform", "infrastructure"]
+repository = "https://github.com/InQuicker/kaws"
+homepage = "https://github.com/InQuicker/kaws"
+
+[dependencies]
+ansi_term = "^0.6.3"
+clap = "^1.4.6"
