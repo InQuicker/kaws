@@ -2,12 +2,15 @@ use std::process::Command;
 
 use clap::ArgMatches;
 
+use aws::get_credentials;
 use encryption::TemporaryDecryption;
 use error::Error;
 use log::Logger;
 use error::Result;
 
 pub struct Terraform<'a> {
+    aws_credentials_path: Option<&'a str>,
+    aws_credentials_profile: Option<&'a str>,
     cluster: &'a str,
     logger: Logger,
 }
@@ -15,6 +18,8 @@ pub struct Terraform<'a> {
 impl<'a> Terraform<'a> {
     pub fn new(matches: &'a ArgMatches) -> Self {
         Terraform {
+            aws_credentials_path: matches.value_of("aws-credentials-path"),
+            aws_credentials_profile: matches.value_of("aws-credentials-profile"),
             cluster: matches.value_of("cluster").expect("clap should have required cluster"),
             logger: Logger::new(matches.is_present("verbose")),
         }
@@ -22,6 +27,10 @@ impl<'a> Terraform<'a> {
 
     pub fn apply(&self) -> Result {
         try!(self.get());
+
+        let (aws_key, aws_secret) = try!(
+            get_credentials(self.aws_credentials_path, self.aws_credentials_profile)
+        );
 
         let encrypted_master_key_path = format!("clusters/{}/apiserver-key.pem.asc", self.cluster);
         let master_key_path = format!("clusters/{}/apiserver-key.pem", self.cluster);
@@ -48,7 +57,7 @@ impl<'a> Terraform<'a> {
             &format!("-state=clusters/{}/terraform.tfstate", self.cluster),
             &format!("-var-file=clusters/{}/terraform.tfvars", self.cluster),
             "terraform",
-        ]).status());
+        ]).env("AWS_ACCESS_KEY_ID", aws_key).env("AWS_SECRET_ACCESS_KEY", aws_secret).status());
 
         Ok(None)
     }
@@ -56,13 +65,17 @@ impl<'a> Terraform<'a> {
     pub fn destroy(&self) -> Result {
         try!(self.get());
 
+        let (aws_key, aws_secret) = try!(
+            get_credentials(self.aws_credentials_path, self.aws_credentials_profile)
+        );
+
         let exit_status = try!(Command::new("terraform").args(&[
             "destroy",
             "-backup=-",
             &format!("-state=clusters/{}/terraform.tfstate", self.cluster),
             &format!("-var-file=clusters/{}/terraform.tfvars", self.cluster),
             "terraform",
-        ]).status());
+        ]).env("AWS_ACCESS_KEY_ID", aws_key).env("AWS_SECRET_ACCESS_KEY", aws_secret).status());
 
         if exit_status.success() {
             Ok(Some(format!(
@@ -78,6 +91,10 @@ impl<'a> Terraform<'a> {
     pub fn plan(&self) -> Result {
         try!(self.get());
 
+        let (aws_key, aws_secret) = try!(
+            get_credentials(self.aws_credentials_path, self.aws_credentials_profile)
+        );
+
         try!(Command::new("terraform").args(&[
             "plan",
             "-backup=-",
@@ -85,7 +102,7 @@ impl<'a> Terraform<'a> {
             &format!("-state=clusters/{}/terraform.tfstate", self.cluster),
             &format!("-var-file=clusters/{}/terraform.tfvars", self.cluster),
             "terraform",
-        ]).status());
+        ]).env("AWS_ACCESS_KEY_ID", aws_key).env("AWS_SECRET_ACCESS_KEY", aws_secret).status());
 
         Ok(None)
     }

@@ -1,7 +1,9 @@
 extern crate ansi_term;
 extern crate clap;
+extern crate ini;
 
 mod admin;
+mod aws;
 mod cli;
 mod cluster;
 mod encryption;

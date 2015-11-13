@@ -4,6 +4,8 @@ use std::fmt::Error as FmtError;
 use std::result::Result as BaseResult;
 use std::str::Utf8Error;
 
+use ini::ini::Error as IniError;
+
 pub struct Error {
     message: String,
 }
@@ -44,6 +46,14 @@ impl From<::std::io::Error> for Error {
 
 impl From<Utf8Error> for Error {
     fn from(error: Utf8Error) -> Self {
+        Error {
+            message: format!("{}", error),
+        }
+    }
+}
+
+impl From<IniError> for Error {
+    fn from(error: IniError) -> Self {
         Error {
             message: format!("{}", error),
         }
