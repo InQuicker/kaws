@@ -1,36 +1,37 @@
 use std::process::Command;
 
 use clap::ArgMatches;
+use rusoto::credentials::{
+    AWSCredentialsProvider,
+    DefaultAWSCredentialsProviderChain,
+};
 
-use aws::get_credentials;
 use encryption::TemporaryDecryption;
 use error::Error;
 use log::Logger;
 use error::Result;
 
 pub struct Terraform<'a> {
-    aws_credentials_path: Option<&'a str>,
-    aws_credentials_profile: Option<&'a str>,
+    aws_credentials_provider: DefaultAWSCredentialsProviderChain,
     cluster: &'a str,
     logger: Logger,
 }
 
 impl<'a> Terraform<'a> {
-    pub fn new(matches: &'a ArgMatches) -> Self {
+    pub fn new(matches: &'a ArgMatches) -> Terraform<'a> {
+        let mut provider = DefaultAWSCredentialsProviderChain::new();
+
+        provider.set_profile(matches.value_of("aws-credentials-profile").unwrap_or("default"));
+
         Terraform {
-            aws_credentials_path: matches.value_of("aws-credentials-path"),
-            aws_credentials_profile: matches.value_of("aws-credentials-profile"),
+            aws_credentials_provider: provider,
             cluster: matches.value_of("cluster").expect("clap should have required cluster"),
             logger: Logger::new(matches.is_present("verbose")),
         }
     }
 
-    pub fn apply(&self) -> Result {
+    pub fn apply(&mut self) -> Result {
         try!(self.get());
-
-        let (aws_key, aws_secret) = try!(
-            get_credentials(self.aws_credentials_path, self.aws_credentials_profile)
-        );
 
         let encrypted_master_key_path = format!("clusters/{}/apiserver-key.pem.asc", self.cluster);
         let master_key_path = format!("clusters/{}/apiserver-key.pem", self.cluster);
@@ -57,17 +58,19 @@ impl<'a> Terraform<'a> {
             &format!("-state=clusters/{}/terraform.tfstate", self.cluster),
             &format!("-var-file=clusters/{}/terraform.tfvars", self.cluster),
             "terraform",
-        ]).env("AWS_ACCESS_KEY_ID", aws_key).env("AWS_SECRET_ACCESS_KEY", aws_secret).status());
+        ]).env(
+            "AWS_ACCESS_KEY_ID",
+            self.aws_credentials_provider.get_credentials().expect("fuck").get_aws_access_key_id(),
+        ).env(
+            "AWS_SECRET_ACCESS_KEY",
+            self.aws_credentials_provider.get_credentials().expect("fuck").get_aws_secret_key(),
+        ).status());
 
         Ok(None)
     }
 
-    pub fn destroy(&self) -> Result {
+    pub fn destroy(&mut self) -> Result {
         try!(self.get());
-
-        let (aws_key, aws_secret) = try!(
-            get_credentials(self.aws_credentials_path, self.aws_credentials_profile)
-        );
 
         let exit_status = try!(Command::new("terraform").args(&[
             "destroy",
@@ -75,7 +78,13 @@ impl<'a> Terraform<'a> {
             &format!("-state=clusters/{}/terraform.tfstate", self.cluster),
             &format!("-var-file=clusters/{}/terraform.tfvars", self.cluster),
             "terraform",
-        ]).env("AWS_ACCESS_KEY_ID", aws_key).env("AWS_SECRET_ACCESS_KEY", aws_secret).status());
+        ]).env(
+            "AWS_ACCESS_KEY_ID",
+            self.aws_credentials_provider.get_credentials().expect("fuck").get_aws_access_key_id(),
+        ).env(
+            "AWS_SECRET_ACCESS_KEY",
+            self.aws_credentials_provider.get_credentials().expect("fuck").get_aws_secret_key(),
+        ).status());
 
         if exit_status.success() {
             Ok(Some(format!(
@@ -88,12 +97,8 @@ impl<'a> Terraform<'a> {
         }
     }
 
-    pub fn plan(&self) -> Result {
+    pub fn plan(&mut self) -> Result {
         try!(self.get());
-
-        let (aws_key, aws_secret) = try!(
-            get_credentials(self.aws_credentials_path, self.aws_credentials_profile)
-        );
 
         try!(Command::new("terraform").args(&[
             "plan",
@@ -102,7 +107,13 @@ impl<'a> Terraform<'a> {
             &format!("-state=clusters/{}/terraform.tfstate", self.cluster),
             &format!("-var-file=clusters/{}/terraform.tfvars", self.cluster),
             "terraform",
-        ]).env("AWS_ACCESS_KEY_ID", aws_key).env("AWS_SECRET_ACCESS_KEY", aws_secret).status());
+        ]).env(
+            "AWS_ACCESS_KEY_ID",
+            self.aws_credentials_provider.get_credentials().expect("fuck").get_aws_access_key_id(),
+        ).env(
+            "AWS_SECRET_ACCESS_KEY",
+            self.aws_credentials_provider.get_credentials().expect("fuck").get_aws_secret_key(),
+        ).status());
 
         Ok(None)
     }

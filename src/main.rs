@@ -1,9 +1,8 @@
 extern crate ansi_term;
 extern crate clap;
-extern crate ini;
+extern crate rusoto;
 
 mod admin;
-mod aws;
 mod cli;
 mod cluster;
 mod encryption;
@@ -31,7 +30,7 @@ fn main() {
     match execute_cli() {
         Ok(success) => {
             if let Some(message) = success {
-                println!("{}", Green.paint(&message));
+                println!("{}", Green.paint(message.to_string()));
             }
         },
         Err(error) => {

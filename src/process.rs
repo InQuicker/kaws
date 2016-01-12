@@ -23,7 +23,7 @@ stderr:
 {}
 ", command, try!(from_utf8(&output.stdout)), try!(from_utf8(&output.stderr)));
 
-        return Err(Error::new(format!("{}", Red.paint(error_message))));
+        return Err(Error::new(format!("{}", Red.paint(error_message.to_string()))));
     }
 
     Ok(None)

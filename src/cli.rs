@@ -131,12 +131,6 @@ fn cluster_apply<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
                 .help("The cluster whose plan should be applied")
         )
         .arg(
-            Arg::with_name("aws-credentials-path")
-                .long("aws-credentials-path")
-                .takes_value(true)
-                .help("Path to AWS credentials file, defaults to \"~/.aws/credentials\"")
-        )
-        .arg(
             Arg::with_name("aws-credentials-profile")
                 .long("aws-credentials-profile")
                 .takes_value(true)
@@ -152,12 +146,6 @@ fn cluster_destroy<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> 
                 .index(1)
                 .required(true)
                 .help("The cluster to destroy")
-        )
-        .arg(
-            Arg::with_name("aws-credentials-path")
-                .long("aws-credentials-path")
-                .takes_value(true)
-                .help("Path to AWS credentials file, defaults to \"~/.aws/credentials\"")
         )
         .arg(
             Arg::with_name("aws-credentials-profile")
