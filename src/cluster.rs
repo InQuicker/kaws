@@ -44,7 +44,6 @@ impl<'a> Cluster<'a> {
 
         provider.set_profile(matches.value_of("aws-credentials-profile").unwrap_or("default"));
 
-
         Cluster {
             aws_credentials_provider: provider,
             ca_cert_path: format!("clusters/{}/ca.pem", name),

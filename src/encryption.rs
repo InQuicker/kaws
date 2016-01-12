@@ -13,43 +13,6 @@ use rusoto::kms::{
 use rusoto::regions::Region;
 
 use error::{Error, Result};
-use process::execute_child_process;
-
-pub struct TemporaryDecryption<'a> {
-    pub encrypted_path: &'a str,
-    pub unencrypted_path: &'a str,
-}
-
-impl<'a> TemporaryDecryption<'a> {
-    pub fn decrypt(&self) -> Result {
-        log_wrap!(&format!("Decrypting {}", self.encrypted_path), {
-            try!(execute_child_process("gpg2", &[
-                "--output",
-                self.unencrypted_path,
-                "--decrypt",
-                self.encrypted_path,
-            ]));
-        });
-
-        Ok(None)
-    }
-}
-
-impl<'a> Drop for TemporaryDecryption<'a> {
-    fn drop(&mut self) {
-        log_wrap!(&format!("Removing unencrypted file {}", self.unencrypted_path), {
-            if let Err(error) = remove_file(self.unencrypted_path) {
-                match error.kind() {
-                    ErrorKind::NotFound => {},
-                    _ => panic!(
-                        "Failed to remove unencrypted file! You should remove it yourself! Error: {}",
-                        error
-                    ),
-                }
-            }
-        });
-    }
-}
 
 pub struct Encryptor<'a> {
     client: KMSClient<'a>,
