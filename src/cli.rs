@@ -16,7 +16,6 @@ pub fn app<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
         .subcommand(admin())
         .subcommand(cluster())
         .subcommand(init())
-        .subcommand(key())
 }
 
 fn admin<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
@@ -286,24 +285,5 @@ fn init<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
                 .long("terraform-source")
                 .takes_value(true)
                 .help("Custom source value for the Terraform module to use")
-        )
-}
-
-fn key<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
-    SubCommand::with_name("key")
-        .about("Commands for managing the OpenPGP keys")
-        .setting(AppSettings::SubcommandRequiredElseHelp)
-        .subcommand(key_export())
-}
-
-
-fn key_export<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
-    SubCommand::with_name("export")
-        .about("Exports an OpenPGP public key from the local keyring into the pubkeys directory")
-        .arg(
-            Arg::with_name("uid")
-                .index(1)
-                .required(true)
-                .help("The OpenPGP UID of the key to export")
         )
 }

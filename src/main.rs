@@ -7,7 +7,6 @@ mod cli;
 mod cluster;
 mod encryption;
 mod error;
-mod key;
 mod log;
 mod process;
 mod repository;
@@ -20,7 +19,6 @@ use ansi_term::Colour::Green;
 use admin::Admin;
 use cluster::Cluster;
 use error::Result;
-use key::Key;
 use repository::Repository;
 use terraform::Terraform;
 
@@ -72,14 +70,6 @@ fn execute_cli() -> Result {
             },
         },
         ("init", Some(matches)) => Repository::new(matches).create(),
-        ("key", Some(key_matches)) => match key_matches.subcommand() {
-            ("export", Some(matches)) => Key::new(matches).export(),
-            _ => {
-                println!("{}", key_matches.usage());
-
-                Ok(None)
-            },
-        },
         _ => {
             println!("{}", app_matches.usage());
 
