@@ -5,7 +5,7 @@ use clap::ArgMatches;
 use rusoto::credentials::DefaultAWSCredentialsProviderChain;
 use rusoto::regions::Region;
 
-use encryption::{Encryptor, import_public_keys, TemporaryDecryption};
+use encryption::{Encryptor, TemporaryDecryption};
 use error::Result;
 use log::Logger;
 use process::execute_child_process;
@@ -73,7 +73,6 @@ impl<'a> Cluster<'a> {
     }
 
     pub fn init(&mut self) -> Result {
-        try!(import_public_keys(&mut self.logger));
         try!(self.create_directories());
         try!(self.create_tfvars());
         try!(self.create_openssl_config());
@@ -90,7 +89,6 @@ impl<'a> Cluster<'a> {
     }
 
     pub fn reencrypt(&mut self) -> Result {
-        try!(import_public_keys(&mut self.logger));
         try!(self.encrypt_secrets(true));
 
         Ok(None)

@@ -2,7 +2,7 @@ use std::fs::create_dir_all;
 
 use clap::ArgMatches;
 
-use encryption::{import_public_keys, TemporaryDecryption};
+use encryption::TemporaryDecryption;
 use error::Result;
 use log::Logger;
 use process::execute_child_process;
@@ -28,8 +28,6 @@ impl<'a> Admin<'a> {
 
     #[allow(unused_variables)]
     pub fn create(&mut self) -> Result {
-        try!(import_public_keys(&mut self.logger));
-
         let local_user = self.local_user.expect("clap should have required uid");
 
         let admin_key_path = format!(
@@ -106,8 +104,6 @@ impl<'a> Admin<'a> {
     }
 
     pub fn install(&mut self) -> Result {
-        try!(import_public_keys(&mut self.logger));
-
         let domain = self.domain.expect("clap should have required domain");
         let local_user = self.local_user.expect("clap should have required uid");
 
@@ -168,8 +164,6 @@ impl<'a> Admin<'a> {
     }
 
     pub fn sign(&mut self) -> Result {
-        try!(import_public_keys(&mut self.logger));
-
         let recipient = self.recipient.expect("clap should have required recipient");
 
         let admin_csr_path = format!("clusters/{}/{}.csr", self.cluster, recipient);

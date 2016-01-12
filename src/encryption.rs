@@ -1,4 +1,4 @@
-use std::fs::{DirEntry, File, read_dir, remove_file};
+use std::fs::{File, remove_file};
 use std::io::{ErrorKind, Read, Write};
 
 use rusoto::credentials::DefaultAWSCredentialsProviderChain;
@@ -44,30 +44,6 @@ impl<'a> Drop for TemporaryDecryption<'a> {
             }
         });
     }
-}
-
-fn import_public_key(entry: DirEntry) -> Result {
-    let path = entry.path();
-    let str_path = try!(path.to_str().ok_or_else(|| {
-        Error::new("invalid utf8 in directory name".to_string())
-    }));
-
-    try!(execute_child_process("gpg2", &[
-        "--import",
-        str_path,
-    ]));
-
-    Ok(None)
-}
-
-pub fn import_public_keys(logger: &mut Logger) -> Result {
-    logger.action("Synchronizing PGP public keys with the local keyring", || {
-        for entry in try!(read_dir("pubkeys")) {
-            try!(import_public_key(try!(entry)));
-        }
-
-        Ok(None)
-    })
 }
 
 pub struct Encryptor<'a> {
