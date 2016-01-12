@@ -5,7 +5,7 @@ use clap::ArgMatches;
 use rusoto::credentials::DefaultAWSCredentialsProviderChain;
 use rusoto::regions::Region;
 
-use encryption::{Encryptor, TemporaryDecryption};
+use encryption::Encryptor;
 use error::Result;
 use process::execute_child_process;
 
@@ -14,6 +14,7 @@ pub struct Cluster<'a> {
     ca_cert_path: String,
     ca_key_path: String,
     coreos_ami: Option<&'a str>,
+    current_kms_master_key_id: Option<&'a str>,
     domain: Option<&'a str>,
     encrypted_ca_key_path: String,
     encrypted_master_key_path: String,
@@ -25,6 +26,7 @@ pub struct Cluster<'a> {
     master_csr_path: String,
     master_key_path: String,
     name: &'a str,
+    new_kms_master_key_id: Option<&'a str>,
     node_cert_path: String,
     node_csr_path: String,
     node_key_path: String,
@@ -48,6 +50,7 @@ impl<'a> Cluster<'a> {
             ca_cert_path: format!("clusters/{}/ca.pem", name),
             ca_key_path: format!("clusters/{}/ca-key.pem", name),
             coreos_ami: matches.value_of("ami"),
+            current_kms_master_key_id: matches.value_of("current-key"),
             domain: matches.value_of("domain"),
             encrypted_ca_key_path: format!("clusters/{}/ca-key.pem.asc", name),
             encrypted_master_key_path: format!("clusters/{}/apiserver-key.pem.asc", name),
@@ -59,6 +62,7 @@ impl<'a> Cluster<'a> {
             master_cert_path: format!("clusters/{}/apiserver.pem", name),
             master_csr_path: format!("clusters/{}/apiserver.csr", name),
             master_key_path: format!("clusters/{}/apiserver-key.pem", name),
+            new_kms_master_key_id: matches.value_of("new-key"),
             node_cert_path: format!("clusters/{}/node.pem", name),
             node_csr_path: format!("clusters/{}/node.csr", name),
             node_key_path: format!("clusters/{}/node-key.pem", name),
@@ -76,7 +80,9 @@ impl<'a> Cluster<'a> {
         try!(self.create_ca());
         try!(self.create_master_credentials());
         try!(self.create_node_credentials());
-        try!(self.encrypt_secrets(false));
+        try!(self.encrypt_secrets(
+            self.kms_master_key_id.expect("clap should have required kms-key"),
+        ));
 
         Ok(Some(format!(
             "Cluster \"{}\" initialized! Commit clusters/{} to Git.",
@@ -86,7 +92,10 @@ impl<'a> Cluster<'a> {
     }
 
     pub fn reencrypt(&mut self) -> Result {
-        try!(self.encrypt_secrets(true));
+        try!(self.reencrypt_secrets(
+            self.current_kms_master_key_id.expect("clap should have required current-key"),
+            self.new_kms_master_key_id.expect("clap should have required new-key"),
+        ));
 
         Ok(None)
     }
@@ -290,45 +299,47 @@ zone_id = \"{}\"
         Ok(None)
     }
 
-    fn encrypt_secrets(&self, decrypt_existing: bool) -> Result {
-        let ca_key_decryption = TemporaryDecryption {
-            encrypted_path: &self.encrypted_ca_key_path,
-            unencrypted_path: &self.ca_key_path,
-        };
-
-        let master_key_decryption = TemporaryDecryption {
-            encrypted_path: &self.encrypted_master_key_path,
-            unencrypted_path: &self.master_key_path,
-        };
-
-        let node_key_decryption = TemporaryDecryption {
-            encrypted_path: &self.encrypted_node_key_path,
-            unencrypted_path: &self.node_key_path,
-        };
-
-        if decrypt_existing {
-            try!(ca_key_decryption.decrypt());
-            try!(master_key_decryption.decrypt());
-            try!(node_key_decryption.decrypt());
-        }
-
+    fn encrypt_secrets<'b>(&self, kms_key_id: &'b str) -> Result {
         let region = Region::UsEast1;
 
         let mut encryptor = Encryptor::new(
             self.aws_credentials_provider.clone(),
             &region,
-            self.kms_master_key_id.expect("KMS master key ID not provided"),
+            kms_key_id,
         );
 
-        // println!("Encrypting Kubernetes certificate authority private key");
-        try!(encryptor.encrypt_file(&self.ca_key_path, &self.encrypted_ca_key_path));
+        log_wrap!("Encrypting Kubernetes certificate authority private key", {
+            try!(encryptor.encrypt_file(&self.ca_key_path, &self.encrypted_ca_key_path));
+        });
 
-        // println!("Encrypting Kubernetes master private key");
-        try!(encryptor.encrypt_file(&self.master_key_path, &self.encrypted_master_key_path));
+        log_wrap!("Encrypting Kubernetes master private key", {
+            try!(encryptor.encrypt_file(&self.master_key_path, &self.encrypted_master_key_path));
+        });
 
-        // println!("Encrypting Kubernetes node private key");
-        try!(encryptor.encrypt_file(&self.node_key_path, &self.encrypted_node_key_path));
+        log_wrap!("Encrypting Kubernetes node private key", {
+            try!(encryptor.encrypt_file(&self.node_key_path, &self.encrypted_node_key_path));
+        });
 
         Ok(None)
+    }
+
+    fn reencrypt_secrets<'b>(
+        &self,
+        current_kms_master_key_id: &'b str,
+        new_kms_master_key_id: &'b str,
+    ) -> Result {
+        let region = Region::UsEast1;
+
+        let mut encryptor = Encryptor::new(
+            self.aws_credentials_provider.clone(),
+            &region,
+            current_kms_master_key_id,
+        );
+
+        try!(encryptor.decrypt_file(&self.encrypted_ca_key_path, &self.ca_key_path));
+        try!(encryptor.decrypt_file(&self.encrypted_master_key_path, &self.master_key_path));
+        try!(encryptor.decrypt_file(&self.encrypted_node_key_path, &self.node_key_path));
+
+        self.encrypt_secrets(new_kms_master_key_id)
     }
 }
