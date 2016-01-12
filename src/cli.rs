@@ -37,17 +37,26 @@ fn admin_create<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
                 .help("The cluster the new administrator should be able to access")
         )
         .arg(
-            Arg::with_name("key")
-                .index(2)
+            Arg::with_name("name")
+                .short("n")
+                .long("name")
+                .takes_value(true)
                 .required(true)
-                .help("OpenPGP UID of the new administrator")
+                .help("The new administrator's name")
+        )
+        .arg(
+            Arg::with_name("kms-key")
+                .short("k")
+                .long("kms-key")
+                .takes_value(true)
+                .required(true)
+                .help("KMS customer master key ID, e.g. \"12345678-1234-1234-1234-123456789012\"")
         )
         .after_help(
             "Creates the following files:\n\n\
-            * clusters/CLUSTER/UID-key.pem.asc: The OpenPGP-encrypted private key\n\
-            * clusters/CLUSTER/UID.csr: The certificate signing request\n\n\
-            The user specified by UID must have the OpenPGP public and secret keys in their\n\
-            local keyring. Generated files are only valid for the specified cluster.\n"
+            * clusters/CLUSTER/NAME-key.pem.aes256: The KMS-encrypted private key\n\
+            * clusters/CLUSTER/NAME.csr: The certificate signing request\n\n\
+            Generated files are only valid for the specified cluster.\n"
         )
 }
 
@@ -61,10 +70,20 @@ fn admin_install<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
                 .help("The cluster to configure")
         )
         .arg(
-            Arg::with_name("uid")
-                .index(2)
+            Arg::with_name("name")
+                .short("n")
+                .long("name")
+                .takes_value(true)
                 .required(true)
-                .help("OpenPGP UID of the administrator")
+                .help("The new administrator's name")
+        )
+        .arg(
+            Arg::with_name("kms-key")
+                .short("k")
+                .long("kms-key")
+                .takes_value(true)
+                .required(true)
+                .help("KMS customer master key ID, e.g. \"12345678-1234-1234-1234-123456789012\"")
         )
         .arg(
             Arg::with_name("domain")
@@ -77,10 +96,8 @@ fn admin_install<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
         .after_help(
             "The following files are expected by this command:\n\n\
             * clusters/CLUSTER/ca.pem: The CA certificate\n\
-            * clusters/CLUSTER/UID.pem: The client certificate\n\
-            * clusters/CLUSTER/UID-key.pem.asc: The OpenPGP encrypted private key\n\n\
-            The user specified by UID must have the OpenPGP secret key in their local\n\
-            keyring.\n"
+            * clusters/CLUSTER/NAME.pem: The client certificate\n\
+            * clusters/CLUSTER/NAME-key.pem.aes256: The KMS-encrypted private key\n"
         )
 }
 
@@ -94,18 +111,18 @@ fn admin_sign<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
                 .help("The name of the cluster the certificate will be valid for")
         )
         .arg(
-            Arg::with_name("recipient")
-                .index(2)
+            Arg::with_name("kms-key")
+                .short("k")
+                .long("kms-key")
+                .takes_value(true)
                 .required(true)
-                .help("OpenPGP UID of the requesting administrator")
+                .help("KMS customer master key ID, e.g. \"12345678-1234-1234-1234-123456789012\"")
         )
         .after_help(
             "The following files are expected by this command:\n\n\
             * clusters/CLUSTER/ca.pem: The CA certificate\n\
-            * clusters/CLUSTER/ca-key.pem: The CA private key\n\
-            * clusters/CLUSTER/RECIPIENT.csr: The requesting administrator's CSR\n\n\
-            The user running the command must have an OpenPGP secret key allowed to\n\
-            decrypt the CA private key in their local keyring.\n"
+            * clusters/CLUSTER/ca-key.pem.aes256: The KMS-encrypted CA private key\n\
+            * clusters/CLUSTER/RECIPIENT.csr: The requesting administrator's CSR\n"
         )
 }
 
@@ -246,7 +263,7 @@ fn cluster_plan<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
 
 fn cluster_reencrypt<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
     SubCommand::with_name("reencrypt")
-        .about("Re-encrypts the cluster's SSL keys, allowing decryption by new administrators")
+        .about("Re-encrypts the cluster's SSL keys using a new AWS KMS customer master key")
         .arg(
             Arg::with_name("cluster")
                 .index(1)
@@ -254,20 +271,18 @@ fn cluster_reencrypt<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar
                 .help("The cluster whose keys should be re-encrypted")
         )
         .arg(
-            Arg::with_name("uid")
-                .short("u")
-                .long("uid")
+            Arg::with_name("current-key")
+                .long("current-key")
                 .takes_value(true)
                 .required(true)
-                .help("OpenPGP UID for the decryption key")
+                .help("Current KMS customer master key ID, e.g. \"12345678-1234-1234-1234-123456789012\"")
         )
         .arg(
-            Arg::with_name("recipient")
-                .short("r")
-                .long("recipient")
+            Arg::with_name("new-key")
+                .long("new-key")
                 .takes_value(true)
-                .multiple(true)
-                .help("OpenPGP UID for a key that will be allowed to decrypt the re-encrypted keys")
+                .required(true)
+                .help("New KMS customer master key ID, e.g. \"12345678-1234-1234-1234-123456789012\"")
         )
 }
 fn init<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
