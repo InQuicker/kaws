@@ -7,7 +7,6 @@ use rusoto::regions::Region;
 
 use encryption::{Encryptor, TemporaryDecryption};
 use error::Result;
-use log::Logger;
 use process::execute_child_process;
 
 pub struct Cluster<'a> {
@@ -22,7 +21,6 @@ pub struct Cluster<'a> {
     instance_size: Option<&'a str>,
     kms_master_key_id: Option<&'a str>,
     kubernetes_version: Option<&'a str>,
-    logger: Logger,
     master_cert_path: String,
     master_csr_path: String,
     master_key_path: String,
@@ -58,7 +56,6 @@ impl<'a> Cluster<'a> {
             instance_size: matches.value_of("size"),
             kms_master_key_id: matches.value_of("kms-key"),
             kubernetes_version: matches.value_of("k8s-version"),
-            logger: Logger::new(matches.is_present("verbose")),
             master_cert_path: format!("clusters/{}/apiserver.pem", name),
             master_csr_path: format!("clusters/{}/apiserver.csr", name),
             master_key_path: format!("clusters/{}/apiserver-key.pem", name),
@@ -95,25 +92,25 @@ impl<'a> Cluster<'a> {
     }
 
     fn create_directories(&self) -> Result {
-        try!(self.logger.action("Creating directories for the new cluster", || {
-            create_dir_all(format!("clusters/{}", self.name))
-        }));
+        log_wrap!("Creating directories for the new cluster", {
+            try!(create_dir_all(format!("clusters/{}", self.name)));
+        });
 
         Ok(None)
     }
 
     fn create_master_credentials(&self) -> Result {
-        try!(self.logger.action("Creating Kubernetes master private key", || {
-            execute_child_process("openssl", &[
+        log_wrap!("Creating Kubernetes master private key", {
+            try!(execute_child_process("openssl", &[
                 "genrsa",
                 "-out",
                 &self.master_key_path,
                 "2048",
-            ])
-        }));
+            ]));
+        });
 
-        try!(self.logger.action("Creating Kubernetes master certificate signing request", || {
-            execute_child_process("openssl", &[
+        log_wrap!("Creating Kubernetes master certificate signing request", {
+            try!(execute_child_process("openssl", &[
                 "req",
                 "-new",
                 "-key",
@@ -124,11 +121,11 @@ impl<'a> Cluster<'a> {
                 &format!("/CN=kube-{}-apiserver", self.name),
                 "-config",
                 &self.openssl_config_path,
-            ])
-        }));
+            ]));
+        });
 
-        try!(self.logger.action("Creating Kubernetes master certificate", || {
-            execute_child_process("openssl", &[
+        log_wrap!("Creating Kubernetes master certificate", {
+            try!(execute_child_process("openssl", &[
                 "x509",
                 "-req",
                 "-in",
@@ -146,28 +143,28 @@ impl<'a> Cluster<'a> {
                 "v3_req",
                 "-extfile",
                 &self.openssl_config_path,
-            ])
-        }));
+            ]));
+        });
 
-        try!(self.logger.action("Removing Kubernetes master certificate signing request", || {
-            remove_file(&self.master_csr_path)
-        }));
+        log_wrap!("Removing Kubernetes master certificate signing request", {
+            try!(remove_file(&self.master_csr_path));
+        });
 
         Ok(None)
     }
 
     fn create_node_credentials(&self) -> Result {
-        try!(self.logger.action("Creating Kubernetes node private key", || {
-            execute_child_process("openssl", &[
+        log_wrap!("Creating Kubernetes node private key", {
+            try!(execute_child_process("openssl", &[
                 "genrsa",
                 "-out",
                 &self.node_key_path,
                 "2048",
-            ])
-        }));
+            ]));
+        });
 
-        try!(self.logger.action("Creating Kubernetes node certificate signing request", || {
-            execute_child_process("openssl", &[
+        log_wrap!("Creating Kubernetes node certificate signing request", {
+            try!(execute_child_process("openssl", &[
                 "req",
                 "-new",
                 "-key",
@@ -176,11 +173,11 @@ impl<'a> Cluster<'a> {
                 &self.node_csr_path,
                 "-subj",
                 &format!("/CN=kube-{}-node", self.name),
-            ])
-        }));
+            ]));
+        });
 
-        try!(self.logger.action("Creating Kubernetes node certificate", || {
-            execute_child_process("openssl", &[
+        log_wrap!("Creating Kubernetes node certificate", {
+            try!(execute_child_process("openssl", &[
                 "x509",
                 "-req",
                 "-in",
@@ -194,21 +191,21 @@ impl<'a> Cluster<'a> {
                 &self.node_cert_path,
                 "-days",
                 "365",
-            ])
-        }));
+            ]));
+        });
 
-        try!(self.logger.action("Removing Kubernetes node certificate signing request", || {
-            remove_file(&self.node_csr_path)
-        }));
+        log_wrap!("Removing Kubernetes node certificate signing request", {
+            try!(remove_file(&self.node_csr_path));
+        });
 
         Ok(None)
     }
 
     fn create_openssl_config(&self) -> Result {
-        try!(self.logger.action("Creating OpenSSL config file", || {
+        log_wrap!("Creating OpenSSL config file", {
             let mut file = try!(File::create(&self.openssl_config_path));
 
-            write!(
+            try!(write!(
                 file,
                 "\
 [req]
@@ -226,24 +223,24 @@ DNS.3 = kubernetes.{}
 IP.1 = 10.3.0.1
 ",
                 self.domain.expect("domain should have been required by clap"),
-            )
-        }));
+            ));
+        });
 
         Ok(None)
     }
 
     fn create_ca(&self) -> Result {
-        try!(self.logger.action("Creating Kubernetes certificate authority private key", || {
-            execute_child_process("openssl", &[
+        log_wrap!("Creating Kubernetes certificate authority private key", {
+            try!(execute_child_process("openssl", &[
                 "genrsa",
                 "-out",
                 &self.ca_key_path,
                 "2048",
-            ])
-        }));
+            ]));
+        });
 
-        try!(self.logger.action("Creating Kubernetes certificate authority certificate", || {
-            execute_child_process("openssl", &[
+        log_wrap!("Creating Kubernetes certificate authority certificate", {
+            try!(execute_child_process("openssl", &[
                 "req",
                 "-x509",
                 "-new",
@@ -256,17 +253,17 @@ IP.1 = 10.3.0.1
                 &self.ca_cert_path,
                 "-subj",
                 &format!("/CN=kube-{}-ca", self.name),
-            ])
-        }));
+            ]));
+        });
 
         Ok(None)
     }
 
     fn create_tfvars(&self) -> Result {
-        try!(self.logger.action("Creating tfvars file", || {
+        log_wrap!("Creating tfvars file", {
             let mut file = try!(File::create(&self.tfvars_path));
 
-            write!(
+            try!(write!(
                 file,
                 "\
 domain = \"{}\"
@@ -287,8 +284,8 @@ zone_id = \"{}\"
                 self.ssh_key.expect("ssh key should have been required by clap"),
                 self.kubernetes_version.expect("k8s version should have been required by clap"),
                 self.zone_id.expect("zone ID should have been required by clap"),
-            )
-        }));
+            ));
+        });
 
         Ok(None)
     }
@@ -296,19 +293,16 @@ zone_id = \"{}\"
     fn encrypt_secrets(&self, decrypt_existing: bool) -> Result {
         let ca_key_decryption = TemporaryDecryption {
             encrypted_path: &self.encrypted_ca_key_path,
-            logger: &self.logger,
             unencrypted_path: &self.ca_key_path,
         };
 
         let master_key_decryption = TemporaryDecryption {
             encrypted_path: &self.encrypted_master_key_path,
-            logger: &self.logger,
             unencrypted_path: &self.master_key_path,
         };
 
         let node_key_decryption = TemporaryDecryption {
             encrypted_path: &self.encrypted_node_key_path,
-            logger: &self.logger,
             unencrypted_path: &self.node_key_path,
         };
 

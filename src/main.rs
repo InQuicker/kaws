@@ -1,13 +1,23 @@
 extern crate ansi_term;
+extern crate env_logger;
 extern crate clap;
 extern crate rusoto;
+#[macro_use]
+extern crate log;
+
+macro_rules! log_wrap {
+    ($m:expr, $b:block) => {
+        debug!("{}...", $m);
+        $b
+        debug!("...done.");
+    }
+}
 
 mod admin;
 mod cli;
 mod cluster;
 mod encryption;
 mod error;
-mod log;
 mod process;
 mod repository;
 mod terraform;
@@ -23,6 +33,8 @@ use repository::Repository;
 use terraform::Terraform;
 
 fn main() {
+    env_logger::init().expect("Failed to initialize logger.");
+
     let mut failed = false;
 
     match execute_cli() {

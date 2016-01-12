@@ -4,14 +4,12 @@ use clap::ArgMatches;
 
 use encryption::TemporaryDecryption;
 use error::Result;
-use log::Logger;
 use process::execute_child_process;
 
 pub struct Admin<'a> {
     cluster: &'a str,
     domain: Option<&'a str>,
     local_user: Option<&'a str>,
-    logger: Logger,
     recipient: Option<&'a str>,
 }
 
@@ -21,7 +19,6 @@ impl<'a> Admin<'a> {
             cluster: matches.value_of("cluster").expect("clap should have required cluster"),
             domain: matches.value_of("domain"),
             local_user: matches.value_of("uid"),
-            logger: Logger::new(matches.is_present("verbose")),
             recipient: matches.value_of("recipient"),
         }
     }
@@ -43,7 +40,6 @@ impl<'a> Admin<'a> {
         // be removed from this method.
         let admin_key_decryption = TemporaryDecryption {
             encrypted_path: &encrypted_admin_key_path,
-            logger: &self.logger,
             unencrypted_path: &admin_key_path,
         };
 
@@ -53,23 +49,23 @@ impl<'a> Admin<'a> {
             local_user,
         );
 
-        try!(self.logger.action("Creating directory for the new administrator's credentials", || {
-            create_dir_all(format!("clusters/{}", self.cluster))
-        }));
+        log_wrap!("Creating directory for the new administrator's credentials", {
+            try!(create_dir_all(format!("clusters/{}", self.cluster)));
+        });
 
         // create private key
-        try!(self.logger.action("Creating Kubernetes admin private key", || {
-            execute_child_process("openssl", &[
+        log_wrap!("Creating Kubernetes admin private key", {
+            try!(execute_child_process("openssl", &[
                 "genrsa",
                 "-out",
                 &admin_key_path,
                 "2048",
-            ])
-        }));
+            ]));
+        });
 
         // create CSR
-        try!(self.logger.action("Creating Kubernetes admin certificate signing request", || {
-            execute_child_process("openssl", &[
+        log_wrap!("Creating Kubernetes admin certificate signing request", {
+            try!(execute_child_process("openssl", &[
                 "req",
                 "-new",
                 "-key",
@@ -78,12 +74,12 @@ impl<'a> Admin<'a> {
                 &admin_csr_path,
                 "-subj",
                 &format!("/CN={}-{}", local_user, self.cluster),
-            ])
-        }));
+            ]));
+        });
 
         // encrypt private key
-        try!(self.logger.action("Encrypting Kubernetes admin private key", || {
-            execute_child_process("gpg2", &[
+        log_wrap!("Encrypting Kubernetes admin private key", {
+            try!(execute_child_process("gpg2", &[
                 "--encrypt",
                 "--sign",
                 "--local-user",
@@ -94,8 +90,8 @@ impl<'a> Admin<'a> {
                 &encrypted_admin_key_path,
                 "--armor",
                 &admin_key_path,
-            ])
-        }));
+            ]));
+        });
 
         Ok(Some(format!(
             "Certificate signing request created! Commit changes to Git and ask an\n\
@@ -113,14 +109,13 @@ impl<'a> Admin<'a> {
         // decrypt the key
         let admin_key_decryption = TemporaryDecryption {
             encrypted_path: &encrypted_admin_key_path,
-            logger: &self.logger,
             unencrypted_path: &admin_key_path,
         };
-        try!(self.logger.action("Decrypting Kubernetes admin private key", || {
-            admin_key_decryption.decrypt()
-        }));
+        log_wrap!("Decrypting Kubernetes admin private key", {
+            try!(admin_key_decryption.decrypt());
+        });
 
-        try!(self.logger.action("Configuring kubectl", || {
+        log_wrap!("Configuring kubectl", {
             // set cluster
             try!(execute_child_process("kubectl", &[
                 "config",
@@ -142,14 +137,14 @@ impl<'a> Admin<'a> {
             ]));
 
             // set context
-            execute_child_process("kubectl", &[
+            try!(execute_child_process("kubectl", &[
                 "config",
                 "set-context",
                 self.cluster,
                 &format!("--cluster={}", self.cluster),
                 &format!("--user={}-{}", local_user, self.cluster),
-            ])
-        }));
+            ]));
+        });
 
         Ok(Some(format!(
             "Admin credentials for user \"{}\" installed for cluster \"{}\"!\n\
@@ -175,14 +170,13 @@ impl<'a> Admin<'a> {
         // decrypt CA key
         let ca_key_decryption = TemporaryDecryption {
             encrypted_path: &encrypted_ca_key_path,
-            logger: &self.logger,
             unencrypted_path: &ca_key_path,
         };
         try!(ca_key_decryption.decrypt());
 
         // generate admin cert
-        try!(self.logger.action("Creating Kubernetes admin certificate", || {
-            execute_child_process("openssl", &[
+        log_wrap!("Creating Kubernetes admin certificate", {
+            try!(execute_child_process("openssl", &[
                 "x509",
                 "-req",
                 "-in",
@@ -196,8 +190,8 @@ impl<'a> Admin<'a> {
                 &admin_cert_path,
                 "-days",
                 "365",
-            ])
-        }));
+            ]));
+        });
 
         Ok(Some(format!(
             "Client certificate for administrator \"{}\" created for cluster \"{}\"!\n\

@@ -6,25 +6,23 @@ use rusoto::kms::{EncryptRequest, EncryptResponse, KMSClient, Result as KMSResul
 use rusoto::regions::Region;
 
 use error::{Error, Result};
-use log::Logger;
 use process::execute_child_process;
 
 pub struct TemporaryDecryption<'a> {
     pub encrypted_path: &'a str,
-    pub logger: &'a Logger,
     pub unencrypted_path: &'a str,
 }
 
 impl<'a> TemporaryDecryption<'a> {
     pub fn decrypt(&self) -> Result {
-        try!(self.logger.action(&format!("Decrypting {}", self.encrypted_path), || {
-            execute_child_process("gpg2", &[
+        log_wrap!(&format!("Decrypting {}", self.encrypted_path), {
+            try!(execute_child_process("gpg2", &[
                 "--output",
                 self.unencrypted_path,
                 "--decrypt",
                 self.encrypted_path,
-            ])
-        }));
+            ]));
+        });
 
         Ok(None)
     }
@@ -32,7 +30,7 @@ impl<'a> TemporaryDecryption<'a> {
 
 impl<'a> Drop for TemporaryDecryption<'a> {
     fn drop(&mut self) {
-        self.logger.action(&format!("Removing unencrypted file {}", self.unencrypted_path), || {
+        log_wrap!(&format!("Removing unencrypted file {}", self.unencrypted_path), {
             if let Err(error) = remove_file(self.unencrypted_path) {
                 match error.kind() {
                     ErrorKind::NotFound => {},

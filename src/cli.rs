@@ -7,12 +7,6 @@ pub fn app<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
         .after_help("Start by creating a new repository with the `init` command.\n")
         .setting(AppSettings::GlobalVersion)
         .setting(AppSettings::SubcommandRequiredElseHelp)
-        .arg(
-            Arg::with_name("verbose")
-                .long("verbose")
-                .global(true)
-                .help("Outputs additional information to the standard output")
-        )
         .subcommand(admin())
         .subcommand(cluster())
         .subcommand(init())

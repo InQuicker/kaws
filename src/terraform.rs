@@ -8,13 +8,11 @@ use rusoto::credentials::{
 
 use encryption::TemporaryDecryption;
 use error::Error;
-use log::Logger;
 use error::Result;
 
 pub struct Terraform<'a> {
     aws_credentials_provider: DefaultAWSCredentialsProviderChain,
     cluster: &'a str,
-    logger: Logger,
 }
 
 impl<'a> Terraform<'a> {
@@ -26,7 +24,6 @@ impl<'a> Terraform<'a> {
         Terraform {
             aws_credentials_provider: provider,
             cluster: matches.value_of("cluster").expect("clap should have required cluster"),
-            logger: Logger::new(matches.is_present("verbose")),
         }
     }
 
@@ -40,14 +37,12 @@ impl<'a> Terraform<'a> {
 
         let master_key_decryption = TemporaryDecryption {
             encrypted_path: &encrypted_master_key_path,
-            logger: &self.logger,
             unencrypted_path: &master_key_path,
         };
         try!(master_key_decryption.decrypt());
 
         let node_key_decryption = TemporaryDecryption {
             encrypted_path: &encrypted_node_key_path,
-            logger: &self.logger,
             unencrypted_path: &node_key_path,
         };
         try!(node_key_decryption.decrypt());
