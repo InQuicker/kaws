@@ -5,6 +5,7 @@ use std::result::Result as BaseResult;
 use std::str::Utf8Error;
 
 use rusoto::error::AWSError;
+use rusoto::kms::KMSError;
 
 pub struct Error {
     message: String,
@@ -60,4 +61,11 @@ impl From<AWSError> for Error {
     }
 }
 
+impl From<KMSError> for Error {
+    fn from(error: KMSError) -> Self {
+        Error {
+            message: format!("{:?}", error),
+        }
+    }
+}
 pub type Result = BaseResult<Option<String>, Error>;

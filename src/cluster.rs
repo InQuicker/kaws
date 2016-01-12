@@ -2,13 +2,16 @@ use std::fs::{create_dir_all, File, remove_file};
 use std::io::Write;
 
 use clap::ArgMatches;
+use rusoto::credentials::DefaultAWSCredentialsProviderChain;
+use rusoto::regions::Region;
 
-use encryption::{import_public_keys, TemporaryDecryption};
+use encryption::{Encryptor, import_public_keys, TemporaryDecryption};
 use error::Result;
 use log::Logger;
 use process::execute_child_process;
 
 pub struct Cluster<'a> {
+    aws_credentials_provider: DefaultAWSCredentialsProviderChain,
     ca_cert_path: String,
     ca_key_path: String,
     coreos_ami: Option<&'a str>,
@@ -16,8 +19,8 @@ pub struct Cluster<'a> {
     encrypted_ca_key_path: String,
     encrypted_master_key_path: String,
     encrypted_node_key_path: String,
-    encryption_key_uid: &'a str,
     instance_size: Option<&'a str>,
+    kms_master_key_id: Option<&'a str>,
     kubernetes_version: Option<&'a str>,
     logger: Logger,
     master_cert_path: String,
@@ -28,7 +31,6 @@ pub struct Cluster<'a> {
     node_csr_path: String,
     node_key_path: String,
     openssl_config_path: String,
-    recipient_args: Vec<&'a str>,
     ssh_key: Option<&'a str>,
     tfvars_path: String,
     zone_id: Option<&'a str>,
@@ -37,16 +39,14 @@ pub struct Cluster<'a> {
 impl<'a> Cluster<'a> {
     pub fn new(matches: &'a ArgMatches) -> Self {
         let name =  matches.value_of("cluster").expect("clap should have required cluster");
-        let uid = matches.value_of("uid").expect("clap should have required uid");
 
-        let mut recipient_args = vec![];
+        let mut provider = DefaultAWSCredentialsProviderChain::new();
 
-        for recipient in matches.values_of("recipient").unwrap_or(vec![uid]).iter() {
-            recipient_args.push("--recipient");
-            recipient_args.push(recipient);
-        }
+        provider.set_profile(matches.value_of("aws-credentials-profile").unwrap_or("default"));
+
 
         Cluster {
+            aws_credentials_provider: provider,
             ca_cert_path: format!("clusters/{}/ca.pem", name),
             ca_key_path: format!("clusters/{}/ca-key.pem", name),
             coreos_ami: matches.value_of("ami"),
@@ -54,9 +54,9 @@ impl<'a> Cluster<'a> {
             encrypted_ca_key_path: format!("clusters/{}/ca-key.pem.asc", name),
             encrypted_master_key_path: format!("clusters/{}/apiserver-key.pem.asc", name),
             encrypted_node_key_path: format!("clusters/{}/node-key.pem.asc", name),
-            encryption_key_uid: uid,
             name: name,
             instance_size: matches.value_of("size"),
+            kms_master_key_id: matches.value_of("kms-key"),
             kubernetes_version: matches.value_of("k8s-version"),
             logger: Logger::new(matches.is_present("verbose")),
             master_cert_path: format!("clusters/{}/apiserver.pem", name),
@@ -66,7 +66,6 @@ impl<'a> Cluster<'a> {
             node_csr_path: format!("clusters/{}/node.csr", name),
             node_key_path: format!("clusters/{}/node-key.pem", name),
             openssl_config_path: format!("clusters/{}/openssl.cnf", name),
-            recipient_args: recipient_args,
             ssh_key: matches.value_of("ssh-key"),
             tfvars_path: format!("clusters/{}/terraform.tfvars", name),
             zone_id: matches.value_of("zone-id"),
@@ -321,53 +320,22 @@ zone_id = \"{}\"
             try!(node_key_decryption.decrypt());
         }
 
-        let mut ca_private_key_args = self.recipient_args.clone();
-        ca_private_key_args.extend(vec![
-            "--encrypt",
-            "--sign",
-            "--local-user",
-            self.encryption_key_uid,
-            "--output",
-            &self.encrypted_ca_key_path,
-            "--armor",
-            &self.ca_key_path,
-        ]);
+        let region = Region::UsEast1;
 
-        try!(self.logger.action("Encrypting Kubernetes certificate authority private key", || {
-            execute_child_process("gpg2", &ca_private_key_args)
-        }));
+        let mut encryptor = Encryptor::new(
+            self.aws_credentials_provider.clone(),
+            &region,
+            self.kms_master_key_id.expect("KMS master key ID not provided"),
+        );
 
-        let mut master_private_key_args = self.recipient_args.clone();
-        master_private_key_args.extend(vec![
-            "--encrypt",
-            "--sign",
-            "--local-user",
-            self.encryption_key_uid,
-            "--output",
-            &self.encrypted_master_key_path,
-            "--armor",
-            &self.master_key_path,
-        ]);
+        // println!("Encrypting Kubernetes certificate authority private key");
+        try!(encryptor.encrypt_file(&self.ca_key_path, &self.encrypted_ca_key_path));
 
-        try!(self.logger.action("Encrypting Kubernetes master private key", || {
-            execute_child_process("gpg2", &master_private_key_args)
-        }));
+        // println!("Encrypting Kubernetes master private key");
+        try!(encryptor.encrypt_file(&self.master_key_path, &self.encrypted_master_key_path));
 
-        let mut node_private_key_args = self.recipient_args.clone();
-        node_private_key_args.extend(vec![
-            "--encrypt",
-            "--sign",
-            "--local-user",
-            self.encryption_key_uid,
-            "--output",
-            &self.encrypted_node_key_path,
-            "--armor",
-            &self.node_key_path,
-        ]);
-
-        try!(self.logger.action("Encrypting Kubernetes node private key", || {
-            execute_child_process("gpg2", &node_private_key_args)
-        }));
+        // println!("Encrypting Kubernetes node private key");
+        try!(encryptor.encrypt_file(&self.node_key_path, &self.encrypted_node_key_path));
 
         Ok(None)
     }

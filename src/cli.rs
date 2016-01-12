@@ -38,7 +38,7 @@ fn admin_create<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
                 .help("The cluster the new administrator should be able to access")
         )
         .arg(
-            Arg::with_name("uid")
+            Arg::with_name("key")
                 .index(2)
                 .required(true)
                 .help("OpenPGP UID of the new administrator")
@@ -173,20 +173,12 @@ fn cluster_init<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
                 .help("The base domain name for the cluster, e.g. \"example.com\"")
         )
         .arg(
-            Arg::with_name("uid")
-                .short("u")
-                .long("uid")
+            Arg::with_name("kms-key")
+                .short("k")
+                .long("kms-key")
                 .takes_value(true)
                 .required(true)
-                .help("OpenPGP UID for the encryption key")
-        )
-        .arg(
-            Arg::with_name("recipient")
-                .short("r")
-                .long("recipient")
-                .takes_value(true)
-                .multiple(true)
-                .help("OpenPGP UID for an additional key allowed to decrypt the CA, master, and node keys")
+                .help("KMS customer master key ID, e.g. \"12345678-1234-1234-1234-123456789012\"")
         )
         .arg(
             Arg::with_name("ami")
@@ -206,7 +198,7 @@ fn cluster_init<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
         )
         .arg(
             Arg::with_name("ssh-key")
-                .short("k")
+                .short("K")
                 .long("ssh-key")
                 .takes_value(true)
                 .required(true)
@@ -226,7 +218,7 @@ fn cluster_init<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
                 .long("zone-id")
                 .takes_value(true)
                 .required(true)
-                .help("Zone ID of the Route 53 hosted zone")
+                .help("Route 53 hosted zone ID")
         )
 }
 
