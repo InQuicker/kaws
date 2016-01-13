@@ -2,7 +2,7 @@
 
 **kaws** is a command line tool for installing and managing Kubernetes clusters.
 kaws operates on a *kaws repository* which is just a Git repository with a particular file structure.
-The repository contains a Terraform module which defines the Kubernetes cluster toplogy, digital certificates and keys for the Kubernetes API, and OpenPGP public keys to facilitate the generation and transfer of Kubernetes API credentials for administrators.
+The repository contains a Terraform module which defines the Kubernetes cluster topology and digital certificates and keys for the Kubernetes API.
 
 The basic workflow for using kaws is:
 
@@ -19,7 +19,6 @@ If you want to get started right away, begin with the [repository workflows](gui
 
 * [Administrators](concepts/admin.md)
 * [Clusters](concepts/cluster.md)
-* [OpenPGP](concepts/key.md)
 * [Repositories](concepts/repository.md)
 * [Terraform](concepts/terraform.md)
 * [Security](concepts/security.md)
@@ -35,4 +34,3 @@ If you want to get started right away, begin with the [repository workflows](gui
 * [kaws admin](references/admin.md)
 * [kaws cluster](references/cluster.md)
 * [kaws init](references/init.md)
-* [kaws key](references/key.md)

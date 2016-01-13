@@ -11,7 +11,6 @@ USAGE:
 FLAGS:
     -h, --help       Prints help information
     -V, --version    Prints version information
-        --verbose    Outputs additional information to the standard output
 
 SUBCOMMANDS:
     create     Generates a private key and certificate signing request for a new administrator
@@ -28,24 +27,26 @@ SUBCOMMANDS:
 
 ```
 USAGE:
-	kaws admin create [FLAGS] <cluster> <uid>
+	kaws admin create [FLAGS] <cluster> <name> --kms-key <kms-key>
 
 FLAGS:
     -h, --help       Prints help information
     -V, --version    Prints version information
-        --verbose    Outputs additional information to the standard output
+
+OPTIONS:
+    -k, --kms-key <kms-key>    KMS customer master key ID, e.g. "12345678-1234-1234-1234-123456789012"
 
 ARGS:
     cluster    The cluster the new administrator should be able to access
-    uid        OpenPGP UID of the new administrator
+    name       The new administrator's name
 ```
 
-This command creates the following files:
+Creates the following files:
 
-* clusters/CLUSTER/UID-key.pem.asc: The OpenPGP-encrypted private key
-* clusters/CLUSTER/UID.csr: The certificate signing request
+* clusters/CLUSTER/NAME-key.pem.encrypted: The KMS-encrypted private key
+* clusters/CLUSTER/NAME.csr: The certificate signing request
 
-The user specified by UID must have the OpenPGP public and secret keys in their local keyring.
+Generated files are only valid for the specified cluster.
 
 ### install
 
@@ -53,28 +54,26 @@ The user specified by UID must have the OpenPGP public and secret keys in their 
 
 ```
 USAGE:
-	kaws admin install [FLAGS] <cluster> <uid> --domain <domain>
+	kaws admin install [FLAGS] <cluster> <name> --kms-key <kms-key> --domain <domain>
 
 FLAGS:
     -h, --help       Prints help information
     -V, --version    Prints version information
-        --verbose    Outputs additional information to the standard output
 
 OPTIONS:
-    -d, --domain <domain>    The base domain name for the cluster, e.g. "example.com"
+    -d, --domain <domain>      The base domain name for the cluster, e.g. "example.com"
+    -k, --kms-key <kms-key>    KMS customer master key ID, e.g. "12345678-1234-1234-1234-123456789012"
 
 ARGS:
     cluster    The cluster to configure
-    uid        OpenPGP UID of the administrator
+    name       The new administrator's name
 ```
 
 The following files are expected by this command:
 
 * clusters/CLUSTER/ca.pem: The CA certificate
-* clusters/CLUSTER/UID.pem: The client certificate
-* clusters/CLUSTER/UID-key.pem.asc: The OpenPGP encrypted private key
-
-The user specified by UID must have the OpenPGP secret key in their local keyring.
+* clusters/CLUSTER/NAME.pem: The client certificate
+* clusters/CLUSTER/NAME-key.pem.encrypted: The KMS-encrypted private key
 
 ### sign
 
@@ -82,22 +81,22 @@ The user specified by UID must have the OpenPGP secret key in their local keyrin
 
 ```
 USAGE:
-	kaws admin sign [FLAGS] <cluster> <recipient>
+	kaws admin sign [FLAGS] <cluster> <name> --kms-key <kms-key>
 
 FLAGS:
     -h, --help       Prints help information
     -V, --version    Prints version information
-        --verbose    Outputs additional information to the standard output
+
+OPTIONS:
+    -k, --kms-key <kms-key>    KMS customer master key ID, e.g. "12345678-1234-1234-1234-123456789012"
 
 ARGS:
-    cluster      The name of the cluster the certificate will be valid for
-    recipient    OpenPGP UID of the requesting administrator
+    cluster    The name of the cluster the certificate will be valid for
+    name       The new administrator's name
 ```
 
 The following files are expected by this command:
 
 * clusters/CLUSTER/ca.pem: The CA certificate
-* clusters/CLUSTER/ca-key.pem: The CA private key
-* clusters/CLUSTER/RECIPIENT.csr: The requesting administrator's CSR
-
-The user running the command must have an OpenPGP secret key allowed to decrypt the CA private key in their local keyring.
+* clusters/CLUSTER/ca-key.pem.encrypted: The KMS-encrypted CA private key
+* clusters/CLUSTER/NAME.csr: The requesting administrator's CSR

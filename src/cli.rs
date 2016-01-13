@@ -3,7 +3,7 @@ use clap::{App, AppSettings, Arg, SubCommand};
 pub fn app<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
     App::new("kaws")
         .version(env!("CARGO_PKG_VERSION"))
-        .about("Deploys Kubernetes clusters using AWS, CoreOS, GnuPG, and Terraform")
+        .about("Deploys Kubernetes clusters using AWS, CoreOS, and Terraform")
         .after_help("Start by creating a new repository with the `init` command.\n")
         .setting(AppSettings::GlobalVersion)
         .setting(AppSettings::SubcommandRequiredElseHelp)
@@ -32,9 +32,7 @@ fn admin_create<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
         )
         .arg(
             Arg::with_name("name")
-                .short("n")
-                .long("name")
-                .takes_value(true)
+                .index(2)
                 .required(true)
                 .help("The new administrator's name")
         )
@@ -48,7 +46,7 @@ fn admin_create<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
         )
         .after_help(
             "Creates the following files:\n\n\
-            * clusters/CLUSTER/NAME-key.pem.aes256: The KMS-encrypted private key\n\
+            * clusters/CLUSTER/NAME-key.pem.encrypted: The KMS-encrypted private key\n\
             * clusters/CLUSTER/NAME.csr: The certificate signing request\n\n\
             Generated files are only valid for the specified cluster.\n"
         )
@@ -65,9 +63,7 @@ fn admin_install<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
         )
         .arg(
             Arg::with_name("name")
-                .short("n")
-                .long("name")
-                .takes_value(true)
+                .index(2)
                 .required(true)
                 .help("The new administrator's name")
         )
@@ -91,7 +87,7 @@ fn admin_install<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
             "The following files are expected by this command:\n\n\
             * clusters/CLUSTER/ca.pem: The CA certificate\n\
             * clusters/CLUSTER/NAME.pem: The client certificate\n\
-            * clusters/CLUSTER/NAME-key.pem.aes256: The KMS-encrypted private key\n"
+            * clusters/CLUSTER/NAME-key.pem.encrypted: The KMS-encrypted private key\n"
         )
 }
 
@@ -105,6 +101,12 @@ fn admin_sign<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
                 .help("The name of the cluster the certificate will be valid for")
         )
         .arg(
+            Arg::with_name("name")
+                .index(2)
+                .required(true)
+                .help("The new administrator's name")
+        )
+        .arg(
             Arg::with_name("kms-key")
                 .short("k")
                 .long("kms-key")
@@ -115,8 +117,8 @@ fn admin_sign<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
         .after_help(
             "The following files are expected by this command:\n\n\
             * clusters/CLUSTER/ca.pem: The CA certificate\n\
-            * clusters/CLUSTER/ca-key.pem.aes256: The KMS-encrypted CA private key\n\
-            * clusters/CLUSTER/RECIPIENT.csr: The requesting administrator's CSR\n"
+            * clusters/CLUSTER/ca-key.pem.encrypted: The KMS-encrypted CA private key\n\
+            * clusters/CLUSTER/NAME.csr: The requesting administrator's CSR\n"
         )
 }
 

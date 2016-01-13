@@ -9,7 +9,7 @@ Specifically, kaws creates Kubernetes clusters in [AWS](https://aws.amazon.com/)
 
 ## Status
 
-kaws has not yet reached version 1.0, and is not recommended for production usage until it has. In accordanace with [Semantic Versioning](http://semver.org/), while kaws is < 1.0, backwards incompatible changes may occur. Major expected changes include moving from OpenPGP to AWS Key Management Service, using AWS autoscaling groups, and changing Kubernetes's container runtime to rkt. See the [issues](https://github.com/InQuicker/kaws/issues) for details.
+kaws has not yet reached version 1.0, and is not recommended for production usage until it has. In accordanace with [Semantic Versioning](http://semver.org/), while kaws is < 1.0, backwards incompatible changes may occur. Major expected changes include using rkt as the container runtime for Kubernetes. See the [issues](https://github.com/InQuicker/kaws/issues) for details.
 
 **kaws has not been reviewed by security professionals.** For information about the threat model of kaws, see the [security](docs/concepts/security.md) document.
 
@@ -22,14 +22,12 @@ USAGE:
 FLAGS:
     -h, --help       Prints help information
     -V, --version    Prints version information
-        --verbose    Outputs additional information to the standard output
 
 SUBCOMMANDS:
     admin      Commands for managing cluster administrators
     cluster    Commands for managing a cluster's infrastructure
     help       Prints this message
     init       Initializes a new repository for managing Kubernetes clusters
-    key        Commands for managing the OpenPGP keys
 ```
 
 ## Goals
@@ -49,7 +47,6 @@ kaws requires the following other programs to be available on your system:
 
 * [Terraform](https://terraform.io/)
 * [OpenSSL](https://www.openssl.org/)
-* [GNU Privacy Guard](https://www.gnupg.org/)
 * [kubectl](http://kubernetes.io/)
 
 ### OS X
@@ -57,16 +54,12 @@ kaws requires the following other programs to be available on your system:
 All the dependencies can be installed with [Homebrew](http://brew.sh/):
 
 ```
-brew install terraform openssl gpg2 kubernetes-cli
+brew install terraform openssl kubernetes-cli
 brew link --force openssl
 ```
 
 The `brew link` command is necessary because the openssl formula is "keg only," in turn because OS X ships with an older version already installed.
 Running the link command makes the newer one installed by Homebrew the default.
-
-You may wish to install [GPGTools](https://gpgtools.org/) instead of installing gpg2 with Homebrew.
-GPGTools will install the gpg2 program needed for this project.
-It also includes a nice GUI for creating and managing keys and a plugin for Apple Mail for signing and encrypting email.
 
 ## Installing kaws
 

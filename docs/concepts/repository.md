@@ -7,15 +7,13 @@ When you run `kaws init`, the new repository will look like this:
 .
 ├── .gitignore
 ├── clusters
-├── pubkeys
 └── terraform
     ├── main.tf
 ```
 
 The top-level directories are as follows:
 
-* clusters – Stores digital certificates, OpenPGP-encrypted private keys, state files, and configuration files for each Kubernetes cluster created with kaws.
-* pubkeys – Stores OpenPGP public keys for each member of your team that will need access to the Kubernetes API for any of your clusters.
+* clusters – Stores digital certificates, encrypted private keys, state files, and configuration files for each Kubernetes cluster created with kaws.
 * terraform – Stores Terraform configuration files that define the Kubernetes cluster topology.
 
 The bulk of the Terraform configuration itself lives in a Terraform module in a subdirectory of the kaws repository on GitHub.
