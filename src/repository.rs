@@ -22,7 +22,6 @@ impl<'a> Repository<'a> {
 
     pub fn create(&self) -> Result {
         try!(create_dir_all(format!("{}/clusters", self.name)));
-        try!(create_dir_all(format!("{}/pubkeys", self.name)));
         try!(create_dir_all(format!("{}/terraform", self.name)));
 
         let mut gitignore = try!(File::create(format!("{}/.gitignore", self.name)));
