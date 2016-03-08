@@ -1,6 +1,6 @@
 use clap::{App, AppSettings, Arg, SubCommand};
 
-pub fn app<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
+pub fn app<'a, 'b>() -> App<'a, 'b> {
     App::new("kaws")
         .version(env!("CARGO_PKG_VERSION"))
         .about("Deploys Kubernetes clusters using AWS, CoreOS, and Terraform")
@@ -12,7 +12,7 @@ pub fn app<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
         .subcommand(init())
 }
 
-fn admin<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
+fn admin<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("admin")
         .about("Commands for managing cluster administrators")
         .setting(AppSettings::SubcommandRequiredElseHelp)
@@ -21,7 +21,7 @@ fn admin<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
         .subcommand(admin_sign())
 }
 
-fn admin_create<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
+fn admin_create<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("create")
         .about("Generates a private key and certificate signing request for a new administrator")
         .arg(
@@ -52,7 +52,7 @@ fn admin_create<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
         )
 }
 
-fn admin_install<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
+fn admin_install<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("install")
         .about("Configures kubectl for a new cluster and administrator")
         .arg(
@@ -91,7 +91,7 @@ fn admin_install<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
         )
 }
 
-fn admin_sign<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
+fn admin_sign<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("sign")
         .about("Signs an administrator's certificate signing request, creating a new client certificate")
         .arg(
@@ -122,7 +122,7 @@ fn admin_sign<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
         )
 }
 
-fn cluster<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
+fn cluster<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("cluster")
         .about("Commands for managing a cluster's infrastructure")
         .setting(AppSettings::SubcommandRequiredElseHelp)
@@ -133,7 +133,7 @@ fn cluster<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
         .subcommand(cluster_reencrypt())
 }
 
-fn cluster_apply<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
+fn cluster_apply<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("apply")
         .about("Applies the Terraform plan to the target cluster")
         .arg(
@@ -150,7 +150,7 @@ fn cluster_apply<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
         )
 }
 
-fn cluster_destroy<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
+fn cluster_destroy<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("destroy")
         .about("Destroys resources defined by the Terraform plan for the target cluster")
         .arg(
@@ -167,7 +167,7 @@ fn cluster_destroy<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> 
         )
 }
 
-fn cluster_init<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
+fn cluster_init<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("init")
         .about("Initializes all the configuration files for a new cluster")
         .arg(
@@ -234,7 +234,7 @@ fn cluster_init<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
         )
 }
 
-fn cluster_plan<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
+fn cluster_plan<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("plan")
         .about("Displays the Terraform plan for the target cluster")
         .arg(
@@ -257,7 +257,7 @@ fn cluster_plan<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
         )
 }
 
-fn cluster_reencrypt<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
+fn cluster_reencrypt<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("reencrypt")
         .about("Re-encrypts the cluster's SSL keys using a new AWS KMS customer master key")
         .arg(
@@ -281,7 +281,7 @@ fn cluster_reencrypt<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar
                 .help("New KMS customer master key ID, e.g. \"12345678-1234-1234-1234-123456789012\"")
         )
 }
-fn init<'a, 'v, 'ab, 'u, 'h, 'ar>() -> App<'a, 'v, 'ab, 'u, 'h, 'ar> {
+fn init<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("init")
         .about("Initializes a new repository for managing Kubernetes clusters")
         .arg(
