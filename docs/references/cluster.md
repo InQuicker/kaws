@@ -1,6 +1,6 @@
 # kaws cluster
 
-`kaws cluster groups commands for managing a Kubernetes cluster's infrastructure.
+`kaws cluster` groups commands for managing a Kubernetes cluster's infrastructure.
 
 ## Synopsis
 
