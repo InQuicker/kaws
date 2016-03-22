@@ -5,7 +5,7 @@ use rusoto::{ChainProvider, Region};
 
 use aws::credentials_provider;
 use encryption::Encryptor;
-use error::Result;
+use error::KawsResult;
 use process::execute_child_process;
 
 pub struct Admin<'a> {
@@ -30,7 +30,7 @@ impl<'a> Admin<'a> {
         }
     }
 
-    pub fn create(&mut self) -> Result {
+    pub fn create(&mut self) -> KawsResult {
         let name = self.name.expect("clap should have required name");
 
         let admin_key_path = format!(
@@ -98,7 +98,7 @@ impl<'a> Admin<'a> {
         )))
     }
 
-    pub fn install(&mut self) -> Result {
+    pub fn install(&mut self) -> KawsResult {
         let domain = self.domain.expect("clap should have required domain");
         let name = self.name.expect("clap should have required name");
 
@@ -160,7 +160,7 @@ impl<'a> Admin<'a> {
         )))
     }
 
-    pub fn sign(&mut self) -> Result {
+    pub fn sign(&mut self) -> KawsResult {
         let name = self.name.expect("clap should have required name");
 
         let admin_csr_path = format!("clusters/{}/{}.csr", self.cluster, name);

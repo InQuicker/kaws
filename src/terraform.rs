@@ -4,7 +4,7 @@ use clap::ArgMatches;
 use rusoto::{ChainProvider, ProvideAWSCredentials};
 
 use aws::credentials_provider;
-use error::{Error, Result};
+use error::{KawsError, KawsResult};
 
 pub struct Terraform<'a> {
     aws_credentials_provider: ChainProvider,
@@ -22,7 +22,7 @@ impl<'a> Terraform<'a> {
         }
     }
 
-    pub fn apply(&mut self) -> Result {
+    pub fn apply(&mut self) -> KawsResult {
         try!(self.get());
 
         try!(Command::new("terraform").args(&[
@@ -42,7 +42,7 @@ impl<'a> Terraform<'a> {
         Ok(None)
     }
 
-    pub fn destroy(&mut self) -> Result {
+    pub fn destroy(&mut self) -> KawsResult {
         try!(self.get());
 
         let exit_status = try!(Command::new("terraform").args(&[
@@ -66,11 +66,11 @@ impl<'a> Terraform<'a> {
                 self.cluster,
             )))
         } else {
-            Err(Error::new(format!("Failed to destroy cluster!")))
+            Err(KawsError::new(format!("Failed to destroy cluster!")))
         }
     }
 
-    pub fn plan(&mut self) -> Result {
+    pub fn plan(&mut self) -> KawsResult {
         try!(self.get());
 
         try!(Command::new("terraform").args(&[
@@ -91,7 +91,7 @@ impl<'a> Terraform<'a> {
         Ok(None)
     }
 
-    fn get(&self) -> Result {
+    fn get(&self) -> KawsResult {
         let exit_status = try!(Command::new("terraform").args(&[
             "get",
             "terraform",
@@ -100,7 +100,7 @@ impl<'a> Terraform<'a> {
         if exit_status.success() {
             Ok(None)
         } else {
-            Err(Error::new(format!("Failed to download Terraform module!")))
+            Err(KawsError::new(format!("Failed to download Terraform module!")))
         }
     }
 }

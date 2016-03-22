@@ -3,7 +3,7 @@ use std::io::Write;
 
 use clap::ArgMatches;
 
-use error::Result;
+use error::KawsResult;
 
 pub struct Repository<'a> {
     name: &'a str,
@@ -20,7 +20,7 @@ impl<'a> Repository<'a> {
         }
     }
 
-    pub fn create(&self) -> Result {
+    pub fn create(&self) -> KawsResult {
         try!(create_dir_all(format!("{}/clusters", self.name)));
         try!(create_dir_all(format!("{}/terraform", self.name)));
 

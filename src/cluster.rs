@@ -6,7 +6,7 @@ use rusoto::{ChainProvider, Region};
 
 use aws::credentials_provider;
 use encryption::Encryptor;
-use error::Result;
+use error::KawsResult;
 use process::execute_child_process;
 
 pub struct Cluster<'a> {
@@ -71,7 +71,7 @@ impl<'a> Cluster<'a> {
         }
     }
 
-    pub fn init(&mut self) -> Result {
+    pub fn init(&mut self) -> KawsResult {
         try!(self.create_directories());
         try!(self.create_tfvars());
         try!(self.create_openssl_config());
@@ -89,7 +89,7 @@ impl<'a> Cluster<'a> {
         )))
     }
 
-    pub fn reencrypt(&mut self) -> Result {
+    pub fn reencrypt(&mut self) -> KawsResult {
         try!(self.reencrypt_secrets(
             self.current_kms_master_key_id.expect("clap should have required current-key"),
             self.new_kms_master_key_id.expect("clap should have required new-key"),
@@ -98,7 +98,7 @@ impl<'a> Cluster<'a> {
         Ok(None)
     }
 
-    fn create_directories(&self) -> Result {
+    fn create_directories(&self) -> KawsResult {
         log_wrap!("Creating directories for the new cluster", {
             try!(create_dir_all(format!("clusters/{}", self.name)));
         });
@@ -106,7 +106,7 @@ impl<'a> Cluster<'a> {
         Ok(None)
     }
 
-    fn create_master_credentials(&self) -> Result {
+    fn create_master_credentials(&self) -> KawsResult {
         log_wrap!("Creating Kubernetes master private key", {
             try!(execute_child_process("openssl", &[
                 "genrsa",
@@ -160,7 +160,7 @@ impl<'a> Cluster<'a> {
         Ok(None)
     }
 
-    fn create_node_credentials(&self) -> Result {
+    fn create_node_credentials(&self) -> KawsResult {
         log_wrap!("Creating Kubernetes node private key", {
             try!(execute_child_process("openssl", &[
                 "genrsa",
@@ -208,7 +208,7 @@ impl<'a> Cluster<'a> {
         Ok(None)
     }
 
-    fn create_openssl_config(&self) -> Result {
+    fn create_openssl_config(&self) -> KawsResult {
         log_wrap!("Creating OpenSSL config file", {
             let mut file = try!(File::create(&self.openssl_config_path));
 
@@ -236,7 +236,7 @@ IP.1 = 10.3.0.1
         Ok(None)
     }
 
-    fn create_ca(&self) -> Result {
+    fn create_ca(&self) -> KawsResult {
         log_wrap!("Creating Kubernetes certificate authority private key", {
             try!(execute_child_process("openssl", &[
                 "genrsa",
@@ -266,7 +266,7 @@ IP.1 = 10.3.0.1
         Ok(None)
     }
 
-    fn create_tfvars(&self) -> Result {
+    fn create_tfvars(&self) -> KawsResult {
         log_wrap!("Creating tfvars file", {
             let mut file = try!(File::create(&self.tfvars_path));
 
@@ -297,7 +297,7 @@ zone_id = \"{}\"
         Ok(None)
     }
 
-    fn encrypt_secrets<'b>(&self, kms_key_id: &'b str) -> Result {
+    fn encrypt_secrets<'b>(&self, kms_key_id: &'b str) -> KawsResult {
         let region = Region::UsEast1;
 
         let mut encryptor = Encryptor::new(
@@ -325,7 +325,7 @@ zone_id = \"{}\"
         &self,
         current_kms_master_key_id: &'b str,
         new_kms_master_key_id: &'b str,
-    ) -> Result {
+    ) -> KawsResult {
         let region = Region::UsEast1;
 
         let mut encryptor = Encryptor::new(

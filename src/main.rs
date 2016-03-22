@@ -29,7 +29,7 @@ use ansi_term::Colour::Green;
 
 use admin::Admin;
 use cluster::Cluster;
-use error::Result;
+use error::KawsResult;
 use repository::Repository;
 use terraform::Terraform;
 
@@ -56,7 +56,7 @@ fn main() {
     }
 }
 
-fn execute_cli() -> Result {
+fn execute_cli() -> KawsResult {
     let app_matches = cli::app().get_matches();
 
     match app_matches.subcommand() {

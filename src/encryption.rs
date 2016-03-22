@@ -11,7 +11,7 @@ use rusoto::kms::{
     Result as KMSResult,
 };
 
-use error::{Error, Result};
+use error::{KawsError, KawsResult};
 
 pub struct Encryptor<'a> {
     client: KMSClient<'a>,
@@ -42,7 +42,7 @@ impl<'a> Encryptor<'a> {
         self.client.decrypt(&request)
     }
 
-    pub fn decrypt_file<'b>(&mut self, source: &'b str, destination: &'b str) -> Result {
+    pub fn decrypt_file<'b>(&mut self, source: &'b str, destination: &'b str) -> KawsResult {
         let mut src = try!(File::open(source));
 
         let mut encrypted_data = String::new();
@@ -55,7 +55,7 @@ impl<'a> Encryptor<'a> {
 
         match decrypted_data.plaintext {
             Some(ref plaintext) => try!(dst.write_all(plaintext)),
-            None => return Err(Error::new("No plaintext was returned from KMS".to_owned())),
+            None => return Err(KawsError::new("No plaintext was returned from KMS".to_owned())),
         }
 
         self.decrypted_files.push(destination.to_string());
@@ -74,7 +74,7 @@ impl<'a> Encryptor<'a> {
         self.client.encrypt(&request)
     }
 
-    pub fn encrypt_file<'b>(&mut self, source: &'b str, destination: &'b str) -> Result {
+    pub fn encrypt_file<'b>(&mut self, source: &'b str, destination: &'b str) -> KawsResult {
         let mut src = try!(File::open(source));
 
         let mut contents = String::new();
@@ -87,7 +87,7 @@ impl<'a> Encryptor<'a> {
 
         match encrypted_data.ciphertext_blob {
             Some(ref ciphertext_blob) => try!(dst.write_all(ciphertext_blob)),
-            None => return Err(Error::new("No ciphertext was returned from KMS".to_owned())),
+            None => return Err(KawsError::new("No ciphertext was returned from KMS".to_owned())),
         }
 
         Ok(None)

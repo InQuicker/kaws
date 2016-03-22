@@ -1,71 +1,70 @@
-use std::error::Error as BaseError;
+use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 use std::fmt::Error as FmtError;
-use std::result::Result as BaseResult;
 use std::str::Utf8Error;
 
 use rusoto::AWSError;
 use rusoto::kms::KMSError;
 
-pub struct Error {
+pub struct KawsError {
     message: String,
 }
 
-impl Error {
-    pub fn new(message: String) -> Error {
-        Error {
+impl KawsError {
+    pub fn new(message: String) -> KawsError {
+        KawsError {
             message: message,
         }
     }
 }
 
-impl Debug for Error {
-    fn fmt(&self, f: &mut Formatter) -> BaseResult<(), FmtError> {
+impl Debug for KawsError {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
         write!(f, "{:?}", self.message)
     }
 }
 
-impl Display for Error {
-    fn fmt(&self, f: &mut Formatter) -> BaseResult<(), FmtError> {
+impl Display for KawsError {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
         write!(f, "{}", self.message)
     }
 }
 
-impl BaseError for Error {
+impl Error for KawsError {
     fn description(&self) -> &str {
         &self.message
     }
 }
 
-impl From<::std::io::Error> for Error {
+impl From<::std::io::Error> for KawsError {
     fn from(error: ::std::io::Error) -> Self {
-        Error {
+        KawsError {
             message: format!("{}", error),
         }
     }
 }
 
-impl From<Utf8Error> for Error {
+impl From<Utf8Error> for KawsError {
     fn from(error: Utf8Error) -> Self {
-        Error {
+        KawsError {
             message: format!("{}", error),
         }
     }
 }
 
-impl From<AWSError> for Error {
+impl From<AWSError> for KawsError {
     fn from(error: AWSError) -> Self {
-        Error {
+        KawsError {
             message: format!("{}", error),
         }
     }
 }
 
-impl From<KMSError> for Error {
+impl From<KMSError> for KawsError {
     fn from(error: KMSError) -> Self {
-        Error {
+        KawsError {
             message: format!("{:?}", error),
         }
     }
 }
-pub type Result = BaseResult<Option<String>, Error>;
+pub type KawsResult = Result<Option<String>, KawsError>;
