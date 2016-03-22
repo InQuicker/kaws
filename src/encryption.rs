@@ -1,7 +1,7 @@
 use std::fs::{File, remove_file};
 use std::io::{ErrorKind, Read, Write};
 
-use rusoto::credentials::DefaultAWSCredentialsProviderChain;
+use rusoto::{ChainProvider, Region};
 use rusoto::kms::{
     DecryptRequest,
     DecryptResponse,
@@ -10,7 +10,6 @@ use rusoto::kms::{
     KMSClient,
     Result as KMSResult,
 };
-use rusoto::regions::Region;
 
 use error::{Error, Result};
 
@@ -22,7 +21,7 @@ pub struct Encryptor<'a> {
 
 impl<'a> Encryptor<'a> {
     pub fn new(
-        provider: DefaultAWSCredentialsProviderChain,
+        provider: ChainProvider,
         region: &'a Region,
         kms_master_key_id: &'a str,
     ) -> Encryptor<'a> {
@@ -35,9 +34,9 @@ impl<'a> Encryptor<'a> {
 
     pub fn decrypt<'b>(&mut self, encrypted_data: &'b str) -> KMSResult<DecryptResponse> {
         let request = DecryptRequest {
-            EncryptionContext: None,
-            GrantTokens: None,
-            CiphertextBlob: encrypted_data.as_bytes().to_vec()
+            encryption_context: None,
+            grant_tokens: None,
+            ciphertext_blob: encrypted_data.as_bytes().to_vec()
         };
 
         self.client.decrypt(&request)
@@ -54,7 +53,7 @@ impl<'a> Encryptor<'a> {
 
         let mut dst = try!(File::create(destination));
 
-        match decrypted_data.Plaintext {
+        match decrypted_data.plaintext {
             Some(ref plaintext) => try!(dst.write_all(plaintext)),
             None => return Err(Error::new("No plaintext was returned from KMS".to_owned())),
         }
@@ -66,10 +65,10 @@ impl<'a> Encryptor<'a> {
 
     pub fn encrypt<'b>(&mut self, decrypted_data: &'b str) -> KMSResult<EncryptResponse> {
         let request = EncryptRequest {
-            Plaintext: decrypted_data.as_bytes().to_vec(),
-            EncryptionContext: None,
-            KeyId: self.kms_master_key_id.to_owned(),
-            GrantTokens: None,
+            plaintext: decrypted_data.as_bytes().to_vec(),
+            encryption_context: None,
+            key_id: self.kms_master_key_id.to_owned(),
+            grant_tokens: None,
         };
 
         self.client.encrypt(&request)
@@ -86,7 +85,7 @@ impl<'a> Encryptor<'a> {
 
         let mut dst = try!(File::create(destination));
 
-        match encrypted_data.CiphertextBlob {
+        match encrypted_data.ciphertext_blob {
             Some(ref ciphertext_blob) => try!(dst.write_all(ciphertext_blob)),
             None => return Err(Error::new("No ciphertext was returned from KMS".to_owned())),
         }

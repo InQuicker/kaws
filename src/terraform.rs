@@ -1,27 +1,23 @@
 use std::process::Command;
 
 use clap::ArgMatches;
-use rusoto::credentials::{
-    AWSCredentialsProvider,
-    DefaultAWSCredentialsProviderChain,
-};
+use rusoto::{ChainProvider, ProvideAWSCredentials};
 
-use error::Error;
-use error::Result;
+use aws::credentials_provider;
+use error::{Error, Result};
 
 pub struct Terraform<'a> {
-    aws_credentials_provider: DefaultAWSCredentialsProviderChain,
+    aws_credentials_provider: ChainProvider,
     cluster: &'a str,
 }
 
 impl<'a> Terraform<'a> {
     pub fn new(matches: &'a ArgMatches) -> Terraform<'a> {
-        let mut provider = DefaultAWSCredentialsProviderChain::new();
-
-        provider.set_profile(matches.value_of("aws-credentials-profile").unwrap_or("default"));
-
         Terraform {
-            aws_credentials_provider: provider,
+            aws_credentials_provider: credentials_provider(
+                matches.value_of("aws-credentials-path"),
+                matches.value_of("aws-credentials-profile"),
+            ),
             cluster: matches.value_of("cluster").expect("clap should have required cluster"),
         }
     }
@@ -37,10 +33,10 @@ impl<'a> Terraform<'a> {
             "terraform",
         ]).env(
             "AWS_ACCESS_KEY_ID",
-            self.aws_credentials_provider.get_credentials().expect("Failed to get AWS credentials").get_aws_access_key_id(),
+            self.aws_credentials_provider.credentials().expect("Failed to get AWS credentials").aws_access_key_id(),
         ).env(
             "AWS_SECRET_ACCESS_KEY",
-            self.aws_credentials_provider.get_credentials().expect("Failed to get AWS credentials").get_aws_secret_key(),
+            self.aws_credentials_provider.credentials().expect("Failed to get AWS credentials").aws_secret_access_key(),
         ).status());
 
         Ok(None)
@@ -57,10 +53,10 @@ impl<'a> Terraform<'a> {
             "terraform",
         ]).env(
             "AWS_ACCESS_KEY_ID",
-            self.aws_credentials_provider.get_credentials().expect("Failed to get AWS credentials").get_aws_access_key_id(),
+            self.aws_credentials_provider.credentials().expect("Failed to get AWS credentials").aws_access_key_id(),
         ).env(
             "AWS_SECRET_ACCESS_KEY",
-            self.aws_credentials_provider.get_credentials().expect("Failed to get AWS credentials").get_aws_secret_key(),
+            self.aws_credentials_provider.credentials().expect("Failed to get AWS credentials").aws_secret_access_key(),
         ).status());
 
         if exit_status.success() {
@@ -86,10 +82,10 @@ impl<'a> Terraform<'a> {
             "terraform",
         ]).env(
             "AWS_ACCESS_KEY_ID",
-            self.aws_credentials_provider.get_credentials().expect("Failed to get AWS credentials").get_aws_access_key_id(),
+            self.aws_credentials_provider.credentials().expect("Failed to get AWS credentials").aws_access_key_id(),
         ).env(
             "AWS_SECRET_ACCESS_KEY",
-            self.aws_credentials_provider.get_credentials().expect("Failed to get AWS credentials").get_aws_secret_key(),
+            self.aws_credentials_provider.credentials().expect("Failed to get AWS credentials").aws_secret_access_key(),
         ).status());
 
         Ok(None)

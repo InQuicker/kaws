@@ -1,15 +1,15 @@
 use std::fs::{create_dir_all, remove_file};
 
 use clap::ArgMatches;
-use rusoto::credentials::DefaultAWSCredentialsProviderChain;
-use rusoto::regions::Region;
+use rusoto::{ChainProvider, Region};
 
+use aws::credentials_provider;
 use encryption::Encryptor;
 use error::Result;
 use process::execute_child_process;
 
 pub struct Admin<'a> {
-    aws_credentials_provider: DefaultAWSCredentialsProviderChain,
+    aws_credentials_provider: ChainProvider,
     cluster: &'a str,
     domain: Option<&'a str>,
     kms_master_key_id: &'a str,
@@ -18,12 +18,11 @@ pub struct Admin<'a> {
 
 impl<'a> Admin<'a> {
     pub fn new(matches: &'a ArgMatches) -> Self {
-        let mut provider = DefaultAWSCredentialsProviderChain::new();
-
-        provider.set_profile(matches.value_of("aws-credentials-profile").unwrap_or("default"));
-
         Admin {
-            aws_credentials_provider: provider,
+            aws_credentials_provider: credentials_provider(
+                matches.value_of("aws-credentials-path"),
+                matches.value_of("aws-credentials-profile"),
+            ),
             cluster: matches.value_of("cluster").expect("clap should have required cluster"),
             domain: matches.value_of("domain"),
             kms_master_key_id: matches.value_of("kms-key").expect("clap should have required kms-key"),

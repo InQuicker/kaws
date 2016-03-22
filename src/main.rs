@@ -14,6 +14,7 @@ macro_rules! log_wrap {
 }
 
 mod admin;
+mod aws;
 mod cli;
 mod cluster;
 mod encryption;

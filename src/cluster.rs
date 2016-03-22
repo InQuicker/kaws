@@ -2,15 +2,15 @@ use std::fs::{create_dir_all, File, remove_file};
 use std::io::Write;
 
 use clap::ArgMatches;
-use rusoto::credentials::DefaultAWSCredentialsProviderChain;
-use rusoto::regions::Region;
+use rusoto::{ChainProvider, Region};
 
+use aws::credentials_provider;
 use encryption::Encryptor;
 use error::Result;
 use process::execute_child_process;
 
 pub struct Cluster<'a> {
-    aws_credentials_provider: DefaultAWSCredentialsProviderChain,
+    aws_credentials_provider: ChainProvider,
     ca_cert_path: String,
     ca_key_path: String,
     coreos_ami: Option<&'a str>,
@@ -40,12 +40,11 @@ impl<'a> Cluster<'a> {
     pub fn new(matches: &'a ArgMatches) -> Self {
         let name =  matches.value_of("cluster").expect("clap should have required cluster");
 
-        let mut provider = DefaultAWSCredentialsProviderChain::new();
-
-        provider.set_profile(matches.value_of("aws-credentials-profile").unwrap_or("default"));
-
         Cluster {
-            aws_credentials_provider: provider,
+            aws_credentials_provider: credentials_provider(
+                matches.value_of("aws-credentials-path"),
+                matches.value_of("aws-credentials-profile"),
+            ),
             ca_cert_path: format!("clusters/{}/ca.pem", name),
             ca_key_path: format!("clusters/{}/ca-key.pem", name),
             coreos_ami: matches.value_of("ami"),

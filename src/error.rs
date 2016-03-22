@@ -4,7 +4,7 @@ use std::fmt::Error as FmtError;
 use std::result::Result as BaseResult;
 use std::str::Utf8Error;
 
-use rusoto::error::AWSError;
+use rusoto::AWSError;
 use rusoto::kms::KMSError;
 
 pub struct Error {
