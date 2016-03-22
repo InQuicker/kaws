@@ -50,9 +50,9 @@ impl<'a> Cluster<'a> {
             coreos_ami: matches.value_of("ami"),
             current_kms_master_key_id: matches.value_of("current-key"),
             domain: matches.value_of("domain"),
-            encrypted_ca_key_path: format!("clusters/{}/ca-key.pem.asc", name),
-            encrypted_master_key_path: format!("clusters/{}/apiserver-key.pem.asc", name),
-            encrypted_node_key_path: format!("clusters/{}/node-key.pem.asc", name),
+            encrypted_ca_key_path: format!("clusters/{}/ca-key-encrypted", name),
+            encrypted_master_key_path: format!("clusters/{}/apiserver-key-encrypted", name),
+            encrypted_node_key_path: format!("clusters/{}/node-key-encrypted", name),
             name: name,
             instance_size: matches.value_of("size"),
             kms_master_key_id: matches.value_of("kms-key"),
@@ -125,7 +125,7 @@ impl<'a> Cluster<'a> {
                 "-out",
                 &self.master_csr_path,
                 "-subj",
-                &format!("/CN=kube-{}-apiserver", self.name),
+                &format!("/CN=kaws-{}-apiserver", self.name),
                 "-config",
                 &self.openssl_config_path,
             ]));
@@ -179,7 +179,7 @@ impl<'a> Cluster<'a> {
                 "-out",
                 &self.node_csr_path,
                 "-subj",
-                &format!("/CN=kube-{}-node", self.name),
+                &format!("/CN=kaws-{}-node", self.name),
             ]));
         });
 
@@ -259,7 +259,7 @@ IP.1 = 10.3.0.1
                 "-out",
                 &self.ca_cert_path,
                 "-subj",
-                &format!("/CN=kube-{}-ca", self.name),
+                &format!("/CN=kaws-{}-ca", self.name),
             ]));
         });
 
