@@ -14,6 +14,7 @@ ansi_term = "0.7.2"
 clap = "2.2.1"
 env_logger = "0.3.2"
 log = "0.3.5"
+rustc-serialize = "0.3.18"
 
 [dependencies.rusoto]
 features = ["kms"]

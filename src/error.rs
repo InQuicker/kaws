@@ -4,6 +4,7 @@ use std::fmt::Error as FmtError;
 use std::str::Utf8Error;
 
 use rusoto::AwsError;
+use rustc_serialize::base64::FromBase64Error;
 
 pub struct KawsError {
     message: String,
@@ -53,6 +54,14 @@ impl From<Utf8Error> for KawsError {
 
 impl From<AwsError> for KawsError {
     fn from(error: AwsError) -> Self {
+        KawsError {
+            message: format!("{}", error),
+        }
+    }
+}
+
+impl From<FromBase64Error> for KawsError {
+    fn from(error: FromBase64Error) -> Self {
         KawsError {
             message: format!("{}", error),
         }

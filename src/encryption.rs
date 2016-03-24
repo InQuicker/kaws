@@ -9,6 +9,7 @@ use rusoto::kms::{
     EncryptResponse,
     KmsClient,
 };
+use rustc_serialize::base64::{FromBase64, STANDARD, ToBase64};
 
 use error::{KawsError, KawsResult};
 
@@ -44,11 +45,12 @@ impl<'a> Encryptor<'a> {
     pub fn decrypt_file<'b>(&mut self, source: &'b str, destination: &'b str) -> KawsResult {
         let mut src = try!(File::open(source));
 
-        let mut encrypted_data = String::new();
+        let mut encoded_data = String::new();
 
-        try!(src.read_to_string(&mut encrypted_data));
+        try!(src.read_to_string(&mut encoded_data));
 
-        let decrypted_data = try!(self.decrypt(&encrypted_data));
+        let encrypted_data = try!(encoded_data.from_base64());
+        let decrypted_data = try!(self.decrypt(&String::from_utf8_lossy(&encrypted_data)));
 
         let mut dst = try!(File::create(destination));
 
@@ -85,7 +87,11 @@ impl<'a> Encryptor<'a> {
         let mut dst = try!(File::create(destination));
 
         match encrypted_data.ciphertext_blob {
-            Some(ref ciphertext_blob) => try!(dst.write_all(ciphertext_blob)),
+            Some(ref ciphertext_blob) => {
+                let encoded_data = ciphertext_blob.to_base64(STANDARD);
+
+                try!(dst.write_all(encoded_data.as_bytes()));
+            }
             None => return Err(KawsError::new("No ciphertext was returned from KMS".to_owned())),
         }
 
