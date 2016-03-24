@@ -7,13 +7,13 @@ use rusoto::kms::{
     DecryptResponse,
     EncryptRequest,
     EncryptResponse,
-    KMSClient,
+    KmsClient,
 };
 
 use error::{KawsError, KawsResult};
 
 pub struct Encryptor<'a> {
-    client: KMSClient<'a>,
+    client: KmsClient<'a>,
     decrypted_files: Vec<String>,
     kms_master_key_id: &'a str,
 }
@@ -25,7 +25,7 @@ impl<'a> Encryptor<'a> {
         kms_master_key_id: &'a str,
     ) -> Encryptor<'a> {
         Encryptor {
-            client: KMSClient::new(provider, region),
+            client: KmsClient::new(provider, region),
             decrypted_files: vec![],
             kms_master_key_id: kms_master_key_id,
         }
@@ -57,7 +57,7 @@ impl<'a> Encryptor<'a> {
             None => return Err(KawsError::new("No plaintext was returned from KMS".to_owned())),
         }
 
-        self.decrypted_files.push(destination.to_string());
+        self.decrypted_files.push(destination.to_owned());
 
         Ok(None)
     }
@@ -88,6 +88,8 @@ impl<'a> Encryptor<'a> {
             Some(ref ciphertext_blob) => try!(dst.write_all(ciphertext_blob)),
             None => return Err(KawsError::new("No ciphertext was returned from KMS".to_owned())),
         }
+
+        self.decrypted_files.push(source.to_owned());
 
         Ok(None)
     }
