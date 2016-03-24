@@ -3,8 +3,7 @@ use std::fmt::{Debug, Display, Formatter};
 use std::fmt::Error as FmtError;
 use std::str::Utf8Error;
 
-use rusoto::AWSError;
-use rusoto::kms::KMSError;
+use rusoto::AwsError;
 
 pub struct KawsError {
     message: String,
@@ -52,19 +51,12 @@ impl From<Utf8Error> for KawsError {
     }
 }
 
-impl From<AWSError> for KawsError {
-    fn from(error: AWSError) -> Self {
+impl From<AwsError> for KawsError {
+    fn from(error: AwsError) -> Self {
         KawsError {
             message: format!("{}", error),
         }
     }
 }
 
-impl From<KMSError> for KawsError {
-    fn from(error: KMSError) -> Self {
-        KawsError {
-            message: format!("{:?}", error),
-        }
-    }
-}
 pub type KawsResult = Result<Option<String>, KawsError>;

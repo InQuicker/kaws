@@ -1,14 +1,13 @@
 use std::fs::{File, remove_file};
 use std::io::{ErrorKind, Read, Write};
 
-use rusoto::{ChainProvider, Region};
+use rusoto::{AwsResult, ChainProvider, Region};
 use rusoto::kms::{
     DecryptRequest,
     DecryptResponse,
     EncryptRequest,
     EncryptResponse,
     KMSClient,
-    Result as KMSResult,
 };
 
 use error::{KawsError, KawsResult};
@@ -32,7 +31,7 @@ impl<'a> Encryptor<'a> {
         }
     }
 
-    pub fn decrypt<'b>(&mut self, encrypted_data: &'b str) -> KMSResult<DecryptResponse> {
+    pub fn decrypt<'b>(&mut self, encrypted_data: &'b str) -> AwsResult<DecryptResponse> {
         let request = DecryptRequest {
             encryption_context: None,
             grant_tokens: None,
@@ -63,7 +62,7 @@ impl<'a> Encryptor<'a> {
         Ok(None)
     }
 
-    pub fn encrypt<'b>(&mut self, decrypted_data: &'b str) -> KMSResult<EncryptResponse> {
+    pub fn encrypt<'b>(&mut self, decrypted_data: &'b str) -> AwsResult<EncryptResponse> {
         let request = EncryptRequest {
             plaintext: decrypted_data.as_bytes().to_vec(),
             encryption_context: None,
