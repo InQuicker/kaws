@@ -35,6 +35,7 @@ coreos:
             [Service]
             ExecStartPre=-/usr/bin/etcdctl mk /coreos.com/network/config "{\"Network\":\"10.2.0.0/16\"}"
     - name: kubelet.service
+      command: start
       content: |
         [Unit]
         Description=Kubernetes Kubelet
@@ -54,18 +55,6 @@ coreos:
         RestartSec=10
         [Install]
         WantedBy=multi-user.target
-    - name: start_kube_addons.service
-      content: |
-        [Unit]
-        Description=Kubernetes addons
-        [Service]
-        ExecStartPre=/bin/bash -c 'until curl --silent "http://127.0.0.1:8080/version"; do sleep 5; done'
-        ExecStartPre=-/bin/bash -c 'curl --silent -X POST -d @/srv/kubernetes/kube-system.json "http://127.0.0.1:8080/api/v1/namespaces" > /dev/null'
-        ExecStartPre=-/bin/bash -c 'curl --silent -X POST -d @/srv/kubernetes/kube-dns-rc.json "http://127.0.0.1:8080/api/v1/namespaces/kube-system/replicationcontrollers" > /dev/null'
-        ExecStartPre=-/bin/bash -c 'curl --silent -X POST -d @/srv/kubernetes/kube-dns-svc.json "http://127.0.0.1:8080/api/v1/namespaces/kube-system/services" > /dev/null'
-        ExecStart=/bin/echo Kubernetes addons submitted to the API!
-        Type=oneshot
-        RemainAfterExit=True
 write_files:
   - path: /etc/kubernetes/manifests/kube-apiserver.yml
     permissions: "0644"

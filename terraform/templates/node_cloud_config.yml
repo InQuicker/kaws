@@ -28,6 +28,7 @@ coreos:
     - name: flanneld.service
       command: start
     - name: kubelet.service
+      command: start
       content: |
         [Unit]
         Description=Kubernetes Kubelet

@@ -1,9 +1,13 @@
-variable "coreos_ami" {
-  description = "The AMI ID for the CoreOS image to use for servers, e.g. `ami-1234abcd`"
+variable "ca_cert" {
+  description = "PEM-formatted X.509 certificate for the CA to be used by Kubernetes"
 }
 
 variable "cluster" {
   description = "The target cluster's name"
+}
+
+variable "coreos_ami" {
+  description = "The AMI ID for the CoreOS image to use for servers, e.g. `ami-1234abcd`"
 }
 
 variable "domain" {
@@ -24,6 +28,22 @@ variable "etcd_03_initial_cluster_state" {
 
 variable "instance_size" {
   description = "The EC2 instance size"
+}
+
+variable "master_cert" {
+  description = "PEM-encoded X.509 certificate for kube-apiserver"
+}
+
+variable "master_key" {
+  description = "Private key for kube-apiserver, encrypted by KMS and Base64-encoded"
+}
+
+variable "node_cert" {
+  description = "PEM-encoded X.509 certificate for kubelet, encrypted by KMS and Base64-encoded"
+}
+
+variable "node_key" {
+  description = "Private key for kubelet, encrypted by KMS and Base64-encoded"
 }
 
 variable "ssh_key" {
