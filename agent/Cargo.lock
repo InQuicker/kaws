@@ -2,7 +2,6 @@
 name = "kaws-agent"
 version = "0.1.0"
 dependencies = [
- "ansi_term 0.7.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "clap 2.2.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "env_logger 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "etcd 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",

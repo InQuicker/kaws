@@ -1,4 +1,3 @@
-extern crate ansi_term;
 extern crate env_logger;
 extern crate etcd;
 extern crate clap;
@@ -12,7 +11,6 @@ mod decryption;
 
 use std::process::exit;
 
-use ansi_term::Colour::Green;
 use clap::{App, AppSettings, Arg, SubCommand};
 
 use agent::Agent;
@@ -25,7 +23,7 @@ fn main() {
     match execute_cli() {
         Ok(success) => {
             if let Some(message) = success {
-                println!("{}", Green.paint(message.to_string()));
+                println!("{}", message);
             }
         }
         Err(error) => {
