@@ -1,0 +1,22 @@
+[package]
+authors = ["Jimmy Cuadra <jimmy@jimmycuadra.com>"]
+description = "Server-side agent for the kaws crate."
+homepage = "https://github.com/InQuicker/kaws"
+keywords = ["kubernetes", "coreos", "aws", "terraform", "infrastructure"]
+license = "MIT"
+name = "kaws-agent"
+readme = "README.md"
+repository = "https://github.com/InQuicker/kaws"
+version = "0.1.0"
+
+[dependencies]
+ansi_term = "0.7.2"
+clap = "2.2.1"
+env_logger = "0.3.2"
+etcd = "0.5.0"
+log = "0.3.5"
+rustc-serialize = "0.3.18"
+
+[dependencies.rusoto]
+features = ["kms"]
+path = "../../rusoto"
