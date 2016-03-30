@@ -52,7 +52,7 @@ fn execute_cli() -> Result<Option<String>, String> {
                         .short("r")
                         .long("role")
                         .takes_value(true)
-                        .possible_values(&["bastion", "master", "node"])
+                        .possible_values(&["master", "node"])
                         .required(true)
                         .help("The role of the server the agent will be running on")
                 )
