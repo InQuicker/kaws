@@ -31,6 +31,8 @@ impl Agent {
     }
 
     pub fn run(mut self) -> Result<Option<String>, String> {
+        println!("kaws-agent is starting...");
+        println!("Checking current modifiedIndex of /kaws key...");
         let mut modified_index = match self.etcd.get("/kaws", false, false, false) {
             Ok(key_space_info) => match key_space_info.node.unwrap().modified_index {
                 Some(new_index) => new_index,
@@ -39,19 +41,24 @@ impl Agent {
             Err(errors) => return Err(errors[0].to_string()),
         };
 
+        if let Err(error) = self.refresh() {
+            println!("ERROR: {}", error);
+        }
+
         loop {
+            println!("Watching /kaws key...");
             match self.etcd.watch("/kaws", Some(modified_index), true) {
                 Ok(key_space_info) => {
                     if let Err(error) = self.refresh() {
-                        warn!("{}", error);
+                        println!("WARNING: {}", error);
                     }
 
                     match key_space_info.node.unwrap().modified_index {
                         Some(new_index) => modified_index = new_index,
-                        None => warn!("etcd node for watched key had no modified index"),
+                        None => println!("WARNING: etcd node for watched key had no modified index"),
                     }
                 }
-                Err(errors) => warn!("{}", errors[0]),
+                Err(errors) => println!("ERROR: {}", errors[0]),
             }
         }
     }
@@ -59,6 +66,7 @@ impl Agent {
     // private
 
     fn refresh(&mut self) -> Result<Option<String>, String> {
+        println!("Refreshing files from data in etcd...");
         try!(self.refresh_item("/kaws/pki/ca.pem", "/etc/kubernetes/ssl/ca.pem", false));
 
         match &self.role {
@@ -93,6 +101,7 @@ impl Agent {
 
     fn refresh_item(&mut self, key: &str, file_path: &str, encrypted: bool)
     -> Result<Option<String>, String> {
+        println!("Refreshing file {} from etcd key {}", file_path, key);
         let key_space_info = match self.etcd.get(key, false, false, false) {
             Ok(key_space_info) => key_space_info,
             Err(errors) => return Err(errors[0].to_string()),
