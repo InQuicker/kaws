@@ -41,7 +41,7 @@ r#"module "kaws" {{
     etcd_02_initial_cluster_state = "${{var.etcd_02_initial_cluster_state}}"
     etcd_03_initial_cluster_state = "${{var.etcd_03_initial_cluster_state}}"
     instance_size = "${{var.instance_size}}"
-    master_cert = "${{file("clusters/${{var.cluster}}/apiserver.pem")}}"
+    master_cert = "${{file("clusters/${{var.cluster}}/master.pem")}}"
     master_key = "${{file("clusters/${{var.cluster}}/master-key-encrypted.base64")}}"
     node_cert = "${{file("clusters/${{var.cluster}}/node.pem")}}"
     node_key = "${{file("clusters/${{var.cluster}}/node-key-encrypted.base64")}}"

@@ -82,10 +82,10 @@ write_files:
           - --secure_port=443
           - --advertise-address=$private_ipv4
           - --admission-control=NamespaceLifecycle,NamespaceExists,LimitRanger,SecurityContextDeny,ServiceAccount,ResourceQuota
-          - --tls-cert-file=/etc/kubernetes/ssl/apiserver.pem
-          - --tls-private-key-file=/etc/kubernetes/ssl/apiserver-key.pem
+          - --tls-cert-file=/etc/kubernetes/ssl/master.pem
+          - --tls-private-key-file=/etc/kubernetes/ssl/master-key.pem
           - --client-ca-file=/etc/kubernetes/ssl/ca.pem
-          - --service-account-key-file=/etc/kubernetes/ssl/apiserver-key.pem
+          - --service-account-key-file=/etc/kubernetes/ssl/master-key.pem
           - --cloud-provider=aws
           ports:
           - containerPort: 443
@@ -203,7 +203,7 @@ write_files:
           - /hyperkube
           - controller-manager
           - --master=http://127.0.0.1:8080
-          - --service-account-private-key-file=/etc/kubernetes/ssl/apiserver-key.pem
+          - --service-account-private-key-file=/etc/kubernetes/ssl/master-key.pem
           - --root-ca-file=/etc/kubernetes/ssl/ca.pem
           - --cloud-provider=aws
           livenessProbe:
