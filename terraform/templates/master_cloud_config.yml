@@ -23,8 +23,6 @@ coreos:
             After=flanneld.service
     - name: etcd2.service
       command: start
-    - name: fleet.service
-      command: start
     - name: flanneld.service
       command: start
       drop-ins:
@@ -34,11 +32,29 @@ coreos:
             Requires=etcd2.service
             [Service]
             ExecStartPre=-/usr/bin/etcdctl mk /coreos.com/network/config "{\"Network\":\"10.2.0.0/16\"}"
+    - name: kaws-agent.service
+      command: start
+      content: |
+        [Unit]
+        Description=kaws agent
+        Requires=etcd2.service
+        After=etcd2.service
+        [Service]
+        TimeoutStartSec=0
+        ExecStartPre=-/usr/bin/docker kill kaws-agent
+        ExecStartPre=-/usr/bin/docker rm kaws-agent
+        ExecStartPre=/usr/bin/docker pull inquicker/kaws-agent
+        ExecStart=/usr/bin/docker run --name kaws-agent inquicker/kaws-agent run --role master
+        ExecStop=/usr/bin/docker stop kaws-agent
+        [Install]
+        WantedBy=multi-user.target
     - name: kubelet.service
       command: start
       content: |
         [Unit]
         Description=Kubernetes Kubelet
+        Requires=kaws-agent.service
+        After=kaws-agent.service
         [Service]
         ExecStart=/usr/bin/kubelet \
           --api_servers=http://127.0.0.1:8080 \
@@ -186,6 +202,18 @@ write_files:
         - hostPath:
             path: /usr/share/ca-certificates
           name: ssl-certs-host
+  - path: /etc/kubernetes/ssl/ca.pem
+    permissions: "0644"
+    owner: "root"
+    content: ""
+  - path: /etc/kubernetes/ssl/master.pem
+    permissions: "0644"
+    owner: "root"
+    content: ""
+  - path: /etc/kubernetes/ssl/master-key.pem
+    permissions: "0600"
+    owner: "root"
+    content: ""
   - path: /srv/kubernetes/manifests/kube-controller-manager.yml
     permissions: "0644"
     owner: root

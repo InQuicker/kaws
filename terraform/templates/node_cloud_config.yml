@@ -23,15 +23,31 @@ coreos:
             [Unit]
             Requires=flanneld.service
             AFter=flanneld.service
-    - name: fleet.service
-      command: start
     - name: flanneld.service
       command: start
+    - name: kaws-agent.service
+      command: start
+      content: |
+        [Unit]
+        Description=kaws agent
+        Requires=etcd2.service
+        After=etcd2.service
+        [Service]
+        TimeoutStartSec=0
+        ExecStartPre=-/usr/bin/docker kill kaws-agent
+        ExecStartPre=-/usr/bin/docker rm kaws-agent
+        ExecStartPre=/usr/bin/docker pull inquicker/kaws-agent
+        ExecStart=/usr/bin/docker run --name kaws-agent inquicker/kaws-agent run --role node
+        ExecStop=/usr/bin/docker stop kaws-agent
+        [Install]
+        WantedBy=multi-user.target
     - name: kubelet.service
       command: start
       content: |
         [Unit]
         Description=Kubernetes Kubelet
+        Requires=kaws-agent.service
+        After=kaws-agent.service
         [Service]
         ExecStart=/usr/bin/kubelet \
           --allow-privileged=true \
@@ -108,3 +124,15 @@ write_files:
           user:
             client-certificate: /etc/kubernetes/ssl/node.pem
             client-key: /etc/kubernetes/ssl/node-key.pem
+  - path: /etc/kubernetes/ssl/ca.pem
+    permissions: "0644"
+    owner: "root"
+    content: ""
+  - path: /etc/kubernetes/ssl/node.pem
+    permissions: "0644"
+    owner: "root"
+    content: ""
+  - path: /etc/kubernetes/ssl/node-key.pem
+    permissions: "0600"
+    owner: "root"
+    content: ""
