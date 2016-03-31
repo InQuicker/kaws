@@ -120,7 +120,7 @@ resource "aws_security_group" "balancers" {
   }
 
   tags {
-    Name = "balancers"
+    Name = "kaws_balancers"
     Cluster = "${var.cluster}"
   }
 }
@@ -145,7 +145,7 @@ resource "aws_security_group" "bastion" {
   }
 
   tags {
-    Name = "bastion"
+    Name = "kaws_bastion"
     Cluster = "${var.cluster}"
   }
 }
@@ -178,7 +178,7 @@ resource "aws_security_group" "etcd" {
   }
 
   tags {
-    Name = "etcd"
+    Name = "kaws_etcd"
     Cluster = "${var.cluster}"
   }
 }
@@ -231,7 +231,7 @@ resource "aws_security_group" "kubernetes" {
   }
 
   tags {
-    Name = "kubernetes"
+    Name = "kaws_kubernetes"
     Cluster = "${var.cluster}"
   }
 }

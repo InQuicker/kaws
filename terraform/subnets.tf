@@ -3,7 +3,7 @@ resource "aws_subnet" "public" {
   vpc_id = "${aws_vpc.kubernetes.id}"
 
   tags {
-    Name = "public"
+    Name = "kaws_public"
     Cluster = "${var.cluster}"
   }
 }

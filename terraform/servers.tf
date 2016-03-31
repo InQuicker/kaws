@@ -7,7 +7,7 @@ resource "aws_instance" "bastion" {
   vpc_security_group_ids = ["${aws_security_group.bastion.id}"]
 
   tags {
-    Name = "bastion"
+    Name = "kaws_bastion"
     Cluster = "${var.cluster}"
   }
 }
@@ -23,7 +23,7 @@ resource "aws_instance" "etcd_01" {
   vpc_security_group_ids = ["${aws_security_group.etcd.id}"]
 
   tags {
-    Name = "etcd_01"
+    Name = "kaws_etcd_01"
     Cluster = "${var.cluster}"
   }
 }
@@ -39,7 +39,7 @@ resource "aws_instance" "etcd_02" {
   vpc_security_group_ids = ["${aws_security_group.etcd.id}"]
 
   tags {
-    Name = "etcd_02"
+    Name = "kaws_etcd_02"
     Cluster = "${var.cluster}"
   }
 }
@@ -55,7 +55,7 @@ resource "aws_instance" "etcd_03" {
   vpc_security_group_ids = ["${aws_security_group.etcd.id}"]
 
   tags {
-    Name = "etcd_03"
+    Name = "kaws_etcd_03"
     Cluster = "${var.cluster}"
   }
 }
@@ -72,7 +72,7 @@ resource "aws_instance" "k8s_master_01" {
   security_groups = ["${aws_security_group.kubernetes.id}"]
 
   tags {
-    Name = "k8s_master_01"
+    Name = "kaws_k8s_master_01"
     Cluster = "${var.cluster}"
   }
 }
@@ -89,7 +89,7 @@ resource "aws_instance" "k8s_master_02" {
   security_groups = ["${aws_security_group.kubernetes.id}"]
 
   tags {
-    Name = "k8s_master_02"
+    Name = "kaws_k8s_master_02"
     Cluster = "${var.cluster}"
   }
 }
@@ -106,7 +106,7 @@ resource "aws_instance" "k8s_node_01" {
   security_groups = ["${aws_security_group.kubernetes.id}"]
 
   tags {
-    Name = "k8s_node_01"
+    Name = "kaws_k8s_node_01"
     Cluster = "${var.cluster}"
   }
 }
@@ -123,7 +123,7 @@ resource "aws_instance" "k8s_node_02" {
   security_groups = ["${aws_security_group.kubernetes.id}"]
 
   tags {
-    Name = "k8s_node_02"
+    Name = "kaws_k8s_node_02"
     Cluster = "${var.cluster}"
   }
 }

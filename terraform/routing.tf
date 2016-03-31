@@ -7,7 +7,7 @@ resource "aws_route_table" "public" {
   }
 
   tags {
-    Name = "public"
+    Name = "kaws_public"
     Cluster = "${var.cluster}"
   }
 }
