@@ -1,7 +1,7 @@
 use std::fs::{File, remove_file};
 use std::io::{ErrorKind, Read, Write};
 
-use rusoto::{AwsResult, ChainProvider, Region};
+use rusoto::{AwsResult, ChainProvider, ProvideAwsCredentials, Region};
 use rusoto::kms::{
     DecryptRequest,
     DecryptResponse,
@@ -13,18 +13,18 @@ use rustc_serialize::base64::{FromBase64, STANDARD, ToBase64};
 
 use error::{KawsError, KawsResult};
 
-pub struct Encryptor<'a> {
-    client: KmsClient<'a>,
+pub struct Encryptor<'a, P> where P: ProvideAwsCredentials {
+    client: KmsClient<P>,
     decrypted_files: Vec<String>,
     kms_master_key_id: &'a str,
 }
 
-impl<'a> Encryptor<'a> {
+impl<'a> Encryptor<'a, ChainProvider> {
     pub fn new(
         provider: ChainProvider,
-        region: &'a Region,
+        region: Region,
         kms_master_key_id: &'a str,
-    ) -> Encryptor<'a> {
+    ) -> Encryptor<'a, ChainProvider> {
         Encryptor {
             client: KmsClient::new(provider, region),
             decrypted_files: vec![],
@@ -101,7 +101,7 @@ impl<'a> Encryptor<'a> {
     }
 }
 
-impl<'a> Drop for Encryptor<'a> {
+impl<'a, P> Drop for Encryptor<'a, P> where P: ProvideAwsCredentials {
     fn drop(&mut self) {
         let mut failures = vec![];
 

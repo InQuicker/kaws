@@ -79,7 +79,7 @@ impl<'a> Admin<'a> {
         let region = Region::UsEast1;
         let mut encryptor = Encryptor::new(
             self.aws_credentials_provider.clone(),
-            &region,
+            region,
             self.kms_master_key_id,
         );
 
@@ -108,7 +108,7 @@ impl<'a> Admin<'a> {
         let region = Region::UsEast1;
         let mut encryptor = Encryptor::new(
             self.aws_credentials_provider.clone(),
-            &region,
+            region,
             self.kms_master_key_id,
         );
 
@@ -172,7 +172,7 @@ impl<'a> Admin<'a> {
         let region = Region::UsEast1;
         let mut encryptor = Encryptor::new(
             self.aws_credentials_provider.clone(),
-            &region,
+            region,
             self.kms_master_key_id,
         );
 

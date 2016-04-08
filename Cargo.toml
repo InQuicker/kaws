@@ -18,4 +18,4 @@ rustc-serialize = "0.3.18"
 
 [dependencies.rusoto]
 features = ["kms"]
-path = "../rusoto"
+git = "https://github.com/rusoto/rusoto.git"

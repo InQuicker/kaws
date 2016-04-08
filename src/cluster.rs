@@ -302,7 +302,7 @@ zone_id = \"{}\"
 
         let mut encryptor = Encryptor::new(
             self.aws_credentials_provider.clone(),
-            &region,
+            region,
             kms_key_id,
         );
 
@@ -330,7 +330,7 @@ zone_id = \"{}\"
 
         let mut encryptor = Encryptor::new(
             self.aws_credentials_provider.clone(),
-            &region,
+            region,
             current_kms_master_key_id,
         );
 

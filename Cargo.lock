@@ -6,7 +6,7 @@ dependencies = [
  "clap 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "env_logger 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "rusoto 0.12.1",
+ "rusoto 0.12.1 (git+https://github.com/rusoto/rusoto.git)",
  "rustc-serialize 0.3.18 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -305,13 +305,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "rusoto"
 version = "0.12.1"
+source = "git+https://github.com/rusoto/rusoto.git#2866ef2fa36df72f4b30b0a7d707439c79ecf4e0"
 dependencies = [
  "chrono 0.2.20 (registry+https://github.com/rust-lang/crates.io-index)",
  "hyper 0.7.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "openssl 0.7.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex 0.1.58 (registry+https://github.com/rust-lang/crates.io-index)",
- "rusoto_codegen 0.1.0",
+ "rusoto_codegen 0.1.0 (git+https://github.com/rusoto/rusoto.git)",
  "rustc-serialize 0.3.18 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -323,6 +324,7 @@ dependencies = [
 [[package]]
 name = "rusoto_codegen"
 version = "0.1.0"
+source = "git+https://github.com/rusoto/rusoto.git#2866ef2fa36df72f4b30b0a7d707439c79ecf4e0"
 dependencies = [
  "Inflector 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex 0.1.58 (registry+https://github.com/rust-lang/crates.io-index)",
