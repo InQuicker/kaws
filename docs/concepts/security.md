@@ -46,7 +46,6 @@ If additional SSH access is required, it must be handled by the primary administ
 
 One of the benefits of kaws is that it automates the creation of the public key infrastructure used to secure communications between Kubernetes components and administrators.
 kaws uses OpenSSL to generate certificates and keys and AWS Key Management Service to keep all private keys encrypted at rest.
-The `kaws cluster reencrypt` command does not change the private keys themselves, so it cannot be used as a revocation mechanism.
 
 ### Threat model
 

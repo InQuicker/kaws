@@ -14,7 +14,6 @@ pub struct Cluster<'a> {
     ca_cert_path: String,
     ca_key_path: String,
     coreos_ami: Option<&'a str>,
-    current_kms_master_key_id: Option<&'a str>,
     domain: Option<&'a str>,
     encrypted_ca_key_path: String,
     encrypted_master_key_path: String,
@@ -26,7 +25,6 @@ pub struct Cluster<'a> {
     master_csr_path: String,
     master_key_path: String,
     name: &'a str,
-    new_kms_master_key_id: Option<&'a str>,
     node_cert_path: String,
     node_csr_path: String,
     node_key_path: String,
@@ -48,7 +46,6 @@ impl<'a> Cluster<'a> {
             ca_cert_path: format!("clusters/{}/ca.pem", name),
             ca_key_path: format!("clusters/{}/ca-key.pem", name),
             coreos_ami: matches.value_of("ami"),
-            current_kms_master_key_id: matches.value_of("current-key"),
             domain: matches.value_of("domain"),
             encrypted_ca_key_path: format!("clusters/{}/ca-key-encrypted.base64", name),
             encrypted_master_key_path: format!("clusters/{}/master-key-encrypted.base64", name),
@@ -60,7 +57,6 @@ impl<'a> Cluster<'a> {
             master_cert_path: format!("clusters/{}/master.pem", name),
             master_csr_path: format!("clusters/{}/master.csr", name),
             master_key_path: format!("clusters/{}/master-key.pem", name),
-            new_kms_master_key_id: matches.value_of("new-key"),
             node_cert_path: format!("clusters/{}/node.pem", name),
             node_csr_path: format!("clusters/{}/node.csr", name),
             node_key_path: format!("clusters/{}/node-key.pem", name),
@@ -87,15 +83,6 @@ impl<'a> Cluster<'a> {
             self.name,
             self.name,
         )))
-    }
-
-    pub fn reencrypt(&mut self) -> KawsResult {
-        try!(self.reencrypt_secrets(
-            self.current_kms_master_key_id.expect("clap should have required current-key"),
-            self.new_kms_master_key_id.expect("clap should have required new-key"),
-        ));
-
-        Ok(None)
     }
 
     fn create_directories(&self) -> KawsResult {
@@ -319,25 +306,5 @@ zone_id = \"{}\"
         });
 
         Ok(None)
-    }
-
-    fn reencrypt_secrets<'b>(
-        &self,
-        current_kms_master_key_id: &'b str,
-        new_kms_master_key_id: &'b str,
-    ) -> KawsResult {
-        let region = Region::UsEast1;
-
-        let mut encryptor = Encryptor::new(
-            self.aws_credentials_provider.clone(),
-            region,
-            current_kms_master_key_id,
-        );
-
-        try!(encryptor.decrypt_file(&self.encrypted_ca_key_path, &self.ca_key_path));
-        try!(encryptor.decrypt_file(&self.encrypted_master_key_path, &self.master_key_path));
-        try!(encryptor.decrypt_file(&self.encrypted_node_key_path, &self.node_key_path));
-
-        self.encrypt_secrets(new_kms_master_key_id)
     }
 }

@@ -18,7 +18,6 @@ SUBCOMMANDS:
     help         Prints this message
     init         Initializes all the configuration files for a new cluster
     plan         Displays the Terraform plan for the target cluster
-    reencrypt    Re-encrypts the cluster's SSL keys using a new AWS KMS customer master key
 ```
 
 ## Subcommands
@@ -121,23 +120,3 @@ ARGS:
 ```
 
 This command is a simple wrapper around `terraform plan` that points at the right Terraform configuration and state files for the target cluster.
-
-### reencrypt
-
-`kaws cluster reencrypt` re-encrypts the cluster's SSL keys using a new AWS KMS customer master key.
-
-```
-USAGE:
-	kaws cluster reencrypt [FLAGS] <cluster> --current-key <current-key> --new-key <new-key>
-
-FLAGS:
-    -h, --help       Prints help information
-    -V, --version    Prints version information
-
-OPTIONS:
-        --current-key <current-key>    Current KMS customer master key ID, e.g. "12345678-1234-1234-1234-123456789012"
-        --new-key <new-key>            New KMS customer master key ID, e.g. "12345678-1234-1234-1234-123456789012"
-
-ARGS:
-    cluster    The cluster whose keys should be re-encrypted
-```

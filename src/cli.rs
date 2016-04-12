@@ -130,7 +130,6 @@ fn cluster<'a, 'b>() -> App<'a, 'b> {
         .subcommand(cluster_destroy())
         .subcommand(cluster_init())
         .subcommand(cluster_plan())
-        .subcommand(cluster_reencrypt())
 }
 
 fn cluster_apply<'a, 'b>() -> App<'a, 'b> {
@@ -269,30 +268,6 @@ fn cluster_plan<'a, 'b>() -> App<'a, 'b> {
         )
 }
 
-fn cluster_reencrypt<'a, 'b>() -> App<'a, 'b> {
-    SubCommand::with_name("reencrypt")
-        .about("Re-encrypts the cluster's SSL keys using a new AWS KMS customer master key")
-        .arg(
-            Arg::with_name("cluster")
-                .index(1)
-                .required(true)
-                .help("The cluster whose keys should be re-encrypted")
-        )
-        .arg(
-            Arg::with_name("current-key")
-                .long("current-key")
-                .takes_value(true)
-                .required(true)
-                .help("Current KMS customer master key ID, e.g. \"12345678-1234-1234-1234-123456789012\"")
-        )
-        .arg(
-            Arg::with_name("new-key")
-                .long("new-key")
-                .takes_value(true)
-                .required(true)
-                .help("New KMS customer master key ID, e.g. \"12345678-1234-1234-1234-123456789012\"")
-        )
-}
 fn init<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("init")
         .about("Initializes a new repository for managing Kubernetes clusters")
