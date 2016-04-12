@@ -9,6 +9,7 @@ use error::{KawsError, KawsResult};
 pub struct Terraform<'a> {
     aws_credentials_provider: ChainProvider,
     cluster: &'a str,
+    terraform_args: Option<Vec<&'a str>>,
 }
 
 impl<'a> Terraform<'a> {
@@ -19,25 +20,39 @@ impl<'a> Terraform<'a> {
                 matches.value_of("aws-credentials-profile"),
             ),
             cluster: matches.value_of("cluster").expect("clap should have required cluster"),
+            terraform_args: matches.values_of("terraform-args").map(|values| values.collect()),
         }
     }
 
     pub fn apply(&mut self) -> KawsResult {
         try!(self.get());
 
-        try!(Command::new("terraform").args(&[
+        let mut command = Command::new("terraform");
+
+        command.args(&[
             "apply",
             "-backup=-",
             &format!("-state=clusters/{}/terraform.tfstate", self.cluster),
             &format!("-var-file=clusters/{}/terraform.tfvars", self.cluster),
-            "terraform",
-        ]).env(
+        ]);
+
+        if self.terraform_args.is_some() {
+            command.args(self.terraform_args.as_ref().unwrap());
+        }
+
+        command.arg("terraform").env(
             "AWS_ACCESS_KEY_ID",
-            self.aws_credentials_provider.credentials().expect("Failed to get AWS credentials").aws_access_key_id(),
+            self.aws_credentials_provider.credentials().expect(
+                "Failed to get AWS credentials"
+            ).aws_access_key_id(),
         ).env(
             "AWS_SECRET_ACCESS_KEY",
-            self.aws_credentials_provider.credentials().expect("Failed to get AWS credentials").aws_secret_access_key(),
-        ).status());
+            self.aws_credentials_provider.credentials().expect(
+                "Failed to get AWS credentials"
+            ).aws_secret_access_key(),
+        );
+
+        try!(command.status());
 
         Ok(None)
     }
@@ -45,19 +60,33 @@ impl<'a> Terraform<'a> {
     pub fn destroy(&mut self) -> KawsResult {
         try!(self.get());
 
-        let exit_status = try!(Command::new("terraform").args(&[
+        let mut command = Command::new("terraform");
+
+        command.args(&[
             "destroy",
             "-backup=-",
             &format!("-state=clusters/{}/terraform.tfstate", self.cluster),
             &format!("-var-file=clusters/{}/terraform.tfvars", self.cluster),
             "terraform",
-        ]).env(
+        ]);
+
+        if self.terraform_args.is_some() {
+            command.args(self.terraform_args.as_ref().unwrap());
+        }
+
+        command.arg("terraform").env(
             "AWS_ACCESS_KEY_ID",
-            self.aws_credentials_provider.credentials().expect("Failed to get AWS credentials").aws_access_key_id(),
+            self.aws_credentials_provider.credentials().expect(
+                "Failed to get AWS credentials"
+            ).aws_access_key_id(),
         ).env(
             "AWS_SECRET_ACCESS_KEY",
-            self.aws_credentials_provider.credentials().expect("Failed to get AWS credentials").aws_secret_access_key(),
-        ).status());
+            self.aws_credentials_provider.credentials().expect(
+                "Failed to get AWS credentials"
+            ).aws_secret_access_key(),
+        );
+
+        let exit_status = try!(command.status());
 
         if exit_status.success() {
             Ok(Some(format!(
@@ -73,20 +102,33 @@ impl<'a> Terraform<'a> {
     pub fn plan(&mut self) -> KawsResult {
         try!(self.get());
 
-        try!(Command::new("terraform").args(&[
+        let mut command = Command::new("terraform");
+
+        command.args(&[
             "plan",
             "-backup=-",
             "-module-depth=-1",
             &format!("-state=clusters/{}/terraform.tfstate", self.cluster),
             &format!("-var-file=clusters/{}/terraform.tfvars", self.cluster),
-            "terraform",
-        ]).env(
+        ]);
+
+        if self.terraform_args.is_some() {
+            command.args(self.terraform_args.as_ref().unwrap());
+        }
+
+        command.arg("terraform").env(
             "AWS_ACCESS_KEY_ID",
-            self.aws_credentials_provider.credentials().expect("Failed to get AWS credentials").aws_access_key_id(),
+            self.aws_credentials_provider.credentials().expect(
+                "Failed to get AWS credentials"
+            ).aws_access_key_id(),
         ).env(
             "AWS_SECRET_ACCESS_KEY",
-            self.aws_credentials_provider.credentials().expect("Failed to get AWS credentials").aws_secret_access_key(),
-        ).status());
+            self.aws_credentials_provider.credentials().expect(
+                "Failed to get AWS credentials"
+            ).aws_secret_access_key(),
+        );
+
+        try!(command.status());
 
         Ok(None)
     }

@@ -135,6 +135,7 @@ fn cluster<'a, 'b>() -> App<'a, 'b> {
 fn cluster_apply<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("apply")
         .about("Applies the Terraform plan to the target cluster")
+        .setting(AppSettings::TrailingVarArg)
         .arg(
             Arg::with_name("cluster")
                 .index(1)
@@ -153,11 +154,20 @@ fn cluster_apply<'a, 'b>() -> App<'a, 'b> {
                 .takes_value(true)
                 .help("Name of the AWS credentials profile to use, defaults to \"default\"")
         )
+        .arg(
+            Arg::with_name("terraform-args")
+                .index(2)
+                .multiple(true)
+                .hidden(true)
+                .help("Additional arguments to be passed on to `terraform apply`")
+        )
+        .after_help("Any arguments following a literal -- will be passed directly as options to `terraform apply`.\n")
 }
 
 fn cluster_destroy<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("destroy")
         .about("Destroys resources defined by the Terraform plan for the target cluster")
+        .setting(AppSettings::TrailingVarArg)
         .arg(
             Arg::with_name("cluster")
                 .index(1)
@@ -176,6 +186,14 @@ fn cluster_destroy<'a, 'b>() -> App<'a, 'b> {
                 .takes_value(true)
                 .help("Name of the AWS credentials profile to use, defaults to \"default\"")
         )
+        .arg(
+            Arg::with_name("terraform-args")
+                .index(2)
+                .multiple(true)
+                .hidden(true)
+                .help("Additional arguments to be passed on to `terraform destroy`")
+        )
+        .after_help("Any arguments following a literal -- will be passed directly as options to `terraform destroy`.\n")
 }
 
 fn cluster_init<'a, 'b>() -> App<'a, 'b> {
@@ -248,6 +266,7 @@ fn cluster_init<'a, 'b>() -> App<'a, 'b> {
 fn cluster_plan<'a, 'b>() -> App<'a, 'b> {
     SubCommand::with_name("plan")
         .about("Displays the Terraform plan for the target cluster")
+        .setting(AppSettings::TrailingVarArg)
         .arg(
             Arg::with_name("cluster")
                 .index(1)
@@ -266,6 +285,14 @@ fn cluster_plan<'a, 'b>() -> App<'a, 'b> {
                 .takes_value(true)
                 .help("Name of the AWS credentials profile to use, defaults to \"default\"")
         )
+        .arg(
+            Arg::with_name("terraform-args")
+                .index(2)
+                .multiple(true)
+                .hidden(true)
+                .help("Additional arguments to be passed on to `terraform plan`")
+        )
+        .after_help("Any arguments following a literal -- will be passed directly as options to `terraform plan`.\n")
 }
 
 fn init<'a, 'b>() -> App<'a, 'b> {
