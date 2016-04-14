@@ -17,5 +17,6 @@ log = "0.3.6"
 rustc-serialize = "0.3.19"
 
 [dependencies.rusoto]
-features = ["kms"]
+default-features = false
+features = ["kms", "nightly"]
 git = "https://github.com/rusoto/rusoto.git"
