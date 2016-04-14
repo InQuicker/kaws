@@ -23,7 +23,7 @@ impl Agent {
     pub fn new<'a>(matches: &'a ArgMatches) -> Self {
         Agent {
             decryptor: Decryptor::new(),
-            etcd: Client::default(),
+            etcd: Client::new(&["http://etcd:2379"]).expect("Failed to create etcd client"),
             role: matches.value_of("role").expect("clap should have required role").parse().expect(
               "clap should have required a valid value for role"
             )
