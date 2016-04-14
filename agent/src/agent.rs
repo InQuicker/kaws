@@ -36,7 +36,7 @@ impl Agent {
         let mut modified_index = match self.etcd.get("/kaws", false, false, false) {
             Ok(key_space_info) => match key_space_info.node.unwrap().modified_index {
                 Some(new_index) => new_index,
-                None => return Err("etcd node for /kaws had no modified index".to_owned()),
+                None => return Err("WARNING: etcd node for /kaws had no modified index".to_owned()),
             },
             Err(errors) => return Err(errors[0].to_string()),
         };

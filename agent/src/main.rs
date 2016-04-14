@@ -1,3 +1,4 @@
+extern crate env_logger;
 extern crate etcd;
 extern crate clap;
 extern crate rusoto;
@@ -13,6 +14,8 @@ use clap::{App, AppSettings, Arg, SubCommand};
 use agent::Agent;
 
 fn main() {
+    env_logger::init().expect("Failed to initialize logger.");
+
     let mut failed = false;
 
     match execute_cli() {
@@ -22,7 +25,7 @@ fn main() {
             }
         }
         Err(error) => {
-            println!("Error:\n{}", error);
+            println!("ERROR: {}", error);
 
             failed = true;
         }

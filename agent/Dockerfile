@@ -1,5 +1,5 @@
-FROM debian:jessie
+FROM alpine
 
-CMD ["/kaws-agent"]
+ENTRYPOINT ["/kaws-agent"]
 
-COPY target/x86_64-unknown-linux-gnu/release/kaws-agent /kaws-agent
+COPY target/x86_64-unknown-linux-musl/release/kaws-agent /kaws-agent
