@@ -1,0 +1,7 @@
+.dockerignore
+Cargo.lock
+Cargo.toml
+Dockerfile
+Makefile
+README.md
+src
