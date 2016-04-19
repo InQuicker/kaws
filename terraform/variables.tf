@@ -38,12 +38,28 @@ variable "master_key" {
   description = "Private key for kube-apiserver, encrypted by KMS and Base64-encoded"
 }
 
+variable "masters_max_size" {
+  description = "The maximum number of EC2 instances the Kubernetes masters may autoscale to."
+}
+
+variable "masters_min_size" {
+  description = "The minimum number of EC2 instances the Kubernetes masters may autoscale to."
+}
+
 variable "node_cert" {
   description = "PEM-encoded X.509 certificate for kubelet, encrypted by KMS and Base64-encoded"
 }
 
 variable "node_key" {
   description = "Private key for kubelet, encrypted by KMS and Base64-encoded"
+}
+
+variable "nodes_max_size" {
+  description = "The maximum number of EC2 instances the Kubernetes nodes may autoscale to."
+}
+
+variable "nodes_min_size" {
+  description = "The minimum number of EC2 instances the Kubernetes nodes may autoscale to."
 }
 
 variable "ssh_key" {

@@ -4,7 +4,7 @@ pub fn app<'a, 'b>() -> App<'a, 'b> {
     App::new("kaws")
         .version(env!("CARGO_PKG_VERSION"))
         .about("Deploys Kubernetes clusters using AWS, CoreOS, and Terraform")
-        .after_help("Start by creating a new repository with the `init` command.\n")
+        .after_help("\nStart by creating a new repository with the `init` command.")
         .setting(AppSettings::GlobalVersion)
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .subcommand(admin())
@@ -45,10 +45,10 @@ fn admin_create<'a, 'b>() -> App<'a, 'b> {
                 .help("KMS customer master key ID, e.g. \"12345678-1234-1234-1234-123456789012\"")
         )
         .after_help(
-            "Creates the following files:\n\n\
+            "\nCreates the following files:\n\n\
             * clusters/CLUSTER/NAME-key.pem.encrypted: The KMS-encrypted private key\n\
             * clusters/CLUSTER/NAME.csr: The certificate signing request\n\n\
-            Generated files are only valid for the specified cluster.\n"
+            Generated files are only valid for the specified cluster."
         )
 }
 
@@ -84,10 +84,10 @@ fn admin_install<'a, 'b>() -> App<'a, 'b> {
                 .help("The base domain name for the cluster, e.g. \"example.com\"")
         )
         .after_help(
-            "The following files are expected by this command:\n\n\
+            "\nThe following files are expected by this command:\n\n\
             * clusters/CLUSTER/ca.pem: The CA certificate\n\
             * clusters/CLUSTER/NAME.pem: The client certificate\n\
-            * clusters/CLUSTER/NAME-key.pem.encrypted: The KMS-encrypted private key\n"
+            * clusters/CLUSTER/NAME-key.pem.encrypted: The KMS-encrypted private key"
         )
 }
 
@@ -115,10 +115,10 @@ fn admin_sign<'a, 'b>() -> App<'a, 'b> {
                 .help("KMS customer master key ID, e.g. \"12345678-1234-1234-1234-123456789012\"")
         )
         .after_help(
-            "The following files are expected by this command:\n\n\
+            "\nThe following files are expected by this command:\n\n\
             * clusters/CLUSTER/ca.pem: The CA certificate\n\
             * clusters/CLUSTER/ca-key.pem.encrypted: The KMS-encrypted CA private key\n\
-            * clusters/CLUSTER/NAME.csr: The requesting administrator's CSR\n"
+            * clusters/CLUSTER/NAME.csr: The requesting administrator's CSR"
         )
 }
 
@@ -161,7 +161,7 @@ fn cluster_apply<'a, 'b>() -> App<'a, 'b> {
                 .hidden(true)
                 .help("Additional arguments to be passed on to `terraform apply`")
         )
-        .after_help("Any arguments following a literal -- will be passed directly as options to `terraform apply`.\n")
+        .after_help("\nAny arguments following a literal -- will be passed directly as options to `terraform apply`.")
 }
 
 fn cluster_destroy<'a, 'b>() -> App<'a, 'b> {
@@ -193,7 +193,7 @@ fn cluster_destroy<'a, 'b>() -> App<'a, 'b> {
                 .hidden(true)
                 .help("Additional arguments to be passed on to `terraform destroy`")
         )
-        .after_help("Any arguments following a literal -- will be passed directly as options to `terraform destroy`.\n")
+        .after_help("\nAny arguments following a literal -- will be passed directly as options to `terraform destroy`.")
 }
 
 fn cluster_init<'a, 'b>() -> App<'a, 'b> {
@@ -204,6 +204,14 @@ fn cluster_init<'a, 'b>() -> App<'a, 'b> {
                 .index(1)
                 .required(true)
                 .help("The name of the cluster to create, e.g. \"production\"")
+        )
+        .arg(
+            Arg::with_name("ami")
+                .short("a")
+                .long("ami")
+                .takes_value(true)
+                .required(true)
+                .help("EC2 AMI ID to use for all CoreOS instances, e.g. \"ami-1234\"")
         )
         .arg(
             Arg::with_name("domain")
@@ -222,12 +230,40 @@ fn cluster_init<'a, 'b>() -> App<'a, 'b> {
                 .help("KMS customer master key ID, e.g. \"12345678-1234-1234-1234-123456789012\"")
         )
         .arg(
-            Arg::with_name("ami")
-                .short("a")
-                .long("ami")
+            Arg::with_name("masters-max-size")
+                .long("masters-max-size")
                 .takes_value(true)
                 .required(true)
-                .help("EC2 AMI ID to use for all CoreOS instances, e.g. \"ami-1234\"")
+                .help(
+                    "The maximum number of EC2 instances the Kubernetes masters may autoscale to."
+                )
+        )
+        .arg(
+            Arg::with_name("masters-min-size")
+                .long("masters-min-size")
+                .takes_value(true)
+                .required(true)
+                .help(
+                    "The minimum number of EC2 instances the Kubernetes masters may autoscale to."
+                )
+        )
+        .arg(
+            Arg::with_name("nodes-max-size")
+                .long("nodes-max-size")
+                .takes_value(true)
+                .required(true)
+                .help(
+                    "The maximum number of EC2 instances the Kubernetes nodes may autoscale to."
+                )
+        )
+        .arg(
+            Arg::with_name("nodes-min-size")
+                .long("nodes-min-size")
+                .takes_value(true)
+                .required(true)
+                .help(
+                    "The minimum number of EC2 instances the Kubernetes nodes may autoscale to."
+                )
         )
         .arg(
             Arg::with_name("size")
@@ -292,7 +328,7 @@ fn cluster_plan<'a, 'b>() -> App<'a, 'b> {
                 .hidden(true)
                 .help("Additional arguments to be passed on to `terraform plan`")
         )
-        .after_help("Any arguments following a literal -- will be passed directly as options to `terraform plan`.\n")
+        .after_help("\nAny arguments following a literal -- will be passed directly as options to `terraform plan`.")
 }
 
 fn init<'a, 'b>() -> App<'a, 'b> {

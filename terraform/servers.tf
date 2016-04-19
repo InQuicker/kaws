@@ -60,70 +60,87 @@ resource "aws_instance" "etcd_03" {
   }
 }
 
-resource "aws_instance" "k8s_master_01" {
-  ami = "${var.coreos_ami}"
+resource "aws_launch_configuration" "k8s_masters" {
   associate_public_ip_address = true
-  depends_on = ["null_resource.sync_pki"]
   iam_instance_profile = "${aws_iam_instance_profile.k8s_master.name}"
+  image_id = "${var.coreos_ami}"
   instance_type = "${var.instance_size}"
   key_name = "${var.ssh_key}"
-  subnet_id = "${aws_subnet.public.id}"
-  user_data = "${template_file.master_cloud_config.rendered}"
+  name_prefix = "kaws_k8s_masters_"
   security_groups = ["${aws_security_group.kubernetes.id}"]
+  user_data = "${template_file.master_cloud_config.rendered}"
 
-  tags {
-    Name = "kaws_k8s_master_01"
-    Cluster = "${var.cluster}"
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
-resource "aws_instance" "k8s_master_02" {
-  ami = "${var.coreos_ami}"
-  associate_public_ip_address = true
+resource "aws_autoscaling_group" "k8s_masters" {
   depends_on = ["null_resource.sync_pki"]
-  iam_instance_profile = "${aws_iam_instance_profile.k8s_master.name}"
-  instance_type = "${var.instance_size}"
-  key_name = "${var.ssh_key}"
-  subnet_id = "${aws_subnet.public.id}"
-  user_data = "${template_file.master_cloud_config.rendered}"
-  security_groups = ["${aws_security_group.kubernetes.id}"]
+  health_check_grace_period = 300
+  health_check_type = "ELB"
+  launch_configuration = "${aws_launch_configuration.k8s_masters.name}"
+  load_balancers = ["${aws_elb.k8s_masters.name}"]
+  max_size = "${var.masters_max_size}"
+  min_size = "${var.masters_min_size}"
+  name = "kaws_k8s_masters"
+  vpc_zone_identifier = ["${aws_subnet.public.id}"]
 
-  tags {
-    Name = "kaws_k8s_master_02"
-    Cluster = "${var.cluster}"
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tag {
+    key = "Name"
+    value = "kaws_k8s_masters"
+    propagate_at_launch = true
+  }
+
+  tag {
+    key = "Cluster"
+    value = "${var.cluster}"
+    propagate_at_launch = true
   }
 }
 
-resource "aws_instance" "k8s_node_01" {
-  ami = "${var.coreos_ami}"
+resource "aws_launch_configuration" "k8s_nodes" {
   associate_public_ip_address = true
-  depends_on = ["aws_instance.k8s_master_01", "aws_instance.k8s_master_02"]
   iam_instance_profile = "${aws_iam_instance_profile.k8s_node.name}"
+  image_id = "${var.coreos_ami}"
   instance_type = "${var.instance_size}"
   key_name = "${var.ssh_key}"
-  subnet_id = "${aws_subnet.public.id}"
-  user_data = "${template_file.node_cloud_config.rendered}"
+  name_prefix = "kaws_k8s_nodes_"
   security_groups = ["${aws_security_group.kubernetes.id}"]
+  user_data = "${template_file.node_cloud_config.rendered}"
 
-  tags {
-    Name = "kaws_k8s_node_01"
-    Cluster = "${var.cluster}"
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
-resource "aws_instance" "k8s_node_02" {
-  ami = "${var.coreos_ami}"
-  associate_public_ip_address = true
-  depends_on = ["aws_instance.k8s_master_01", "aws_instance.k8s_master_02"]
-  iam_instance_profile = "${aws_iam_instance_profile.k8s_node.name}"
-  instance_type = "${var.instance_size}"
-  key_name = "${var.ssh_key}"
-  subnet_id = "${aws_subnet.public.id}"
-  user_data = "${template_file.node_cloud_config.rendered}"
-  security_groups = ["${aws_security_group.kubernetes.id}"]
+resource "aws_autoscaling_group" "k8s_nodes" {
+  depends_on ["null_resource.start_kube_addons"]
+  health_check_grace_period = 300
+  health_check_type = "EC2"
+  launch_configuration = "${aws_launch_configuration.k8s_nodes.name}"
+  max_size = "${var.nodes_max_size}"
+  min_size = "${var.nodes_min_size}"
+  name = "kaws_k8s_nodes"
+  vpc_zone_identifier = ["${aws_subnet.public.id}"]
 
-  tags {
-    Name = "kaws_k8s_node_02"
-    Cluster = "${var.cluster}"
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tag {
+    key = "Name"
+    value = "kaws_k8s_masters"
+    propagate_at_launch = true
+  }
+
+  tag {
+    key = "Cluster"
+    value = "${var.cluster}"
+    propagate_at_launch = true
   }
 }

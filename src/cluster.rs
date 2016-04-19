@@ -24,10 +24,14 @@ pub struct Cluster<'a> {
     master_cert_path: String,
     master_csr_path: String,
     master_key_path: String,
+    masters_max_size: &'a str,
+    masters_min_size: &'a str,
     name: &'a str,
     node_cert_path: String,
     node_csr_path: String,
     node_key_path: String,
+    nodes_max_size: &'a str,
+    nodes_min_size: &'a str,
     openssl_config_path: String,
     ssh_key: Option<&'a str>,
     tfvars_path: String,
@@ -57,9 +61,21 @@ impl<'a> Cluster<'a> {
             master_cert_path: format!("clusters/{}/master.pem", name),
             master_csr_path: format!("clusters/{}/master.csr", name),
             master_key_path: format!("clusters/{}/master-key.pem", name),
+            masters_max_size: matches.value_of("masters-max-size").expect(
+                "clap should have required masters-max-size"
+            ),
+            masters_min_size: matches.value_of("masters-min-size").expect(
+                "clap should have required masters-min-size"
+            ),
             node_cert_path: format!("clusters/{}/node.pem", name),
             node_csr_path: format!("clusters/{}/node.csr", name),
             node_key_path: format!("clusters/{}/node-key.pem", name),
+            nodes_max_size: matches.value_of("nodes-max-size").expect(
+                "clap should have required nodes-max-size"
+            ),
+            nodes_min_size: matches.value_of("nodes-min-size").expect(
+                "clap should have required nodes-min-size"
+            ),
             openssl_config_path: format!("clusters/{}/openssl.cnf", name),
             ssh_key: matches.value_of("ssh-key"),
             tfvars_path: format!("clusters/{}/terraform.tfvars", name),
@@ -267,6 +283,10 @@ etcd_01_initial_cluster_state = \"new\"
 etcd_02_initial_cluster_state = \"new\"
 etcd_03_initial_cluster_state = \"new\"
 instance_size = \"{}\"
+masters_max_size = \"{}\"
+masters_min_size = \"{}\"
+nodes_max_size = \"{}\"
+nodes_min_size = \"{}\"
 ssh_key = \"{}\"
 version = \"{}\"
 zone_id = \"{}\"
@@ -275,6 +295,10 @@ zone_id = \"{}\"
                 self.coreos_ami.expect("AMI should have been required by clap"),
                 self.name,
                 self.instance_size.expect("instance size should have been required by clap"),
+                self.masters_max_size,
+                self.masters_min_size,
+                self.nodes_max_size,
+                self.nodes_min_size,
                 self.ssh_key.expect("ssh key should have been required by clap"),
                 self.kubernetes_version.expect("k8s version should have been required by clap"),
                 self.zone_id.expect("zone ID should have been required by clap"),

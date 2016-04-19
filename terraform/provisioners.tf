@@ -33,7 +33,7 @@ resource "null_resource" "start_kube_addons" {
     bastion_host = "${aws_instance.bastion.public_ip}"
   }
 
-  depends_on = ["aws_instance.k8s_master_01"]
+  depends_on = ["aws_autoscaling_group.k8s_masters"]
 
   provisioner "remote-exec" {
     inline = [

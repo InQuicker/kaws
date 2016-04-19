@@ -43,6 +43,10 @@ r#"module "kaws" {{
     instance_size = "${{var.instance_size}}"
     master_cert = "${{file("clusters/${{var.cluster}}/master.pem")}}"
     master_key = "${{file("clusters/${{var.cluster}}/master-key-encrypted.base64")}}"
+    masters_max_size = "${{var.masters_max_size}}"
+    masters_min_size = "${{var.masters_min_size}}"
+    nodes_max_size = "${{var.nodes_max_size}}"
+    nodes_min_size = "${{var.nodes_min_size}}"
     node_cert = "${{file("clusters/${{var.cluster}}/node.pem")}}"
     node_key = "${{file("clusters/${{var.cluster}}/node-key-encrypted.base64")}}"
     ssh_key = "${{var.ssh_key}}"
@@ -76,6 +80,22 @@ variable "etcd_03_initial_cluster_state" {{
 
 variable "instance_size" {{
   description = "The EC2 instance size"
+}}
+
+variable "masters_max_size" {{
+  description = "The maximum number of EC2 instances the Kubernetes masters may autoscale to."
+}}
+
+variable "masters_min_size" {{
+  description = "The minimum number of EC2 instances the Kubernetes masters may autoscale to."
+}}
+
+variable "nodes_max_size" {{
+  description = "The maximum number of EC2 instances the Kubernetes nodes may autoscale to."
+}}
+
+variable "nodes_min_size" {{
+  description = "The minimum number of EC2 instances the Kubernetes nodes may autoscale to."
 }}
 
 variable "ssh_key" {{
