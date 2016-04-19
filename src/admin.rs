@@ -39,7 +39,11 @@ impl<'a> Admin<'a> {
             name,
         );
 
-        let encrypted_admin_key_path = format!("{}.asc", &admin_key_path);
+        let encrypted_admin_key_path = format!(
+            "clusters/{}/{}-key-encrypted.base64",
+            self.cluster,
+            name,
+        );
 
         let admin_csr_path = format!(
             "clusters/{}/{}.csr",
@@ -103,7 +107,11 @@ impl<'a> Admin<'a> {
         let name = self.name.expect("clap should have required name");
 
         let admin_key_path = format!("clusters/{}/{}-key.pem", self.cluster, name);
-        let encrypted_admin_key_path = format!("{}.asc", &admin_key_path);
+        let encrypted_admin_key_path = format!(
+            "clusters/{}/{}-key-encrypted.base64",
+            self.cluster,
+            name
+        );
 
         let region = Region::UsEast1;
         let mut encryptor = Encryptor::new(
@@ -167,7 +175,7 @@ impl<'a> Admin<'a> {
         let admin_cert_path = format!("clusters/{}/{}.pem", self.cluster, name);
         let ca_cert_path = format!("clusters/{}/ca.pem", self.cluster);
         let ca_key_path = format!("clusters/{}/ca-key.pem", self.cluster);
-        let encrypted_ca_key_path = format!("{}.asc", &ca_key_path);
+        let encrypted_ca_key_path = format!("clusters/{}/ca-key-encrypted.base64", self.cluster);
 
         let region = Region::UsEast1;
         let mut encryptor = Encryptor::new(
