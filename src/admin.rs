@@ -1,7 +1,7 @@
 use std::fs::{create_dir_all, remove_file};
 
 use clap::ArgMatches;
-use rusoto::{ChainProvider, Region};
+use rusoto::ChainProvider;
 
 use aws::credentials_provider;
 use encryption::Encryptor;
@@ -14,6 +14,7 @@ pub struct Admin<'a> {
     domain: Option<&'a str>,
     kms_master_key_id: &'a str,
     name: Option<&'a str>,
+    region: &'a str,
 }
 
 impl<'a> Admin<'a> {
@@ -27,6 +28,7 @@ impl<'a> Admin<'a> {
             domain: matches.value_of("domain"),
             kms_master_key_id: matches.value_of("kms-key").expect("clap should have required kms-key"),
             name: matches.value_of("name"),
+            region: matches.value_of("region").expect("clap should have required region"),
         }
     }
 
@@ -80,10 +82,9 @@ impl<'a> Admin<'a> {
         });
 
         // encrypt private key
-        let region = Region::UsEast1;
         let mut encryptor = Encryptor::new(
             self.aws_credentials_provider.clone(),
-            region,
+            try!(self.region.parse()),
             self.kms_master_key_id,
         );
 
@@ -113,10 +114,9 @@ impl<'a> Admin<'a> {
             name
         );
 
-        let region = Region::UsEast1;
         let mut encryptor = Encryptor::new(
             self.aws_credentials_provider.clone(),
-            region,
+            try!(self.region.parse()),
             self.kms_master_key_id,
         );
 
@@ -177,10 +177,9 @@ impl<'a> Admin<'a> {
         let ca_key_path = format!("clusters/{}/ca-key.pem", self.cluster);
         let encrypted_ca_key_path = format!("clusters/{}/ca-key-encrypted.base64", self.cluster);
 
-        let region = Region::UsEast1;
         let mut encryptor = Encryptor::new(
             self.aws_credentials_provider.clone(),
-            region,
+            try!(self.region.parse()),
             self.kms_master_key_id,
         );
 

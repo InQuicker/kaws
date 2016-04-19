@@ -20,14 +20,16 @@ enum Role {
 }
 
 impl Agent {
-    pub fn new<'a>(matches: &'a ArgMatches) -> Self {
-        Agent {
-            decryptor: Decryptor::new(),
+    pub fn new<'a>(matches: &'a ArgMatches) -> Result<Self, String> {
+        Ok(Agent {
+            decryptor: try!(Decryptor::new(
+                matches.value_of("region").expect("clap should have required region")
+            )),
             etcd: Client::new(&["http://etcd:2379"]).expect("Failed to create etcd client"),
             role: matches.value_of("role").expect("clap should have required role").parse().expect(
               "clap should have required a valid value for role"
             )
-        }
+        })
     }
 
     pub fn run(mut self) -> Result<Option<String>, String> {

@@ -44,6 +44,14 @@ fn admin_create<'a, 'b>() -> App<'a, 'b> {
                 .required(true)
                 .help("KMS customer master key ID, e.g. \"12345678-1234-1234-1234-123456789012\"")
         )
+        .arg(
+            Arg::with_name("region")
+                .short("r")
+                .long("region")
+                .takes_value(true)
+                .required(true)
+                .help("AWS Region where the KMS key lives, e.g. \"us-east-1\"")
+        )
         .after_help(
             "\nCreates the following files:\n\n\
             * clusters/CLUSTER/NAME-key-encrypted.base64: The KMS-encrypted private key\n\
@@ -83,6 +91,14 @@ fn admin_install<'a, 'b>() -> App<'a, 'b> {
                 .required(true)
                 .help("The base domain name for the cluster, e.g. \"example.com\"")
         )
+        .arg(
+            Arg::with_name("region")
+                .short("r")
+                .long("region")
+                .takes_value(true)
+                .required(true)
+                .help("AWS Region where the KMS key lives, e.g. \"us-east-1\"")
+        )
         .after_help(
             "\nThe following files are expected by this command:\n\n\
             * clusters/CLUSTER/ca.pem: The CA certificate\n\
@@ -113,6 +129,14 @@ fn admin_sign<'a, 'b>() -> App<'a, 'b> {
                 .takes_value(true)
                 .required(true)
                 .help("KMS customer master key ID, e.g. \"12345678-1234-1234-1234-123456789012\"")
+        )
+        .arg(
+            Arg::with_name("region")
+                .short("r")
+                .long("region")
+                .takes_value(true)
+                .required(true)
+                .help("AWS Region where the KMS key lives, e.g. \"us-east-1\"")
         )
         .after_help(
             "\nThe following files are expected by this command:\n\n\
@@ -264,6 +288,14 @@ fn cluster_init<'a, 'b>() -> App<'a, 'b> {
                 .help(
                     "The minimum number of EC2 instances the Kubernetes nodes may autoscale to."
                 )
+        )
+        .arg(
+            Arg::with_name("region")
+                .short("r")
+                .long("region")
+                .takes_value(true)
+                .required(true)
+                .help("AWS Region where the KMS key lives, e.g. \"us-east-1\"")
         )
         .arg(
             Arg::with_name("size")

@@ -45,9 +45,18 @@ fn execute_cli() -> Result<Option<String>, String> {
         .subcommand(
             SubCommand::with_name("run")
                 .about("Runs the agent")
+
+                .arg(
+                    Arg::with_name("region")
+                        .short("r")
+                        .long("region")
+                        .takes_value(true)
+                        .required(true)
+                        .help("AWS Region where the command is being run, e.g. \"us-east-1\"")
+                )
                 .arg(
                     Arg::with_name("role")
-                        .short("r")
+                        .short("R")
                         .long("role")
                         .takes_value(true)
                         .possible_values(&["master", "node"])
@@ -58,7 +67,7 @@ fn execute_cli() -> Result<Option<String>, String> {
         .get_matches();
 
     match app_matches.subcommand() {
-        ("run", Some(matches)) => Agent::new(matches).run(),
+        ("run", Some(matches)) => try!(Agent::new(matches)).run(),
         _ => {
             println!("{}", app_matches.usage());
 

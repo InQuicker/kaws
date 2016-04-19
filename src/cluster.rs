@@ -2,7 +2,7 @@ use std::fs::{create_dir_all, File, remove_file};
 use std::io::Write;
 
 use clap::ArgMatches;
-use rusoto::{ChainProvider, Region};
+use rusoto::ChainProvider;
 
 use aws::credentials_provider;
 use encryption::Encryptor;
@@ -33,6 +33,7 @@ pub struct Cluster<'a> {
     nodes_max_size: &'a str,
     nodes_min_size: &'a str,
     openssl_config_path: String,
+    region: &'a str,
     ssh_key: Option<&'a str>,
     tfvars_path: String,
     zone_id: Option<&'a str>,
@@ -77,6 +78,7 @@ impl<'a> Cluster<'a> {
                 "clap should have required nodes-min-size"
             ),
             openssl_config_path: format!("clusters/{}/openssl.cnf", name),
+            region: matches.value_of("region").expect("clap should have required region"),
             ssh_key: matches.value_of("ssh-key"),
             tfvars_path: format!("clusters/{}/terraform.tfvars", name),
             zone_id: matches.value_of("zone-id"),
@@ -309,11 +311,9 @@ zone_id = \"{}\"
     }
 
     fn encrypt_secrets<'b>(&self, kms_key_id: &'b str) -> KawsResult {
-        let region = Region::UsEast1;
-
         let mut encryptor = Encryptor::new(
             self.aws_credentials_provider.clone(),
-            region,
+            try!(self.region.parse()),
             kms_key_id,
         );
 

@@ -62,6 +62,10 @@ variable "nodes_min_size" {
   description = "The minimum number of EC2 instances the Kubernetes nodes may autoscale to."
 }
 
+variable "region" {
+  description = "The AWS Region where the cluster will live, e.g. us-east-1"
+}
+
 variable "ssh_key" {
   description = "Name of the SSH key in AWS that should have acccess to EC2 instances"
 }

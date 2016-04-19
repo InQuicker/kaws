@@ -22,4 +22,4 @@ version = "0.5.3"
 [dependencies.rusoto]
 default-features = false
 features = ["kms", "nightly"]
-git = "https://github.com/rusoto/rusoto.git"
+path = "../../rusoto"

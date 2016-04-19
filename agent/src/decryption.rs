@@ -1,6 +1,6 @@
 use std::str::from_utf8;
 
-use rusoto::{IamProvider, Region};
+use rusoto::IamProvider;
 use rusoto::kms::{DecryptRequest, KmsClient};
 use rustc_serialize::base64::FromBase64;
 
@@ -9,10 +9,15 @@ pub struct Decryptor {
 }
 
 impl Decryptor {
-    pub fn new() -> Decryptor {
-        Decryptor {
-            client: KmsClient::new(IamProvider::new(), Region::UsEast1),
-        }
+    pub fn new(region_str: &str) -> Result<Decryptor, String> {
+        let region = match region_str.parse() {
+            Ok(region) => region,
+            Err(error) => return Err(format!("{}", error)),
+        };
+
+        Ok(Decryptor {
+            client: KmsClient::new(IamProvider::new(), region),
+        })
     }
 
     pub fn decrypt<'a>(&mut self, encoded_ciphertext: &'a str) -> Result<String, String> {
