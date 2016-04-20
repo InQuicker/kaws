@@ -31,6 +31,7 @@ resource "template_file" "master_cloud_config" {
   vars {
     cluster = "${var.cluster}"
     domain = "${var.domain}"
+    region = "${var.region}"
     version = "${var.version}"
   }
 }
@@ -41,6 +42,7 @@ resource "template_file" "node_cloud_config" {
   vars {
     cluster = "${var.cluster}"
     master_ip = "kubernetes.${var.domain}"
+    region = "${var.region}"
     version = "${var.version}"
   }
 }

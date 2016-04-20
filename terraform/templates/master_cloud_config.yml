@@ -44,7 +44,7 @@ coreos:
         ExecStartPre=-/usr/bin/docker kill kaws-agent
         ExecStartPre=-/usr/bin/docker rm kaws-agent
         ExecStartPre=/usr/bin/docker pull inquicker/kaws-agent
-        ExecStart=/usr/bin/docker run --name kaws-agent inquicker/kaws-agent run --role master
+        ExecStart=/usr/bin/docker run --name kaws-agent inquicker/kaws-agent run --region ${region} --role master
         ExecStop=/usr/bin/docker stop kaws-agent
         [Install]
         WantedBy=multi-user.target
