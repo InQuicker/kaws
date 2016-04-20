@@ -19,4 +19,4 @@ rustc-serialize = "0.3.19"
 [dependencies.rusoto]
 default-features = false
 features = ["kms", "nightly"]
-path = "../rusoto"
+git = "https://github.com/rusoto/rusoto.git"
