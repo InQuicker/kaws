@@ -1,15 +1,15 @@
 resource "aws_iam_instance_profile" "k8s_master" {
-  name = "k8s_master_${var.cluster}"
+  name = "kaws_k8s_master_${var.cluster}"
   roles = ["${aws_iam_role.k8s_master.name}"]
 }
 
 resource "aws_iam_instance_profile" "k8s_node" {
-  name = "k8s_node_${var.cluster}"
+  name = "kaws_k8s_node_${var.cluster}"
   roles = ["${aws_iam_role.k8s_node.name}"]
 }
 
 resource "aws_iam_role" "k8s_master" {
-  name = "k8s_master_${var.cluster}"
+  name = "kaws_k8s_master_${var.cluster}"
   assume_role_policy = <<EOS
 {
   "Version": "2012-10-17",
@@ -27,7 +27,7 @@ EOS
 }
 
 resource "aws_iam_role" "k8s_node" {
-  name = "k8s_node_${var.cluster}"
+  name = "kaws_k8s_node_${var.cluster}"
   assume_role_policy = <<EOS
 {
   "Version": "2012-10-17",
@@ -45,7 +45,7 @@ EOS
 }
 
 resource "aws_iam_role_policy" "k8s_master" {
-  name = "k8s_master_${var.cluster}"
+  name = "kaws_k8s_master_${var.cluster}"
   role = "${aws_iam_role.k8s_master.id}"
   policy = <<EOS
 {
@@ -67,7 +67,7 @@ EOS
 }
 
 resource "aws_iam_role_policy" "k8s_node" {
-  name = "k8s_node_${var.cluster}"
+  name = "kaws_k8s_node_${var.cluster}"
   role = "${aws_iam_role.k8s_node.id}"
   policy = <<EOS
 {
