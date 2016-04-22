@@ -1,9 +1,5 @@
-variable "ca_cert" {
-  description = "PEM-formatted X.509 certificate for the CA to be used by Kubernetes"
-}
-
 variable "cluster" {
-  description = "The target cluster's name"
+  description = "The target cluster's name, e.g. `production`"
 }
 
 variable "coreos_ami" {
@@ -11,7 +7,7 @@ variable "coreos_ami" {
 }
 
 variable "domain" {
-  description = "The domain name for the cluster"
+  description = "The domain name for the cluster, e.g. `example.com`"
 }
 
 variable "etcd_01_initial_cluster_state" {
@@ -27,53 +23,37 @@ variable "etcd_03_initial_cluster_state" {
 }
 
 variable "instance_size" {
-  description = "The EC2 instance size"
-}
-
-variable "master_cert" {
-  description = "PEM-encoded X.509 certificate for kube-apiserver"
-}
-
-variable "master_key" {
-  description = "Private key for kube-apiserver, encrypted by KMS and Base64-encoded"
+  description = "The EC2 instance size, e.g. `m3.medium`"
 }
 
 variable "masters_max_size" {
-  description = "The maximum number of EC2 instances the Kubernetes masters may autoscale to."
+  description = "The maximum number of EC2 instances the Kubernetes masters may autoscale to"
 }
 
 variable "masters_min_size" {
-  description = "The minimum number of EC2 instances the Kubernetes masters may autoscale to."
-}
-
-variable "node_cert" {
-  description = "PEM-encoded X.509 certificate for kubelet, encrypted by KMS and Base64-encoded"
-}
-
-variable "node_key" {
-  description = "Private key for kubelet, encrypted by KMS and Base64-encoded"
+  description = "The minimum number of EC2 instances the Kubernetes masters may autoscale to"
 }
 
 variable "nodes_max_size" {
-  description = "The maximum number of EC2 instances the Kubernetes nodes may autoscale to."
+  description = "The maximum number of EC2 instances the Kubernetes nodes may autoscale to"
 }
 
 variable "nodes_min_size" {
-  description = "The minimum number of EC2 instances the Kubernetes nodes may autoscale to."
+  description = "The minimum number of EC2 instances the Kubernetes nodes may autoscale to"
 }
 
 variable "region" {
-  description = "The AWS Region where the cluster will live, e.g. us-east-1"
+  description = "The AWS Region where the cluster will live, e.g. `us-east-1`"
 }
 
 variable "ssh_key" {
-  description = "Name of the SSH key in AWS that should have acccess to EC2 instances"
+  description = "Name of the SSH key in AWS that should have acccess to EC2 instances, e.g. `jimmy`"
 }
 
 variable "version" {
-  description = "Version of Kubernetes to use, e.g. 1.0.0"
+  description = "Version of Kubernetes to use, e.g. `1.0.0`"
 }
 
 variable "zone_id" {
-  description = "Zone ID of the Route 53 hosted zone"
+  description = "Zone ID of the Route 53 hosted zone, e.g. `Z111111QQQQQQQ`"
 }

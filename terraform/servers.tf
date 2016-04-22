@@ -119,7 +119,8 @@ resource "aws_launch_configuration" "k8s_nodes" {
 }
 
 resource "aws_autoscaling_group" "k8s_nodes" {
-  depends_on ["null_resource.start_kube_addons"]
+  depends_on = ["null_resource.start_kube_addons"]
+
   health_check_grace_period = 300
   health_check_type = "EC2"
   launch_configuration = "${aws_launch_configuration.k8s_nodes.name}"

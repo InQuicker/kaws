@@ -75,6 +75,7 @@ fn execute_cli() -> KawsResult {
             ("apply", Some(matches)) => Terraform::new(matches).apply(),
             ("destroy", Some(matches)) => Terraform::new(matches).destroy(),
             ("init", Some(matches)) => Cluster::new(matches).init(),
+            ("genpki", Some(matches)) => Cluster::new(matches).generate_pki(),
             ("plan", Some(matches)) => Terraform::new(matches).plan(),
             _ => {
                 println!("{}", cluster_matches.usage());

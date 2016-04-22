@@ -1,6 +1,5 @@
 resource "aws_elb" "k8s_masters" {
   connection_draining = true
-  instances = ["${aws_instance.k8s_master_01.id}", "${aws_instance.k8s_master_02.id}"]
   name = "k8s-masters"
   security_groups = ["${aws_security_group.balancers.id}"]
   subnets = ["${aws_subnet.public.id}"]

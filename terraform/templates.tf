@@ -1,5 +1,5 @@
 resource "template_file" "etcd_01_cloud_config" {
-  filename = "${path.module}/templates/etcd_cloud_config.yml"
+  template = "${file("${path.module}/templates/etcd_cloud_config.yml")}"
 
   vars {
     initial_cluster_state = "${var.etcd_01_initial_cluster_state}"
@@ -8,7 +8,7 @@ resource "template_file" "etcd_01_cloud_config" {
 }
 
 resource "template_file" "etcd_02_cloud_config" {
-  filename = "${path.module}/templates/etcd_cloud_config.yml"
+  template = "${file("${path.module}/templates/etcd_cloud_config.yml")}"
 
   vars {
     initial_cluster_state = "${var.etcd_02_initial_cluster_state}"
@@ -17,7 +17,7 @@ resource "template_file" "etcd_02_cloud_config" {
 }
 
 resource "template_file" "etcd_03_cloud_config" {
-  filename = "${path.module}/templates/etcd_cloud_config.yml"
+  template = "${file("${path.module}/templates/etcd_cloud_config.yml")}"
 
   vars {
     initial_cluster_state = "${var.etcd_03_initial_cluster_state}"
@@ -26,7 +26,7 @@ resource "template_file" "etcd_03_cloud_config" {
 }
 
 resource "template_file" "master_cloud_config" {
-  filename = "${path.module}/templates/master_cloud_config.yml"
+  template = "${file("${path.module}/templates/master_cloud_config.yml")}"
 
   vars {
     cluster = "${var.cluster}"
@@ -37,7 +37,7 @@ resource "template_file" "master_cloud_config" {
 }
 
 resource "template_file" "node_cloud_config" {
-  filename = "${path.module}/templates/node_cloud_config.yml"
+  template = "${file("${path.module}/templates/node_cloud_config.yml")}"
 
   vars {
     cluster = "${var.cluster}"

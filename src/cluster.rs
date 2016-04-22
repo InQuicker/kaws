@@ -10,6 +10,7 @@ use error::KawsResult;
 use process::execute_child_process;
 
 pub struct Cluster<'a> {
+    aws_account_id: Option<&'a str>,
     aws_credentials_provider: ChainProvider,
     ca_cert_path: String,
     ca_key_path: String,
@@ -18,8 +19,10 @@ pub struct Cluster<'a> {
     encrypted_ca_key_path: String,
     encrypted_master_key_path: String,
     encrypted_node_key_path: String,
+    iam_users: Option<Vec<&'a str>>,
     instance_size: Option<&'a str>,
     kms_master_key_id: Option<&'a str>,
+    kms_policy_path: String,
     kubernetes_version: Option<&'a str>,
     master_cert_path: String,
     master_csr_path: String,
@@ -44,6 +47,7 @@ impl<'a> Cluster<'a> {
         let name =  matches.value_of("cluster").expect("clap should have required cluster");
 
         Cluster {
+            aws_account_id: matches.value_of("aws-account-id"),
             aws_credentials_provider: credentials_provider(
                 matches.value_of("aws-credentials-path"),
                 matches.value_of("aws-credentials-profile"),
@@ -56,8 +60,10 @@ impl<'a> Cluster<'a> {
             encrypted_master_key_path: format!("clusters/{}/master-key-encrypted.base64", name),
             encrypted_node_key_path: format!("clusters/{}/node-key-encrypted.base64", name),
             name: name,
+            iam_users: matches.values_of("iam-users").map(|values| values.collect()),
             instance_size: matches.value_of("size"),
             kms_master_key_id: matches.value_of("kms-key"),
+            kms_policy_path: format!("clusters/{}/kms-policy.json", name),
             kubernetes_version: matches.value_of("k8s-version"),
             master_cert_path: format!("clusters/{}/master.pem", name),
             master_csr_path: format!("clusters/{}/master.csr", name),
@@ -89,6 +95,16 @@ impl<'a> Cluster<'a> {
         try!(self.create_directories());
         try!(self.create_tfvars());
         try!(self.create_openssl_config());
+        try!(self.create_kms_policy());
+        try!(self.create_pki_stubs());
+
+        Ok(Some(format!(
+            "Cluster \"{}\" initialized!",
+            self.name,
+        )))
+    }
+
+    pub fn generate_pki(&mut self) -> KawsResult {
         try!(self.create_ca());
         try!(self.create_master_credentials());
         try!(self.create_node_credentials());
@@ -96,16 +112,119 @@ impl<'a> Cluster<'a> {
             self.kms_master_key_id.expect("clap should have required kms-key"),
         ));
 
-        Ok(Some(format!(
-            "Cluster \"{}\" initialized! Commit clusters/{} to Git.",
-            self.name,
-            self.name,
-        )))
+        Ok(None)
     }
 
     fn create_directories(&self) -> KawsResult {
         log_wrap!("Creating directories for the new cluster", {
             try!(create_dir_all(format!("clusters/{}", self.name)));
+        });
+
+        Ok(None)
+    }
+
+    fn create_kms_policy(&self) -> KawsResult {
+        log_wrap!("Creating KMS policy file", {
+            let mut file = try!(File::create(&self.kms_policy_path));
+
+            let aws_account_id = self.aws_account_id.expect(
+                "AWS account ID should have been required by clap"
+            );
+
+            let iam_user_arns = self.iam_users.as_ref().expect(
+                "IAM users should have been required by clap"
+            ).iter().map(|iam_user| {
+                format!("\"arn::aws::iam::{}:user/{}\"", aws_account_id, iam_user)
+            }).collect::<Vec<String>>().join(",");
+
+            try!(write!(
+                file,
+                r#"{{
+  "Version": "2012-10-17",
+  "Statement": [
+    {{
+      "Sid": "Enable IAM User Permissions",
+      "Effect": "Allow",
+      "Principal": {{
+        "AWS": [
+          "arn:aws:iam::{aws_account_id}:root"
+        ]
+      }},
+      "Action": "kms:*",
+      "Resource": "*"
+    }},
+    {{
+      "Sid": "Allow access for Key Administrators",
+      "Effect": "Allow",
+      "Principal": {{
+        "AWS": [
+          {iam_user_arns}
+        ]
+      }},
+      "Action": [
+        "kms:Create*",
+        "kms:Describe*",
+        "kms:Enable*",
+        "kms:List*",
+        "kms:Put*",
+        "kms:Update*",
+        "kms:Revoke*",
+        "kms:Disable*",
+        "kms:Get*",
+        "kms:Delete*",
+        "kms:ScheduleKeyDeletion",
+        "kms:CancelKeyDeletion"
+      ],
+      "Resource": "*"
+    }},
+    {{
+      "Sid": "Allow use of the key",
+      "Effect": "Allow",
+      "Principal": {{
+        "AWS": [
+          "arn:aws:iam::{aws_account_id}:role/kaws_k8s_master_{cluster}",
+          "arn:aws:iam::{aws_account_id}:role/kaws_k8s_node_{cluster}",
+          {iam_user_arns}
+        ]
+      }},
+      "Action": [
+        "kms:Encrypt",
+        "kms:Decrypt",
+        "kms:ReEncrypt*",
+        "kms:GenerateDataKey*",
+        "kms:DescribeKey"
+      ],
+      "Resource": "*"
+    }},
+    {{
+      "Sid": "Allow attachment of persistent resources",
+      "Effect": "Allow",
+      "Principal": {{
+        "AWS": [
+          "arn:aws:iam::{aws_account_id}:role/kaws_k8s_master_{cluster}",
+          "arn:aws:iam::{aws_account_id}:role/kaws_k8s_node_{cluster}",
+          {iam_user_arns}
+        ]
+      }},
+      "Action": [
+        "kms:CreateGrant",
+        "kms:ListGrants",
+        "kms:RevokeGrant"
+      ],
+      "Resource": "*",
+      "Condition": {{
+        "Bool": {{
+          "kms:GrantIsForAWSResource": true
+        }}
+      }}
+    }}
+  ]
+}}
+"#,
+                aws_account_id = aws_account_id,
+                cluster = self.name,
+                iam_user_arns = iam_user_arns,
+            ));
         });
 
         Ok(None)
@@ -271,6 +390,22 @@ IP.1 = 10.3.0.1
         Ok(None)
     }
 
+    fn create_pki_stubs(&self) -> KawsResult {
+        let paths = [
+            &self.ca_cert_path,
+            &self.master_cert_path,
+            &self.encrypted_master_key_path,
+            &self.node_cert_path,
+            &self.encrypted_node_key_path,
+        ];
+
+        for path in paths.iter() {
+            try!(File::create(path));
+        }
+
+        Ok(None)
+    }
+
     fn create_tfvars(&self) -> KawsResult {
         log_wrap!("Creating tfvars file", {
             let mut file = try!(File::create(&self.tfvars_path));
@@ -278,9 +413,9 @@ IP.1 = 10.3.0.1
             try!(write!(
                 file,
                 "\
-domain = \"{}\"
-coreos_ami = \"{}\"
 cluster = \"{}\"
+coreos_ami = \"{}\"
+domain = \"{}\"
 etcd_01_initial_cluster_state = \"new\"
 etcd_02_initial_cluster_state = \"new\"
 etcd_03_initial_cluster_state = \"new\"
@@ -289,18 +424,20 @@ masters_max_size = \"{}\"
 masters_min_size = \"{}\"
 nodes_max_size = \"{}\"
 nodes_min_size = \"{}\"
+region = \"{}\"
 ssh_key = \"{}\"
 version = \"{}\"
 zone_id = \"{}\"
 ",
-                self.domain.expect("domain should have been required by clap"),
-                self.coreos_ami.expect("AMI should have been required by clap"),
                 self.name,
+                self.coreos_ami.expect("AMI should have been required by clap"),
+                self.domain.expect("domain should have been required by clap"),
                 self.instance_size.expect("instance size should have been required by clap"),
                 self.masters_max_size,
                 self.masters_min_size,
                 self.nodes_max_size,
                 self.nodes_min_size,
+                self.region,
                 self.ssh_key.expect("ssh key should have been required by clap"),
                 self.kubernetes_version.expect("k8s version should have been required by clap"),
                 self.zone_id.expect("zone ID should have been required by clap"),

@@ -93,6 +93,12 @@ resource "aws_iam_role_policy" "k8s_node" {
 EOS
 }
 
+resource "aws_kms_key" "pki" {
+  description = "kaws ${var.cluster} Kubernetes PKI"
+
+  policy = "${file("clusters/${var.cluster}/kms-policy.json")}"
+}
+
 resource "aws_security_group" "balancers" {
   name = "balancers"
   description = "Load balancers"

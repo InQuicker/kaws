@@ -153,6 +153,7 @@ fn cluster<'a, 'b>() -> App<'a, 'b> {
         .subcommand(cluster_apply())
         .subcommand(cluster_destroy())
         .subcommand(cluster_init())
+        .subcommand(cluster_genpki())
         .subcommand(cluster_plan())
 }
 
@@ -230,6 +231,14 @@ fn cluster_init<'a, 'b>() -> App<'a, 'b> {
                 .help("The name of the cluster to create, e.g. \"production\"")
         )
         .arg(
+            Arg::with_name("aws-account-id")
+                .short("A")
+                .long("aws-account-id")
+                .takes_value(true)
+                .required(true)
+                .help("The numeric ID of the AWS account, e.g. \"123456789012\"")
+        )
+        .arg(
             Arg::with_name("ami")
                 .short("a")
                 .long("ami")
@@ -246,20 +255,12 @@ fn cluster_init<'a, 'b>() -> App<'a, 'b> {
                 .help("The base domain name for the cluster, e.g. \"example.com\"")
         )
         .arg(
-            Arg::with_name("kms-key")
-                .short("k")
-                .long("kms-key")
-                .takes_value(true)
-                .required(true)
-                .help("KMS customer master key ID, e.g. \"12345678-1234-1234-1234-123456789012\"")
-        )
-        .arg(
             Arg::with_name("masters-max-size")
                 .long("masters-max-size")
                 .takes_value(true)
                 .required(true)
                 .help(
-                    "The maximum number of EC2 instances the Kubernetes masters may autoscale to."
+                    "The maximum number of EC2 instances the Kubernetes masters may autoscale to"
                 )
         )
         .arg(
@@ -268,7 +269,7 @@ fn cluster_init<'a, 'b>() -> App<'a, 'b> {
                 .takes_value(true)
                 .required(true)
                 .help(
-                    "The minimum number of EC2 instances the Kubernetes masters may autoscale to."
+                    "The minimum number of EC2 instances the Kubernetes masters may autoscale to"
                 )
         )
         .arg(
@@ -277,7 +278,7 @@ fn cluster_init<'a, 'b>() -> App<'a, 'b> {
                 .takes_value(true)
                 .required(true)
                 .help(
-                    "The maximum number of EC2 instances the Kubernetes nodes may autoscale to."
+                    "The maximum number of EC2 instances the Kubernetes nodes may autoscale to"
                 )
         )
         .arg(
@@ -286,7 +287,7 @@ fn cluster_init<'a, 'b>() -> App<'a, 'b> {
                 .takes_value(true)
                 .required(true)
                 .help(
-                    "The minimum number of EC2 instances the Kubernetes nodes may autoscale to."
+                    "The minimum number of EC2 instances the Kubernetes nodes may autoscale to"
                 )
         )
         .arg(
@@ -296,6 +297,15 @@ fn cluster_init<'a, 'b>() -> App<'a, 'b> {
                 .takes_value(true)
                 .required(true)
                 .help("AWS Region where the KMS key lives, e.g. \"us-east-1\"")
+        )
+        .arg(
+            Arg::with_name("iam-users")
+                .short("i")
+                .long("iam-user")
+                .takes_value(true)
+                .multiple(true)
+                .required(true)
+                .help("The name of an IAM user who will have access to cluster PKI secrets, e.g. \"alice\"")
         )
         .arg(
             Arg::with_name("size")
@@ -328,6 +338,25 @@ fn cluster_init<'a, 'b>() -> App<'a, 'b> {
                 .takes_value(true)
                 .required(true)
                 .help("Route 53 hosted zone ID")
+        )
+}
+
+fn cluster_genpki<'a, 'b>() -> App<'a, 'b> {
+    SubCommand::with_name("genpki")
+        .about("Generates public key infrastructure for the target cluster")
+        .arg(
+            Arg::with_name("cluster")
+                .index(1)
+                .required(true)
+                .help("The cluster whose plan should be applied")
+        )
+        .arg(
+            Arg::with_name("kms-key")
+                .short("k")
+                .long("kms-key")
+                .takes_value(true)
+                .required(true)
+                .help("KMS customer master key ID, e.g. \"12345678-1234-1234-1234-123456789012\"")
         )
 }
 

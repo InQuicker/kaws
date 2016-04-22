@@ -22,18 +22,17 @@ impl<'a> Repository<'a> {
 
     pub fn create(&self) -> KawsResult {
         try!(create_dir_all(format!("{}/clusters", self.name)));
-        try!(create_dir_all(format!("{}/terraform", self.name)));
+        try!(create_dir_all(format!("{}/terraform/kaws", self.name)));
 
         let mut gitignore = try!(File::create(format!("{}/.gitignore", self.name)));
         try!(writeln!(&mut gitignore, ".terraform"));
 
-        let mut main_tf = try!(File::create(format!("{}/terraform/main.tf", self.name)));
+        let mut main_tf = try!(File::create(format!("{}/terraform/kaws/main.tf", self.name)));
         try!(write!(
             &mut main_tf,
 r#"module "kaws" {{
     source = "{}"
 
-    ca_cert = "${{file("clusters/${{var.cluster}}/ca.pem")}}"
     cluster = "${{var.cluster}}"
     coreos_ami = "${{var.coreos_ami}}"
     domain = "${{var.domain}}"
@@ -41,29 +40,26 @@ r#"module "kaws" {{
     etcd_02_initial_cluster_state = "${{var.etcd_02_initial_cluster_state}}"
     etcd_03_initial_cluster_state = "${{var.etcd_03_initial_cluster_state}}"
     instance_size = "${{var.instance_size}}"
-    master_cert = "${{file("clusters/${{var.cluster}}/master.pem")}}"
-    master_key = "${{file("clusters/${{var.cluster}}/master-key-encrypted.base64")}}"
     masters_max_size = "${{var.masters_max_size}}"
     masters_min_size = "${{var.masters_min_size}}"
     nodes_max_size = "${{var.nodes_max_size}}"
     nodes_min_size = "${{var.nodes_min_size}}"
-    node_cert = "${{file("clusters/${{var.cluster}}/node.pem")}}"
-    node_key = "${{file("clusters/${{var.cluster}}/node-key-encrypted.base64")}}"
+    region = "${{var.region}}"
     ssh_key = "${{var.ssh_key}}"
     version = "${{var.version}}"
     zone_id = "${{var.zone_id}}"
+}}
+
+variable "cluster" {{
+  description = "The target cluster's name, e.g. `production`"
 }}
 
 variable "coreos_ami" {{
   description = "The AMI ID for the CoreOS image to use for servers, e.g. `ami-1234abcd`"
 }}
 
-variable "cluster" {{
-  description = "The target cluster's name"
-}}
-
 variable "domain" {{
-  description = "The domain name for the cluster"
+  description = "The domain name for the cluster, e.g. `example.com`"
 }}
 
 variable "etcd_01_initial_cluster_state" {{
@@ -79,35 +75,39 @@ variable "etcd_03_initial_cluster_state" {{
 }}
 
 variable "instance_size" {{
-  description = "The EC2 instance size"
+  description = "The EC2 instance size, e.g. `m3.medium`"
 }}
 
 variable "masters_max_size" {{
-  description = "The maximum number of EC2 instances the Kubernetes masters may autoscale to."
+  description = "The maximum number of EC2 instances the Kubernetes masters may autoscale to"
 }}
 
 variable "masters_min_size" {{
-  description = "The minimum number of EC2 instances the Kubernetes masters may autoscale to."
+  description = "The minimum number of EC2 instances the Kubernetes masters may autoscale to"
 }}
 
 variable "nodes_max_size" {{
-  description = "The maximum number of EC2 instances the Kubernetes nodes may autoscale to."
+  description = "The maximum number of EC2 instances the Kubernetes nodes may autoscale to"
 }}
 
 variable "nodes_min_size" {{
-  description = "The minimum number of EC2 instances the Kubernetes nodes may autoscale to."
+  description = "The minimum number of EC2 instances the Kubernetes nodes may autoscale to"
+}}
+
+variable "region" {{
+  description = "The AWS Region where the cluster will live, e.g. `us-east-1`"
 }}
 
 variable "ssh_key" {{
-  description = "Name of the SSH key in AWS that should have acccess to EC2 instances"
+  description = "Name of the SSH key in AWS that should have acccess to EC2 instances, e.g. `jimmy`"
 }}
 
 variable "version" {{
-  description = "Version of Kubernetes to use, e.g. 1.0.0"
+  description = "Version of Kubernetes to use, e.g. `1.0.0`"
 }}
 
 variable "zone_id" {{
-  description = "Zone ID of the Route 53 hosted zone"
+  description = "Zone ID of the Route 53 hosted zone, e.g. `Z111111QQQQQQQ`"
 }}
 "#,
             self.terraform_source,
