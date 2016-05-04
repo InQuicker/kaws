@@ -11,12 +11,11 @@ version = "0.2.0"
 
 [dependencies]
 ansi_term = "0.7.2"
-clap = "2.2.5"
+clap = "2.4.0"
 env_logger = "0.3.3"
 log = "0.3.6"
 rustc-serialize = "0.3.19"
 
 [dependencies.rusoto]
-default-features = false
-features = ["kms", "nightly"]
-git = "https://github.com/rusoto/rusoto.git"
+features = ["kms"]
+version = "0.13.0"

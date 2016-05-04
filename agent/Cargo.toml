@@ -10,16 +10,11 @@ repository = "https://github.com/InQuicker/kaws"
 version = "0.1.0"
 
 [dependencies]
-clap = "2.2.5"
+clap = "2.4.0"
 env_logger = "0.3.3"
+etcd = "0.5.3"
 rustc-serialize = "0.3.19"
 
-[dependencies.etcd]
-default-features = false
-features = ["nightly"]
-version = "0.5.3"
-
 [dependencies.rusoto]
-default-features = false
-features = ["kms", "nightly"]
-git = "https://github.com/rusoto/rusoto.git"
+features = ["kms"]
+version = "0.13.0"
