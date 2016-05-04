@@ -25,7 +25,7 @@ impl Agent {
             decryptor: try!(Decryptor::new(
                 matches.value_of("region").expect("clap should have required region")
             )),
-            etcd: Client::new(&["http://etcd:2379"]).expect("Failed to create etcd client"),
+            etcd: Client::new(&["http://127.0.0.1:2379"]).expect("Failed to create etcd client"),
             role: matches.value_of("role").expect("clap should have required role").parse().expect(
               "clap should have required a valid value for role"
             )
