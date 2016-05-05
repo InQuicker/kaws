@@ -99,6 +99,11 @@ resource "aws_kms_key" "pki" {
   policy = "${file("clusters/${var.cluster}/kms-policy.json")}"
 }
 
+resource "aws_kms_alias" "pki" {
+  name = "alias/kaws-${var.cluster}"
+  target_key_id = "${aws_kms_key.pki.key_id}"
+}
+
 resource "aws_security_group" "balancers" {
   name = "kaws-balancers-${var.cluster}"
   description = "Load balancers"
