@@ -2,7 +2,7 @@ resource "null_resource" "generate_pki" {
   depends_on = ["aws_instance.etcd_01", "aws_instance.etcd_02", "aws_instance.etcd_03"]
 
   provisioner "local-exec" {
-    command = "kaws cluster genpki ${var.cluster} --kms-key ${aws_kms_key.pki.key_id}"
+    command = "kaws cluster genpki ${var.cluster} --kms-key ${aws_kms_key.pki.key_id} --region ${var.region}"
   }
 }
 

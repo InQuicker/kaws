@@ -358,6 +358,14 @@ fn cluster_genpki<'a, 'b>() -> App<'a, 'b> {
                 .required(true)
                 .help("KMS customer master key ID, e.g. \"12345678-1234-1234-1234-123456789012\"")
         )
+        .arg(
+            Arg::with_name("region")
+                .short("r")
+                .long("region")
+                .takes_value(true)
+                .required(true)
+                .help("AWS Region where the KMS key lives, e.g. \"us-east-1\"")
+        )
 }
 
 fn cluster_plan<'a, 'b>() -> App<'a, 'b> {
