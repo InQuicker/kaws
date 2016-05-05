@@ -33,22 +33,3 @@ resource "null_resource" "sync_pki" {
     node_key = "${file("clusters/${var.cluster}/node-key-encrypted.base64")}"
   }
 }
-
-resource "null_resource" "start_kube_addons" {
-  connection {
-    user = "core"
-    host = "${aws_instance.k8s_master_01.private_ip}"
-    bastion_host = "${aws_instance.bastion.public_ip}"
-  }
-
-  depends_on = ["aws_autoscaling_group.k8s_masters"]
-
-  provisioner "remote-exec" {
-    inline = [
-      "until curl --silent http://127.0.0.1:8080/version; do sleep 5; done",
-      "curl --silent -X POST -d @/srv/kubernetes/kube-system.json http://127.0.0.1:8080/api/v1/namespaces",
-      "curl --silent -X POST -d @/srv/kubernetes/kube-dns-rc.json http://127.0.0.1:8080/api/v1/namespaces/kube-system/replicationcontrollers",
-      "curl --silent -X POST -d @/srv/kubernetes/kube-dns-svc.json http://127.0.0.1:8080/api/v1/namespaces/kube-system/services",
-    ]
-  }
-}
