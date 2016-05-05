@@ -134,7 +134,7 @@ impl<'a> Cluster<'a> {
             let iam_user_arns = self.iam_users.as_ref().expect(
                 "IAM users should have been required by clap"
             ).iter().map(|iam_user| {
-                format!("\"arn::aws::iam::{}:user/{}\"", aws_account_id, iam_user)
+                format!("\"arn:aws:iam::{}:user/{}\"", aws_account_id, iam_user)
             }).collect::<Vec<String>>().join(",");
 
             try!(write!(
