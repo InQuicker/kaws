@@ -174,8 +174,8 @@ impl<'a> Cluster<'a> {
       "Effect": "Allow",
       "Principal": {{
         "AWS": [
-          "arn:aws:iam::{aws_account_id}:role/kaws_k8s_master_{cluster}",
-          "arn:aws:iam::{aws_account_id}:role/kaws_k8s_node_{cluster}",
+          "arn:aws:iam::{aws_account_id}:role/kaws-k8s-master-{cluster}",
+          "arn:aws:iam::{aws_account_id}:role/kaws-k8s-node-{cluster}",
           {iam_user_arns}
         ]
       }},
@@ -193,8 +193,8 @@ impl<'a> Cluster<'a> {
       "Effect": "Allow",
       "Principal": {{
         "AWS": [
-          "arn:aws:iam::{aws_account_id}:role/kaws_k8s_master_{cluster}",
-          "arn:aws:iam::{aws_account_id}:role/kaws_k8s_node_{cluster}",
+          "arn:aws:iam::{aws_account_id}:role/kaws-k8s-master-{cluster}",
+          "arn:aws:iam::{aws_account_id}:role/kaws-k8s-node-{cluster}",
           {iam_user_arns}
         ]
       }},
@@ -241,7 +241,7 @@ impl<'a> Cluster<'a> {
                 "-out",
                 &self.master_csr_path,
                 "-subj",
-                &format!("/CN=kaws-{}-master", self.name),
+                &format!("/CN=kaws-master-{}", self.name),
                 "-config",
                 &self.openssl_config_path,
             ]));
@@ -295,7 +295,7 @@ impl<'a> Cluster<'a> {
                 "-out",
                 &self.node_csr_path,
                 "-subj",
-                &format!("/CN=kaws-{}-node", self.name),
+                &format!("/CN=kaws-node-{}", self.name),
             ]));
         });
 
@@ -375,7 +375,7 @@ IP.1 = 10.3.0.1
                 "-out",
                 &self.ca_cert_path,
                 "-subj",
-                &format!("/CN=kaws-{}-ca", self.name),
+                &format!("/CN=kaws-ca-{}", self.name),
             ]));
         });
 
