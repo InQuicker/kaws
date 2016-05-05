@@ -67,7 +67,6 @@ impl<'a> Terraform<'a> {
             "-backup=-",
             &format!("-state=clusters/{}/terraform.tfstate", self.cluster),
             &format!("-var-file=clusters/{}/terraform.tfvars", self.cluster),
-            "terraform",
         ]);
 
         if self.terraform_args.is_some() {
