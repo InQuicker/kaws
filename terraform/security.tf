@@ -1,15 +1,15 @@
 resource "aws_iam_instance_profile" "k8s_master" {
-  name = "kaws_k8s_master_${var.cluster}"
+  name = "kaws-k8s-master-${var.cluster}"
   roles = ["${aws_iam_role.k8s_master.name}"]
 }
 
 resource "aws_iam_instance_profile" "k8s_node" {
-  name = "kaws_k8s_node_${var.cluster}"
+  name = "kaws-k8s-node-${var.cluster}"
   roles = ["${aws_iam_role.k8s_node.name}"]
 }
 
 resource "aws_iam_role" "k8s_master" {
-  name = "kaws_k8s_master_${var.cluster}"
+  name = "kaws-k8s-master-${var.cluster}"
   assume_role_policy = <<EOS
 {
   "Version": "2012-10-17",
@@ -27,7 +27,7 @@ EOS
 }
 
 resource "aws_iam_role" "k8s_node" {
-  name = "kaws_k8s_node_${var.cluster}"
+  name = "kaws-k8s-node-${var.cluster}"
   assume_role_policy = <<EOS
 {
   "Version": "2012-10-17",
@@ -45,7 +45,7 @@ EOS
 }
 
 resource "aws_iam_role_policy" "k8s_master" {
-  name = "kaws_k8s_master_${var.cluster}"
+  name = "kaws-k8s-master-${var.cluster}"
   role = "${aws_iam_role.k8s_master.id}"
   policy = <<EOS
 {
@@ -67,7 +67,7 @@ EOS
 }
 
 resource "aws_iam_role_policy" "k8s_node" {
-  name = "kaws_k8s_node_${var.cluster}"
+  name = "kaws-k8s-node-${var.cluster}"
   role = "${aws_iam_role.k8s_node.id}"
   policy = <<EOS
 {
@@ -100,7 +100,7 @@ resource "aws_kms_key" "pki" {
 }
 
 resource "aws_security_group" "balancers" {
-  name = "balancers"
+  name = "kaws-balancers-${var.cluster}"
   description = "Load balancers"
   vpc_id = "${aws_vpc.kubernetes.id}"
 
@@ -126,13 +126,13 @@ resource "aws_security_group" "balancers" {
   }
 
   tags {
-    Name = "kaws_balancers"
+    Name = "kaws-balancers-${var.cluster}"
     Cluster = "${var.cluster}"
   }
 }
 
 resource "aws_security_group" "bastion" {
-  name = "bastion"
+  name = "kaws-bastion-${var.cluster}"
   description = "Bastion for SSH access"
   vpc_id = "${aws_vpc.kubernetes.id}"
 
@@ -151,13 +151,13 @@ resource "aws_security_group" "bastion" {
   }
 
   tags {
-    Name = "kaws_bastion"
+    Name = "kaws-bastion-${var.cluster}"
     Cluster = "${var.cluster}"
   }
 }
 
 resource "aws_security_group" "etcd" {
-  name = "etcd"
+  name = "kaws-etcd-${var.cluster}"
   description = "etcd quorum"
   vpc_id = "${aws_vpc.kubernetes.id}"
 
@@ -184,13 +184,13 @@ resource "aws_security_group" "etcd" {
   }
 
   tags {
-    Name = "kaws_etcd"
+    Name = "kaws-etcd-${var.cluster}"
     Cluster = "${var.cluster}"
   }
 }
 
 resource "aws_security_group" "kubernetes" {
-  name = "kubernetes"
+  name = "kaws-k8s-${var.cluster}"
   description = "Kubernetes masters and nodes"
   vpc_id = "${aws_vpc.kubernetes.id}"
 
@@ -237,7 +237,7 @@ resource "aws_security_group" "kubernetes" {
   }
 
   tags {
-    Name = "kaws_kubernetes"
+    Name = "kaws-k8s-${var.cluster}"
     Cluster = "${var.cluster}"
   }
 }

@@ -7,7 +7,7 @@ resource "aws_instance" "bastion" {
   vpc_security_group_ids = ["${aws_security_group.bastion.id}"]
 
   tags {
-    Name = "kaws_bastion"
+    Name = "kaws-bastion-${var.cluster}"
     Cluster = "${var.cluster}"
   }
 }
@@ -23,7 +23,7 @@ resource "aws_instance" "etcd_01" {
   vpc_security_group_ids = ["${aws_security_group.etcd.id}"]
 
   tags {
-    Name = "kaws_etcd_01"
+    Name = "kaws-etcd-${var.cluster}-01"
     Cluster = "${var.cluster}"
   }
 }
@@ -39,7 +39,7 @@ resource "aws_instance" "etcd_02" {
   vpc_security_group_ids = ["${aws_security_group.etcd.id}"]
 
   tags {
-    Name = "kaws_etcd_02"
+    Name = "kaws-etcd-${var.cluster}-02"
     Cluster = "${var.cluster}"
   }
 }
@@ -55,7 +55,7 @@ resource "aws_instance" "etcd_03" {
   vpc_security_group_ids = ["${aws_security_group.etcd.id}"]
 
   tags {
-    Name = "kaws_etcd_03"
+    Name = "kaws-etcd-${var.cluster}-03"
     Cluster = "${var.cluster}"
   }
 }
@@ -66,7 +66,7 @@ resource "aws_launch_configuration" "k8s_masters" {
   image_id = "${var.coreos_ami}"
   instance_type = "${var.instance_size}"
   key_name = "${var.ssh_key}"
-  name_prefix = "kaws_k8s_masters_"
+  name_prefix = "kaws-k8s-masters-${var.cluster}-"
   security_groups = ["${aws_security_group.kubernetes.id}"]
   user_data = "${template_file.master_cloud_config.rendered}"
 
@@ -83,7 +83,7 @@ resource "aws_autoscaling_group" "k8s_masters" {
   load_balancers = ["${aws_elb.k8s_masters.name}"]
   max_size = "${var.masters_max_size}"
   min_size = "${var.masters_min_size}"
-  name = "kaws_k8s_masters"
+  name = "kaws-k8s-masters-${var.cluster}"
   vpc_zone_identifier = ["${aws_subnet.public.id}"]
 
   lifecycle {
@@ -92,7 +92,7 @@ resource "aws_autoscaling_group" "k8s_masters" {
 
   tag {
     key = "Name"
-    value = "kaws_k8s_masters"
+    value = "kaws-k8s-masters-${var.cluster}"
     propagate_at_launch = true
   }
 
@@ -109,7 +109,7 @@ resource "aws_launch_configuration" "k8s_nodes" {
   image_id = "${var.coreos_ami}"
   instance_type = "${var.instance_size}"
   key_name = "${var.ssh_key}"
-  name_prefix = "kaws_k8s_nodes_"
+  name_prefix = "kaws-k8s-nodes-${var.cluster}-"
   security_groups = ["${aws_security_group.kubernetes.id}"]
   user_data = "${template_file.node_cloud_config.rendered}"
 
@@ -126,7 +126,7 @@ resource "aws_autoscaling_group" "k8s_nodes" {
   launch_configuration = "${aws_launch_configuration.k8s_nodes.name}"
   max_size = "${var.nodes_max_size}"
   min_size = "${var.nodes_min_size}"
-  name = "kaws_k8s_nodes"
+  name = "kaws-k8s-nodes-${var.cluster}"
   vpc_zone_identifier = ["${aws_subnet.public.id}"]
 
   lifecycle {
@@ -135,7 +135,7 @@ resource "aws_autoscaling_group" "k8s_nodes" {
 
   tag {
     key = "Name"
-    value = "kaws_k8s_masters"
+    value = "kaws-k8s-masters-${var.cluster}"
     propagate_at_launch = true
   }
 

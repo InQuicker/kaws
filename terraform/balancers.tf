@@ -1,6 +1,6 @@
 resource "aws_elb" "k8s_masters" {
   connection_draining = true
-  name = "k8s-masters"
+  name = "kaws-k8s-masters-${var.cluster}"
   security_groups = ["${aws_security_group.balancers.id}"]
   subnets = ["${aws_subnet.public.id}"]
 
@@ -20,7 +20,7 @@ resource "aws_elb" "k8s_masters" {
   }
 
   tags {
-    Name = "k8s_masters"
+    Name = "kaws-k8s-masters"
     Cluster = "${var.cluster}"
   }
 }
