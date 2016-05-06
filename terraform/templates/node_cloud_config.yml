@@ -30,7 +30,13 @@ coreos:
         After=etcd2.service
         [Service]
         TimeoutStartSec=0
-        ExecStart=/usr/bin/rkt --insecure-options image run --stage1-from-dir stage1-fly.aci docker://inquicker/kaws-agent -- run --region ${region} --role node
+        ExecStart=/usr/bin/rkt --insecure-options image run \
+          --stage1-from-dir stage1-fly.aci \
+          docker://inquicker/kaws-agent \
+          -- \
+          run \
+          --region ${region} \
+          --role node
         KillMode=mixed
         Restart=always
         [Install]
@@ -43,18 +49,36 @@ coreos:
         Requires=kaws-agent.service
         After=kaws-agent.service
         [Service]
-        ExecStart=/usr/bin/kubelet \
+        ExecStart=/usr/bin/rkt run \
+          --volume etc-kubernetes,kind=host,source=/etc/kubernetes \
+          --volume etc-ssl-certs,kind=host,source=/usr/share/ca-certificates \
+          --volume var-lib-docker,kind=host,source=/var/lib/docker \
+          --volume var-lib-kubelet,kind=host,source=/var/lib/kubelet \
+          --volume os-release,kind=host,source=/usr/lib/os-release \
+          --volume run,kind=host,source=/run \
+          --mount volume=etc-kubernetes,target=/etc/kubernetes \
+          --mount volume=etc-ssl-certs,target=/etc/ssl/certs \
+          --mount volume=var-lib-docker,target=/var/lib/docker \
+          --mount volume=var-lib-kubelet,target=/var/lib/kubelet \
+          --mount volume=os-release,target=/etc/os-release \
+          --mount volume=run,target=/run \
+          --trust-keys-from-https \
+          docker://gcr.io/google_containers/hyperkube:v${version} \
+          --exec /hyperkube \
+          -- \
+          kubelet \
           --allow-privileged=true \
           --api-servers=https://${master_ip}:443 \
           --cadvisor-port=0 \
-          --cluster-domain=cluster.local \
           --cluster-dns=10.3.0.10 \
+          --cluster-domain=cluster.local \
           --config=/etc/kubernetes/manifests \
           --hostname-override=$private_ipv4 \
           --kubeconfig=/etc/kubernetes/node-kubeconfig.yml \
+          --logtostderr=true \
+          --register-node=true \
           --tls-cert-file=/etc/kubernetes/ssl/node.pem \
           --tls-private-key-file=/etc/kubernetes/ssl/node-key.pem \
-          --logtostderr=true \
           --v=2
         Restart=always
         RestartSec=10
@@ -78,6 +102,7 @@ write_files:
           - proxy
           - --master=https://${master_ip}:443
           - --kubeconfig=/etc/kubernetes/node-kubeconfig.yml
+          - --proxy-mode=iptables
           securityContext:
             privileged: true
           volumeMounts:
