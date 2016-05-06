@@ -8,10 +8,6 @@ coreos:
   flannel:
     etcd_endpoints: http://127.0.0.1:2379
     interface: $private_ipv4
-  fleet:
-    etcd-servers: http://127.0.0.1:2379
-    metadata: etcd=proxy,kubernetes=master
-    public-ip: $private_ipv4
   units:
     - name: docker.service
       command: start
