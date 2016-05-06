@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::io::Write;
+use std::process::Command;
 use std::str::FromStr;
 
 use clap::ArgMatches;
@@ -79,7 +80,7 @@ impl Agent {
                     false,
                 ));
                 try!(self.refresh_item(
-                    "/kaws/pki/master-key.pem",
+                    "/kaws/pki/master-key-encrypted.base64",
                     "/etc/kubernetes/ssl/master-key.pem",
                     true,
                 ));
@@ -91,12 +92,14 @@ impl Agent {
                     false,
                 ));
                 try!(self.refresh_item(
-                    "/kaws/pki/node-key.pem",
+                    "/kaws/pki/node-key-encrypted.base64",
                     "/etc/kubernetes/ssl/node-key.pem",
                     true,
                 ));
             }
         }
+
+        try!(self.restart_kubelet());
 
         Ok(None)
     }
@@ -129,6 +132,21 @@ impl Agent {
         match file.write_all(value.as_bytes()) {
             Ok(_) => Ok(None),
             Err(error) => Err(error.to_string()),
+        }
+    }
+
+    fn restart_kubelet(&self) -> Result<Option<String>, String> {
+        match Command::new("sudo").args(&["systemctl", "restart", "kubelet"]).status() {
+            Ok(status) => {
+                if status.success() {
+                    return Ok(None)
+                } else if let Some(code) = status.code() {
+                    return Err(format!("Failed to restart kubelet: exit code {}", code));
+                } else {
+                    return Err("Failed to restart kubelet: non-zero exit code.".to_owned());
+                }
+            }
+            Err(error) => return Err(format!("Failed to restart kubelet: {}", error)),
         }
     }
 }
