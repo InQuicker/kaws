@@ -15,13 +15,39 @@ resource "null_resource" "sync_pki" {
 
   depends_on = ["null_resource.generate_pki"]
 
+  provisioner "file" {
+    source = "clusters/${var.cluster}/ca.pem"
+    destionation = "/tmp/ca.pem"
+  }
+
+  provisioner "file" {
+    source = "clusters/${var.cluster}/master.pem"
+    destionation = "/tmp/master.pem"
+  }
+
+  provisioner "file" {
+    source = "clusters/${var.cluster}/master-key-encrypted.base64"
+    destionation = "/tmp/master-key-encrypted.base64"
+  }
+
+  provisioner "file" {
+    source = "clusters/${var.cluster}/node.pem"
+    destionation = "/tmp/node.pem"
+  }
+
+  provisioner "file" {
+    source = "clusters/${var.cluster}/node-key-encrypted.base64"
+    destionation = "/tmp/node-key-encrypted.base64"
+  }
+
   provisioner "remote-exec" {
     inline = [
-      "etcdctl set /kaws/pki/ca-cert '${file("clusters/${var.cluster}/ca.pem")}'",
-      "etcdctl set /kaws/pki/master-cert '${file("clusters/${var.cluster}/master.pem")}'",
-      "etcdctl set /kaws/pki/master-key '${file("clusters/${var.cluster}/master-key-encrypted.base64")}'",
-      "etcdctl set /kaws/pki/node-cert '${file("clusters/${var.cluster}/node.pem")}'",
-      "etcdctl set /kaws/pki/node-key '${file("clusters/${var.cluster}/node-key-encrypted.base64")}'",
+      "etcdctl set /kaws/pki/ca.pem < /tmp/ca.pem",
+      "etcdctl set /kaws/pki/master.pem < /tmp/master.pem",
+      "etcdctl set /kaws/pki/master-key-encrypted.base64 < /tmp/master-key-encrypted.base64",
+      "etcdctl set /kaws/pki/node.pem < /tmp/node.pem",
+      "etcdctl set /kaws/pki/node-key-encrypted.base64 < /tmp/node-key-encrypted.base64",
+      "rm /tmp/{ca.pem,master.pem,master-key-encrypted.base64,node.pem,node-key-encrypted.base64}",
     ]
   }
 
