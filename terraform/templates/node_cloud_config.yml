@@ -34,11 +34,9 @@ coreos:
         After=etcd2.service
         [Service]
         TimeoutStartSec=0
-        ExecStartPre=-/usr/bin/docker kill kaws-agent
-        ExecStartPre=-/usr/bin/docker rm kaws-agent
-        ExecStartPre=/usr/bin/docker pull inquicker/kaws-agent
-        ExecStart=/usr/bin/docker run --name kaws-agent --net host inquicker/kaws-agent run --region ${region} --role node
-        ExecStop=/usr/bin/docker stop kaws-agent
+        ExecStart=/usr/bin/rkt --insecure-options image run --stage1-from-dir stage1-fly.aci docker://inquicker/kaws-agent -- run --region ${region} --role node
+        KillMode=mixed
+        Restart=always
         [Install]
         WantedBy=multi-user.target
     - name: kubelet.service
