@@ -91,8 +91,8 @@ impl<'a> Cluster<'a> {
         try!(self.create_pki_stubs());
 
         Ok(Some(format!(
-            "Cluster \"{}\" initialized!",
-            self.name,
+            "Cluster \"{name}\" initialized! Commit clusters/{name} to Git.",
+            name = self.name,
         )))
     }
 
