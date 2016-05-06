@@ -92,7 +92,7 @@ resource "aws_autoscaling_group" "k8s_masters" {
 
   tag {
     key = "Name"
-    value = "kaws-k8s-masters-${var.cluster}"
+    value = "kaws-k8s-master-${var.cluster}"
     propagate_at_launch = true
   }
 
@@ -135,7 +135,7 @@ resource "aws_autoscaling_group" "k8s_nodes" {
 
   tag {
     key = "Name"
-    value = "kaws-k8s-masters-${var.cluster}"
+    value = "kaws-k8s-node-${var.cluster}"
     propagate_at_launch = true
   }
 
