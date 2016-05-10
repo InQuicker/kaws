@@ -36,25 +36,9 @@ fn admin_create<'a, 'b>() -> App<'a, 'b> {
                 .required(true)
                 .help("The new administrator's name")
         )
-        .arg(
-            Arg::with_name("kms-key")
-                .short("k")
-                .long("kms-key")
-                .takes_value(true)
-                .required(true)
-                .help("KMS customer master key ID, e.g. \"12345678-1234-1234-1234-123456789012\"")
-        )
-        .arg(
-            Arg::with_name("region")
-                .short("r")
-                .long("region")
-                .takes_value(true)
-                .required(true)
-                .help("AWS Region where the KMS key lives, e.g. \"us-east-1\"")
-        )
         .after_help(
             "\nCreates the following files:\n\n\
-            * clusters/CLUSTER/NAME-key-encrypted.base64: The KMS-encrypted private key\n\
+            * clusters/CLUSTER/NAME-key.pem: The admin's private key\n\
             * clusters/CLUSTER/NAME.csr: The certificate signing request\n\n\
             Generated files are only valid for the specified cluster."
         )
@@ -76,14 +60,6 @@ fn admin_install<'a, 'b>() -> App<'a, 'b> {
                 .help("The new administrator's name")
         )
         .arg(
-            Arg::with_name("kms-key")
-                .short("k")
-                .long("kms-key")
-                .takes_value(true)
-                .required(true)
-                .help("KMS customer master key ID, e.g. \"12345678-1234-1234-1234-123456789012\"")
-        )
-        .arg(
             Arg::with_name("domain")
                 .short("d")
                 .long("domain")
@@ -91,19 +67,11 @@ fn admin_install<'a, 'b>() -> App<'a, 'b> {
                 .required(true)
                 .help("The base domain name for the cluster, e.g. \"example.com\"")
         )
-        .arg(
-            Arg::with_name("region")
-                .short("r")
-                .long("region")
-                .takes_value(true)
-                .required(true)
-                .help("AWS Region where the KMS key lives, e.g. \"us-east-1\"")
-        )
         .after_help(
             "\nThe following files are expected by this command:\n\n\
             * clusters/CLUSTER/ca.pem: The CA certificate\n\
             * clusters/CLUSTER/NAME.pem: The client certificate\n\
-            * clusters/CLUSTER/NAME-key-encrypted.base64: The KMS-encrypted private key"
+            * clusters/CLUSTER/NAME-key.pem: The admin's private key"
         )
 }
 

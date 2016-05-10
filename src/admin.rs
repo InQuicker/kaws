@@ -1,4 +1,4 @@
-use std::fs::{create_dir_all, remove_file};
+use std::fs::create_dir_all;
 
 use clap::ArgMatches;
 use rusoto::ChainProvider;
@@ -12,9 +12,9 @@ pub struct Admin<'a> {
     aws_credentials_provider: ChainProvider,
     cluster: &'a str,
     domain: Option<&'a str>,
-    kms_master_key_id: &'a str,
+    kms_master_key_id: Option<&'a str>,
     name: Option<&'a str>,
-    region: &'a str,
+    region: Option<&'a str>,
 }
 
 impl<'a> Admin<'a> {
@@ -26,9 +26,9 @@ impl<'a> Admin<'a> {
             ),
             cluster: matches.value_of("cluster").expect("clap should have required cluster"),
             domain: matches.value_of("domain"),
-            kms_master_key_id: matches.value_of("kms-key").expect("clap should have required kms-key"),
+            kms_master_key_id: matches.value_of("kms-key"),
             name: matches.value_of("name"),
-            region: matches.value_of("region").expect("clap should have required region"),
+            region: matches.value_of("region"),
         }
     }
 
@@ -37,12 +37,6 @@ impl<'a> Admin<'a> {
 
         let admin_key_path = format!(
             "clusters/{}/{}-key.pem",
-            self.cluster,
-            name,
-        );
-
-        let encrypted_admin_key_path = format!(
-            "clusters/{}/{}-key-encrypted.base64",
             self.cluster,
             name,
         );
@@ -81,22 +75,6 @@ impl<'a> Admin<'a> {
             ]));
         });
 
-        // encrypt private key
-        let mut encryptor = Encryptor::new(
-            self.aws_credentials_provider.clone(),
-            try!(self.region.parse()),
-            self.kms_master_key_id,
-        );
-
-        log_wrap!("Encrypting Kubernetes admin private key", {
-            try!(encryptor.encrypt_file(&admin_key_path, &encrypted_admin_key_path));
-        });
-
-        // Remove unencrypted private key
-        log_wrap!(&format!("Removing unencrypted file {}", admin_key_path), {
-            try!(remove_file(admin_key_path));
-        });
-
         Ok(Some(format!(
             "Certificate signing request created! Commit changes to Git and ask an\n\
             administrator to generate your client certificate."
@@ -106,24 +84,6 @@ impl<'a> Admin<'a> {
     pub fn install(&mut self) -> KawsResult {
         let domain = self.domain.expect("clap should have required domain");
         let name = self.name.expect("clap should have required name");
-
-        let admin_key_path = format!("clusters/{}/{}-key.pem", self.cluster, name);
-        let encrypted_admin_key_path = format!(
-            "clusters/{}/{}-key-encrypted.base64",
-            self.cluster,
-            name
-        );
-
-        let mut encryptor = Encryptor::new(
-            self.aws_credentials_provider.clone(),
-            try!(self.region.parse()),
-            self.kms_master_key_id,
-        );
-
-        // decrypt the key
-        log_wrap!("Decrypting Kubernetes admin private key", {
-            try!(encryptor.decrypt_file(&encrypted_admin_key_path, &admin_key_path));
-        });
 
         log_wrap!("Configuring kubectl", {
             // set cluster
@@ -170,6 +130,8 @@ impl<'a> Admin<'a> {
 
     pub fn sign(&mut self) -> KawsResult {
         let name = self.name.expect("clap should have required name");
+        let region = self.region.expect("clap should have required region");
+        let kms_master_key_id = self.kms_master_key_id.expect("clap should have required kms key");
 
         let admin_csr_path = format!("clusters/{}/{}.csr", self.cluster, name);
         let admin_cert_path = format!("clusters/{}/{}.pem", self.cluster, name);
@@ -179,8 +141,8 @@ impl<'a> Admin<'a> {
 
         let mut encryptor = Encryptor::new(
             self.aws_credentials_provider.clone(),
-            try!(self.region.parse()),
-            self.kms_master_key_id,
+            try!(region.parse()),
+            kms_master_key_id,
         );
 
         // decrypt CA key
