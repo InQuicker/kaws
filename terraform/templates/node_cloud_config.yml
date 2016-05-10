@@ -33,7 +33,9 @@ coreos:
         ExecStartPre=/bin/bash -c 'until curl -sf "http://127.0.0.1:2379/v2/keys/kaws"; do sleep 5; done'
         ExecStart=/usr/bin/rkt --insecure-options image run \
           --volume etc-kubernetes,kind=host,source=/etc/kubernetes \
+          --volume etc-resolve-conf,kind=host,source=/etc/resolv.conf \
           --mount volume=etc-kubernetes,target=/etc/kubernetes \
+          --mount volume=etc-resolve-conf,target=/etc/resolv.conf \
           --stage1-from-dir stage1-fly.aci \
           docker://inquicker/kaws-agent \
           -- \
