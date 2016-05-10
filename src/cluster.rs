@@ -19,6 +19,7 @@ pub struct Cluster<'a> {
     encrypted_ca_key_path: String,
     encrypted_master_key_path: String,
     encrypted_node_key_path: String,
+    gitignore_path: String,
     iam_users: Option<Vec<&'a str>>,
     instance_size: Option<&'a str>,
     kms_master_key_id: Option<&'a str>,
@@ -59,6 +60,7 @@ impl<'a> Cluster<'a> {
             encrypted_ca_key_path: format!("clusters/{}/ca-key-encrypted.base64", name),
             encrypted_master_key_path: format!("clusters/{}/master-key-encrypted.base64", name),
             encrypted_node_key_path: format!("clusters/{}/node-key-encrypted.base64", name),
+            gitignore_path: format!("clusters/{}/.gitignore", name),
             name: name,
             iam_users: matches.values_of("iam-users").map(|values| values.collect()),
             instance_size: matches.value_of("size"),
@@ -85,6 +87,7 @@ impl<'a> Cluster<'a> {
 
     pub fn init(&mut self) -> KawsResult {
         try!(self.create_directories());
+        try!(self.create_gitignore());
         try!(self.create_tfvars());
         try!(self.create_openssl_config());
         try!(self.create_kms_policy());
@@ -394,6 +397,16 @@ IP.1 = 10.3.0.1
         for path in paths.iter() {
             try!(File::create(path));
         }
+
+        Ok(None)
+    }
+
+    fn create_gitignore(&self) -> KawsResult {
+        log_wrap!("Creating .gitignore file", {
+            let mut file = try!(File::create(&self.gitignore_path));
+
+            try!(write!(file, "*-key.pem"));
+        });
 
         Ok(None)
     }
