@@ -85,6 +85,29 @@ coreos:
         RestartSec=10
         [Install]
         WantedBy=multi-user.target
+    - name: restart-kubelet@.path
+      content: |
+        [Unit]
+        Description=Restart kubelet if %f changes
+        [Path]
+        PathChanged=%f
+        Unit=restart-kube.service
+    - name: restart-kubelet@etc-kubernetes-ssl-ca.pem.path
+      enable: true
+      command: start
+    - name: restart-kubelet@etc-kubernetes-ssl-node.pem.path
+      enable: true
+      command: start
+    - name: restart-kubelet@etc-kubernetes-ssl-node\x2dkey.pem.path
+      enable: true
+      command: start
+    - name: restart-kubelet.service
+      content: |
+        [Unit]
+        Description=Restart kubelet
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/bin/systemctl restart kubelet
 write_files:
   - path: /etc/kubernetes/manifests/kube-proxy.yml
     content: |
