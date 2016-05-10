@@ -59,6 +59,7 @@ coreos:
         Requires=kaws-agent.service
         After=kaws-agent.service
         [Service]
+        ExecStartPre=/usr/bin/mkdir -p /var/lib/kubelet
         ExecStart=/usr/bin/rkt --insecure-options image run \
           --volume etc-kubernetes,kind=host,source=/etc/kubernetes \
           --volume etc-ssl-certs,kind=host,source=/usr/share/ca-certificates \
