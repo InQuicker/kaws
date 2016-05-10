@@ -21,10 +21,15 @@ impl Decryptor {
     }
 
     pub fn decrypt<'a>(&mut self, encoded_ciphertext: &'a str) -> Result<String, String> {
+        let ciphertext = match encoded_ciphertext.from_base64() {
+            Ok(ciphertext) => ciphertext,
+            Err(error) => return Err(error.to_string()),
+        };
+
         let request = DecryptRequest {
             encryption_context: None,
             grant_tokens: None,
-            ciphertext_blob: encoded_ciphertext.as_bytes().to_vec(),
+            ciphertext_blob: ciphertext,
         };
 
         let decryption_response = match self.client.decrypt(&request) {
@@ -32,18 +37,13 @@ impl Decryptor {
             Err(error) => return Err(error.to_string()),
         };
 
-        let encoded_plaintext = match decryption_response.plaintext {
+        let plaintext = match decryption_response.plaintext {
             Some(plaintext) => plaintext,
             None => return Err("No plaintext was returned from KMS".to_owned()),
         };
 
-        let plaintext_bytes = match encoded_plaintext.from_base64() {
-            Ok(plaintext_bytes) => plaintext_bytes,
-            Err(error) => return Err(error.to_string()),
-        };
-
-        match from_utf8(&plaintext_bytes) {
-            Ok(plaintext) => Ok(plaintext.to_owned()),
+        match from_utf8(&plaintext) {
+            Ok(utf8) => Ok(utf8.to_owned()),
             Err(error) => return Err(error.to_string()),
         }
     }
