@@ -34,11 +34,11 @@ impl Agent {
 
     pub fn run(mut self) -> Result<Option<String>, String> {
         println!("kaws-agent is starting...");
-        println!("Checking current modifiedIndex of /kaws key...");
+        println!("Checking initial modifiedIndex of /kaws key...");
         let mut modified_index = match self.etcd.get("/kaws", false, false, false) {
             Ok(key_space_info) => match key_space_info.node.unwrap().modified_index {
                 Some(new_index) => new_index,
-                None => return Err("WARNING: etcd node for /kaws had no modified index".to_owned()),
+                None => return Err("WARNING: etcd node for /kaws had no initial modified index".to_owned()),
             },
             Err(errors) => return Err(errors[0].to_string()),
         };
@@ -49,7 +49,7 @@ impl Agent {
 
         loop {
             println!("Watching /kaws key...");
-            match self.etcd.watch("/kaws", Some(modified_index), true) {
+            match self.etcd.watch("/kaws", Some(modified_index + 1), true) {
                 Ok(key_space_info) => {
                     if let Err(error) = self.refresh() {
                         println!("WARNING: {}", error);
