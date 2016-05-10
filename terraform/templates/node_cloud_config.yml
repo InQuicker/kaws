@@ -54,7 +54,7 @@ coreos:
         Requires=kaws-agent.service
         After=kaws-agent.service
         [Service]
-        ExecStartPre=/usr/bin/mkdir -p /var/lib/kubelet
+        ExecStartPre=/usr/bin/mkdir -p /var/lib/kubelet /opt/bin
         ExecStartPre=/usr/bin/curl -L -o /opt/bin/kubelet -z /opt/bin/kubelet https://storage.googleapis.com/kubernetes-release/release/v${version}/bin/linux/amd64/kubelet
         ExecStartPre=/usr/bin/chmod +x /opt/bin/kubelet
         ExecStart=/opt/bin/kubelet \
