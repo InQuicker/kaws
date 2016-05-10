@@ -39,7 +39,7 @@ fn admin_create<'a, 'b>() -> App<'a, 'b> {
         .after_help(
             "\nCreates the following files:\n\n\
             * clusters/CLUSTER/NAME-key.pem: The admin's private key\n\
-            * clusters/CLUSTER/NAME.csr: The certificate signing request\n\n\
+            * clusters/CLUSTER/NAME-csr.pem: The certificate signing request\n\n\
             Generated files are only valid for the specified cluster."
         )
 }
@@ -102,7 +102,7 @@ fn admin_sign<'a, 'b>() -> App<'a, 'b> {
             "\nThe following files are expected by this command:\n\n\
             * clusters/CLUSTER/ca.pem: The CA certificate\n\
             * clusters/CLUSTER/ca-key-encrypted.base64: The KMS-encrypted CA private key\n\
-            * clusters/CLUSTER/NAME.csr: The requesting administrator's CSR"
+            * clusters/CLUSTER/NAME-csr.pem: The requesting administrator's CSR"
         )
 }
 

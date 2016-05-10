@@ -40,7 +40,7 @@ impl<'a> Admin<'a> {
         );
 
         let admin_csr_path = format!(
-            "clusters/{}/{}.csr",
+            "clusters/{}/{}-csr.pem",
             self.cluster,
             name,
         );
@@ -130,7 +130,7 @@ impl<'a> Admin<'a> {
         let name = self.name.expect("clap should have required name");
         let region = self.region.expect("clap should have required region");
 
-        let admin_csr_path = format!("clusters/{}/{}.csr", self.cluster, name);
+        let admin_csr_path = format!("clusters/{}/{}-csr.pem", self.cluster, name);
         let admin_cert_path = format!("clusters/{}/{}.pem", self.cluster, name);
         let ca_cert_path = format!("clusters/{}/ca.pem", self.cluster);
         let ca_key_path = format!("clusters/{}/ca-key.pem", self.cluster);
