@@ -120,7 +120,7 @@ resource "aws_launch_configuration" "k8s_nodes" {
 }
 
 resource "aws_autoscaling_group" "k8s_nodes" {
-  depends_on = ["aws_autoscaling_group.k8s_masters", "aws_internet_gateway", "outgoing"]
+  depends_on = ["aws_autoscaling_group.k8s_masters", "aws_internet_gateway.outgoing"]
   health_check_grace_period = 3600
   health_check_type = "EC2"
   launch_configuration = "${aws_launch_configuration.k8s_nodes.name}"
