@@ -66,7 +66,7 @@ impl<'a> Admin<'a> {
                 "-out",
                 &admin_csr_path,
                 "-subj",
-                &format!("/CN={}-{}", name, self.cluster),
+                &format!("/CN=kaws-{}-{}", self.cluster, name),
             ]));
         });
 
@@ -87,7 +87,7 @@ impl<'a> Admin<'a> {
             try!(execute_child_process("kubectl", &[
                 "config",
                 "set-cluster",
-                self.cluster,
+                &format!("kaws-{}", self.cluster),
                 &format!("--server=https://kubernetes.{}", &domain),
                 &format!("--certificate-authority=clusters/{}/ca.pem", self.cluster),
                 "--embed-certs=true",
@@ -97,7 +97,7 @@ impl<'a> Admin<'a> {
             try!(execute_child_process("kubectl", &[
                 "config",
                 "set-credentials",
-                &format!("{}-{}", name, self.cluster),
+                &format!("kaws-{}-{}", self.cluster, name),
                 &format!("--client-certificate=clusters/{}/{}.pem", self.cluster, name),
                 &format!("--client-key=clusters/{}/{}-key.pem", self.cluster, name),
                 "--embed-certs=true",
@@ -107,21 +107,20 @@ impl<'a> Admin<'a> {
             try!(execute_child_process("kubectl", &[
                 "config",
                 "set-context",
-                self.cluster,
-                &format!("--cluster={}", self.cluster),
-                &format!("--user={}-{}", name, self.cluster),
+                &format!("kaws-{}", self.cluster),
+                &format!("--cluster=kaws-{}", self.cluster),
+                &format!("--user=kaws-{}-{}", self.cluster, name),
             ]));
         });
 
         Ok(Some(format!(
-            "Admin credentials for user \"{}\" installed for cluster \"{}\"!\n\
+            "Admin credentials for user \"{name}\" installed for cluster \"{cluster}\"!\n\
             To activate these settings as the current context, run:\n\n\
-            kubectl config use-context {}\n\n\
+            kubectl config use-context kaws-{cluster}\n\n\
             If the kubectl configuration file is ever removed or changed accidentally,\n\
             just run this command again to regenerate or reconfigure it.",
-            name,
-            self.cluster,
-            self.cluster,
+            name = name,
+            cluster = self.cluster,
         )))
     }
 
