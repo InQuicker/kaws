@@ -17,27 +17,27 @@ resource "null_resource" "sync_pki" {
 
   provisioner "file" {
     source = "clusters/${var.cluster}/ca.pem"
-    destionation = "/tmp/ca.pem"
+    destination = "/tmp/ca.pem"
   }
 
   provisioner "file" {
     source = "clusters/${var.cluster}/master.pem"
-    destionation = "/tmp/master.pem"
+    destination = "/tmp/master.pem"
   }
 
   provisioner "file" {
     source = "clusters/${var.cluster}/master-key-encrypted.base64"
-    destionation = "/tmp/master-key-encrypted.base64"
+    destination = "/tmp/master-key-encrypted.base64"
   }
 
   provisioner "file" {
     source = "clusters/${var.cluster}/node.pem"
-    destionation = "/tmp/node.pem"
+    destination = "/tmp/node.pem"
   }
 
   provisioner "file" {
     source = "clusters/${var.cluster}/node-key-encrypted.base64"
-    destionation = "/tmp/node-key-encrypted.base64"
+    destination = "/tmp/node-key-encrypted.base64"
   }
 
   provisioner "remote-exec" {
