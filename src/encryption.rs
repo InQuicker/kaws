@@ -16,14 +16,14 @@ use error::{KawsError, KawsResult};
 pub struct Encryptor<'a, P> where P: ProvideAwsCredentials {
     client: KmsClient<P>,
     decrypted_files: Vec<String>,
-    kms_master_key_id: &'a str,
+    kms_master_key_id: Option<&'a str>,
 }
 
 impl<'a> Encryptor<'a, ChainProvider> {
     pub fn new(
         provider: ChainProvider,
         region: Region,
-        kms_master_key_id: &'a str,
+        kms_master_key_id: Option<&'a str>,
     ) -> Encryptor<'a, ChainProvider> {
         Encryptor {
             client: KmsClient::new(provider, region),
@@ -68,7 +68,7 @@ impl<'a> Encryptor<'a, ChainProvider> {
         let request = EncryptRequest {
             plaintext: decrypted_data.as_bytes().to_vec(),
             encryption_context: None,
-            key_id: self.kms_master_key_id.to_owned(),
+            key_id: self.kms_master_key_id.expect("KMS key must be supplied to encrypt").to_owned(),
             grant_tokens: None,
         };
 

@@ -91,14 +91,6 @@ fn admin_sign<'a, 'b>() -> App<'a, 'b> {
                 .help("The new administrator's name")
         )
         .arg(
-            Arg::with_name("kms-key")
-                .short("k")
-                .long("kms-key")
-                .takes_value(true)
-                .required(true)
-                .help("KMS customer master key ID, e.g. \"12345678-1234-1234-1234-123456789012\"")
-        )
-        .arg(
             Arg::with_name("region")
                 .short("r")
                 .long("region")

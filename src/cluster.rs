@@ -443,7 +443,7 @@ zone_id = \"{}\"
         let mut encryptor = Encryptor::new(
             self.aws_credentials_provider.clone(),
             try!(self.region.parse()),
-            kms_key_id,
+            Some(kms_key_id),
         );
 
         log_wrap!("Encrypting Kubernetes certificate authority private key", {

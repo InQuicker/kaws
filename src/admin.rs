@@ -12,7 +12,6 @@ pub struct Admin<'a> {
     aws_credentials_provider: ChainProvider,
     cluster: &'a str,
     domain: Option<&'a str>,
-    kms_master_key_id: Option<&'a str>,
     name: Option<&'a str>,
     region: Option<&'a str>,
 }
@@ -26,7 +25,6 @@ impl<'a> Admin<'a> {
             ),
             cluster: matches.value_of("cluster").expect("clap should have required cluster"),
             domain: matches.value_of("domain"),
-            kms_master_key_id: matches.value_of("kms-key"),
             name: matches.value_of("name"),
             region: matches.value_of("region"),
         }
@@ -131,7 +129,6 @@ impl<'a> Admin<'a> {
     pub fn sign(&mut self) -> KawsResult {
         let name = self.name.expect("clap should have required name");
         let region = self.region.expect("clap should have required region");
-        let kms_master_key_id = self.kms_master_key_id.expect("clap should have required kms key");
 
         let admin_csr_path = format!("clusters/{}/{}.csr", self.cluster, name);
         let admin_cert_path = format!("clusters/{}/{}.pem", self.cluster, name);
@@ -142,7 +139,7 @@ impl<'a> Admin<'a> {
         let mut encryptor = Encryptor::new(
             self.aws_credentials_provider.clone(),
             try!(region.parse()),
-            kms_master_key_id,
+            None,
         );
 
         // decrypt CA key
