@@ -1,6 +1,7 @@
 resource "aws_instance" "bastion" {
   ami = "${var.coreos_ami}"
   associate_public_ip_address = true
+  depends_on = ["aws_instance.etcd_01", "aws_instance.etcd_02", "aws_instance.etcd_03"]
   instance_type = "t2.micro"
   key_name = "${var.ssh_key}"
   subnet_id = "${aws_subnet.public.id}"
