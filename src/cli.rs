@@ -65,7 +65,7 @@ fn admin_install<'a, 'b>() -> App<'a, 'b> {
                 .long("domain")
                 .takes_value(true)
                 .required(true)
-                .help("The base domain name for the cluster, e.g. \"example.com\"")
+                .help("The apex domain name for the cluster, e.g. \"example.com\"")
         )
         .after_help(
             "\nThe following files are expected by this command:\n\n\
@@ -257,7 +257,7 @@ fn cluster_init<'a, 'b>() -> App<'a, 'b> {
                 .long("region")
                 .takes_value(true)
                 .required(true)
-                .help("AWS Region where the KMS key lives, e.g. \"us-east-1\"")
+                .help("AWS Region to create the resources in, e.g. \"us-east-1\"")
         )
         .arg(
             Arg::with_name("iam-users")
