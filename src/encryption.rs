@@ -32,11 +32,11 @@ impl<'a> Encryptor<'a, ChainProvider> {
         }
     }
 
-    pub fn decrypt<'b>(&mut self, encrypted_data: &'b str) -> AwsResult<DecryptResponse> {
+    pub fn decrypt<'b>(&mut self, encrypted_data: Vec<u8>) -> AwsResult<DecryptResponse> {
         let request = DecryptRequest {
             encryption_context: None,
             grant_tokens: None,
-            ciphertext_blob: encrypted_data.as_bytes().to_vec()
+            ciphertext_blob: encrypted_data,
         };
 
         self.client.decrypt(&request)
@@ -50,7 +50,7 @@ impl<'a> Encryptor<'a, ChainProvider> {
         try!(src.read_to_string(&mut encoded_data));
 
         let encrypted_data = try!(encoded_data.from_base64());
-        let decrypted_data = try!(self.decrypt(&String::from_utf8_lossy(&encrypted_data)));
+        let decrypted_data = try!(self.decrypt(encrypted_data));
 
         let mut dst = try!(File::create(destination));
 
@@ -64,9 +64,9 @@ impl<'a> Encryptor<'a, ChainProvider> {
         Ok(None)
     }
 
-    pub fn encrypt<'b>(&mut self, decrypted_data: &'b str) -> AwsResult<EncryptResponse> {
+    pub fn encrypt<'b>(&mut self, decrypted_data: Vec<u8>) -> AwsResult<EncryptResponse> {
         let request = EncryptRequest {
-            plaintext: decrypted_data.as_bytes().to_vec(),
+            plaintext: decrypted_data,
             encryption_context: None,
             key_id: self.kms_master_key_id.expect("KMS key must be supplied to encrypt").to_owned(),
             grant_tokens: None,
@@ -78,11 +78,11 @@ impl<'a> Encryptor<'a, ChainProvider> {
     pub fn encrypt_file<'b>(&mut self, source: &'b str, destination: &'b str) -> KawsResult {
         let mut src = try!(File::open(source));
 
-        let mut contents = String::new();
+        let mut contents = vec![];
 
-        try!(src.read_to_string(&mut contents));
+        try!(src.read_to_end(&mut contents));
 
-        let encrypted_data = try!(self.encrypt(&contents));
+        let encrypted_data = try!(self.encrypt(contents));
 
         let mut dst = try!(File::create(destination));
 
