@@ -30,6 +30,7 @@ coreos:
         After=etcd2.service
         [Service]
         TimeoutStartSec=0
+        ExecStartPre=/bin/bash -c 'until curl --silent "http://127.0.0.1:2379/v2/keys/kaws"; do sleep 5; done'
         ExecStart=/usr/bin/rkt --insecure-options image run \
           --volume etc-kubernetes,kind=host,source=/etc/kubernetes \
           --mount volume=etc-kubernetes,target=/etc/kubernetes \
