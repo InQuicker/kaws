@@ -59,14 +59,6 @@ fn admin_install<'a, 'b>() -> App<'a, 'b> {
                 .required(true)
                 .help("The new administrator's name")
         )
-        .arg(
-            Arg::with_name("domain")
-                .short("d")
-                .long("domain")
-                .takes_value(true)
-                .required(true)
-                .help("The apex domain name for the cluster, e.g. \"example.com\"")
-        )
         .after_help(
             "\nThe following files are expected by this command:\n\n\
             * clusters/CLUSTER/ca.pem: The CA certificate\n\
@@ -89,14 +81,6 @@ fn admin_sign<'a, 'b>() -> App<'a, 'b> {
                 .index(2)
                 .required(true)
                 .help("The new administrator's name")
-        )
-        .arg(
-            Arg::with_name("region")
-                .short("r")
-                .long("region")
-                .takes_value(true)
-                .required(true)
-                .help("AWS Region where the KMS key lives, e.g. \"us-east-1\"")
         )
         .after_help(
             "\nThe following files are expected by this command:\n\n\

@@ -1,4 +1,5 @@
 use std::fs::create_dir_all;
+use std::process::Command;
 
 use clap::ArgMatches;
 use rusoto::ChainProvider;
@@ -11,9 +12,7 @@ use process::execute_child_process;
 pub struct Admin<'a> {
     aws_credentials_provider: ChainProvider,
     cluster: &'a str,
-    domain: Option<&'a str>,
     name: Option<&'a str>,
-    region: Option<&'a str>,
 }
 
 impl<'a> Admin<'a> {
@@ -24,9 +23,7 @@ impl<'a> Admin<'a> {
                 matches.value_of("aws-credentials-profile"),
             ),
             cluster: matches.value_of("cluster").expect("clap should have required cluster"),
-            domain: matches.value_of("domain"),
             name: matches.value_of("name"),
-            region: matches.value_of("region"),
         }
     }
 
@@ -80,7 +77,9 @@ impl<'a> Admin<'a> {
     }
 
     pub fn install(&mut self) -> KawsResult {
-        let domain = self.domain.expect("clap should have required domain");
+        let domain = try!(self.domain()).expect(
+            "Terraform should have had a value for the domain output"
+        );
         let name = self.name.expect("clap should have required name");
 
         log_wrap!("Configuring kubectl", {
@@ -128,7 +127,9 @@ impl<'a> Admin<'a> {
 
     pub fn sign(&mut self) -> KawsResult {
         let name = self.name.expect("clap should have required name");
-        let region = self.region.expect("clap should have required region");
+        let region = try!(self.region()).expect(
+            "Terraform should have had a value for the region output"
+        );
 
         let admin_csr_path = format!("clusters/{}/{}-csr.pem", self.cluster, name);
         let admin_cert_path = format!("clusters/{}/{}.pem", self.cluster, name);
@@ -170,5 +171,23 @@ impl<'a> Admin<'a> {
             name,
             self.cluster,
         )))
+    }
+
+    fn domain(&self) -> KawsResult {
+        self.output("domain")
+    }
+
+    fn region(&self) -> KawsResult {
+        self.output("region")
+    }
+
+    fn output(&self, output_name: &str) -> KawsResult {
+        let cluster_name = self.name.expect("clap should have required name");
+
+        let output = try!(
+            Command::new("kaws").args(&["cluster", "output", cluster_name, output_name]).output()
+        );
+
+        Ok(Some(String::from_utf8_lossy(&output.stdout).to_string()))
     }
 }
