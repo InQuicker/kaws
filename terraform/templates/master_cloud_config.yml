@@ -109,8 +109,9 @@ coreos:
         Description=Kubernetes addons
         [Service]
         ExecStartPre=/bin/bash -c 'until curl -sf "http://127.0.0.1:8080/version"; do sleep 5; done'
-        ExecStartPre=-/bin/bash -c 'curl -s -X POST -d @/srv/kubernetes/kube-dns-rc.json "http://127.0.0.1:8080/api/v1/namespaces/kube-system/replicationcontrollers" > /dev/null'
+        ExecStartPre=-/bin/bash -c 'curl -s -X POST -d @/srv/kubernetes/kube-system.json "http://127.0.0.1:8080/api/v1/namespaces" > /dev/null'
         ExecStartPre=-/bin/bash -c 'curl -s -X POST -d @/srv/kubernetes/kube-dns-svc.json "http://127.0.0.1:8080/api/v1/namespaces/kube-system/services" > /dev/null'
+        ExecStartPre=-/bin/bash -c 'curl -s -X POST -d @/srv/kubernetes/kube-dns-rc.json "http://127.0.0.1:8080/api/v1/namespaces/kube-system/replicationcontrollers" > /dev/null'
         ExecStart=/bin/echo Kubernetes addons submitted to the API!
         Type=oneshot
         RemainAfterExit=True
@@ -478,5 +479,16 @@ write_files:
           "selector": {
             "k8s-app": "kube-dns"
           }
+        }
+      }
+  - path: /srv/kubernetes/kube-system.json
+    permissions: "0644"
+    owner: root
+    content: |
+      {
+        "apiVersion": "v1",
+        "kind": "Namespace",
+        "metadata": {
+          "name": "kube-system"
         }
       }
