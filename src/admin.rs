@@ -12,7 +12,7 @@ use process::execute_child_process;
 pub struct Admin<'a> {
     aws_credentials_provider: ChainProvider,
     cluster: &'a str,
-    name: Option<&'a str>,
+    admin: &'a str,
 }
 
 impl<'a> Admin<'a> {
@@ -23,23 +23,21 @@ impl<'a> Admin<'a> {
                 matches.value_of("aws-credentials-profile"),
             ),
             cluster: matches.value_of("cluster").expect("clap should have required cluster"),
-            name: matches.value_of("name"),
+            admin: matches.value_of("name").expect("clap should have required name"),
         }
     }
 
     pub fn create(&mut self) -> KawsResult {
-        let name = self.name.expect("clap should have required name");
-
         let admin_key_path = format!(
             "clusters/{}/{}-key.pem",
             self.cluster,
-            name,
+            self.admin,
         );
 
         let admin_csr_path = format!(
             "clusters/{}/{}-csr.pem",
             self.cluster,
-            name,
+            self.admin,
         );
 
         log_wrap!("Creating directory for the new administrator's credentials", {
@@ -66,7 +64,7 @@ impl<'a> Admin<'a> {
                 "-out",
                 &admin_csr_path,
                 "-subj",
-                &format!("/CN=kaws-{}-{}", self.cluster, name),
+                &format!("/CN=kaws-{}-{}", self.cluster, self.admin),
             ]));
         });
 
@@ -80,7 +78,6 @@ impl<'a> Admin<'a> {
         let domain = try!(self.domain()).expect(
             "Terraform should have had a value for the domain output"
         );
-        let name = self.name.expect("clap should have required name");
 
         log_wrap!("Configuring kubectl", {
             // set cluster
@@ -97,9 +94,9 @@ impl<'a> Admin<'a> {
             try!(execute_child_process("kubectl", &[
                 "config",
                 "set-credentials",
-                &format!("kaws-{}-{}", self.cluster, name),
-                &format!("--client-certificate=clusters/{}/{}.pem", self.cluster, name),
-                &format!("--client-key=clusters/{}/{}-key.pem", self.cluster, name),
+                &format!("kaws-{}-{}", self.cluster, self.admin),
+                &format!("--client-certificate=clusters/{}/{}.pem", self.cluster, self.admin),
+                &format!("--client-key=clusters/{}/{}-key.pem", self.cluster, self.admin),
                 "--embed-certs=true",
             ]));
 
@@ -109,29 +106,28 @@ impl<'a> Admin<'a> {
                 "set-context",
                 &format!("kaws-{}", self.cluster),
                 &format!("--cluster=kaws-{}", self.cluster),
-                &format!("--user=kaws-{}-{}", self.cluster, name),
+                &format!("--user=kaws-{}-{}", self.cluster, self.admin),
             ]));
         });
 
         Ok(Some(format!(
-            "Admin credentials for user \"{name}\" installed for cluster \"{cluster}\"!\n\
+            "Admin credentials for user \"{admin}\" installed for cluster \"{cluster}\"!\n\
             To activate these settings as the current context, run:\n\n\
             kubectl config use-context kaws-{cluster}\n\n\
             If the kubectl configuration file is ever removed or changed accidentally,\n\
             just run this command again to regenerate or reconfigure it.",
-            name = name,
+            admin = self.admin,
             cluster = self.cluster,
         )))
     }
 
     pub fn sign(&mut self) -> KawsResult {
-        let name = self.name.expect("clap should have required name");
         let region = try!(self.region()).expect(
             "Terraform should have had a value for the region output"
         );
 
-        let admin_csr_path = format!("clusters/{}/{}-csr.pem", self.cluster, name);
-        let admin_cert_path = format!("clusters/{}/{}.pem", self.cluster, name);
+        let admin_csr_path = format!("clusters/{}/{}-csr.pem", self.cluster, self.admin);
+        let admin_cert_path = format!("clusters/{}/{}.pem", self.cluster, self.admin);
         let ca_cert_path = format!("clusters/{}/ca.pem", self.cluster);
         let ca_key_path = format!("clusters/{}/ca-key.pem", self.cluster);
         let encrypted_ca_key_path = format!("clusters/{}/ca-key-encrypted.base64", self.cluster);
@@ -167,7 +163,7 @@ impl<'a> Admin<'a> {
         Ok(Some(format!(
             "Client certificate for administrator \"{}\" created for cluster \"{}\"!\n\
             Commit changes to Git and ask the administrator to run `kaws admin install`.",
-            name,
+            self.admin,
             self.cluster,
         )))
     }
@@ -181,12 +177,10 @@ impl<'a> Admin<'a> {
     }
 
     fn output(&self, output_name: &str) -> KawsResult {
-        let cluster_name = self.name.expect("clap should have required name");
-
         let output = try!(
-            Command::new("kaws").args(&["cluster", "output", cluster_name, output_name]).output()
+            Command::new("kaws").args(&["cluster", "output", self.cluster, output_name]).output()
         );
 
-        Ok(Some(String::from_utf8_lossy(&output.stdout).to_string()))
+        Ok(Some(String::from_utf8_lossy(&output.stdout).trim_right().to_string()))
     }
 }
