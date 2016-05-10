@@ -108,13 +108,10 @@ coreos:
         [Unit]
         Description=Kubernetes addons
         [Service]
-        ExecStartPre=/bin/bash -c 'until curl -sf "http://127.0.0.1:8080/version"; do sleep 5; done'
-        ExecStartPre=-/bin/bash -c 'curl -s -X POST -d @/srv/kubernetes/kube-system.json "http://127.0.0.1:8080/api/v1/namespaces" > /dev/null'
-        ExecStartPre=-/bin/bash -c 'curl -s -X POST -d @/srv/kubernetes/kube-dns-svc.json "http://127.0.0.1:8080/api/v1/namespaces/kube-system/services" > /dev/null'
-        ExecStartPre=-/bin/bash -c 'curl -s -X POST -d @/srv/kubernetes/kube-dns-rc.json "http://127.0.0.1:8080/api/v1/namespaces/kube-system/replicationcontrollers" > /dev/null'
-        ExecStart=/bin/echo Kubernetes addons submitted to the API!
-        Type=oneshot
-        RemainAfterExit=True
+        ExecStartPre=/usr/bin/curl http://127.0.0.1:8080/version
+        ExecStart=/opt/bin/start-kube-addons
+        StartLimitInterval=0
+        Restart=on-failure
 write_files:
   - path: /etc/kubernetes/manifests/kube-apiserver.yml
     permissions: "0644"
@@ -278,6 +275,14 @@ write_files:
               port: 10251
             initialDelaySeconds: 15
             timeoutSeconds: 1
+  - path: /opt/bin/start-kube-addons
+    permissions: "0700"
+    owner: root
+    content: |
+      #!/bin/bash -e
+      curl -H "Content-Type: application/json" -X POST -d @/srv/kubernetes/kube-system.json "http://127.0.0.1:8080/api/v1/namespaces"
+      curl -H "Content-Type: application/json" -X POST -d @/srv/kubernetes/kube-dns-svc.json "http://127.0.0.1:8080/api/v1/namespaces/kube-system/services"
+      curl -H "Content-Type: application/json" -X POST -d @/srv/kubernetes/kube-dns-rc.json "http://127.0.0.1:8080/api/v1/namespaces/kube-system/replicationcontrollers"
   - path: /srv/kubernetes/kube-dns-rc.json
     permissions: "0644"
     owner: root
