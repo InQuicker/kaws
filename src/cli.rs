@@ -122,6 +122,7 @@ fn cluster<'a, 'b>() -> App<'a, 'b> {
         .subcommand(cluster_destroy())
         .subcommand(cluster_init())
         .subcommand(cluster_genpki())
+        .subcommand(cluster_output())
         .subcommand(cluster_plan())
 }
 
@@ -333,6 +334,22 @@ fn cluster_genpki<'a, 'b>() -> App<'a, 'b> {
                 .takes_value(true)
                 .required(true)
                 .help("AWS Region where the KMS key lives, e.g. \"us-east-1\"")
+        )
+}
+
+fn cluster_output<'a, 'b>() -> App<'a, 'b> {
+    SubCommand::with_name("output")
+        .about("Displays the Terraform outputs for the target cluster")
+        .arg(
+            Arg::with_name("cluster")
+                .index(1)
+                .required(true)
+                .help("The cluster whose plan should be displayed")
+        )
+        .arg(
+            Arg::with_name("output")
+                .index(2)
+                .help("The name of an individual output to display")
         )
 }
 

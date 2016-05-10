@@ -9,6 +9,7 @@ use error::{KawsError, KawsResult};
 pub struct Terraform<'a> {
     aws_credentials_provider: ChainProvider,
     cluster: &'a str,
+    output: Option<&'a str>,
     terraform_args: Option<Vec<&'a str>>,
 }
 
@@ -20,6 +21,7 @@ impl<'a> Terraform<'a> {
                 matches.value_of("aws-credentials-profile"),
             ),
             cluster: matches.value_of("cluster").expect("clap should have required cluster"),
+            output: matches.value_of("output"),
             terraform_args: matches.values_of("terraform-args").map(|values| values.collect()),
         }
     }
@@ -96,6 +98,26 @@ impl<'a> Terraform<'a> {
         } else {
             Err(KawsError::new(format!("Failed to destroy cluster!")))
         }
+    }
+
+    pub fn output(&mut self) -> KawsResult {
+        try!(self.get());
+
+        let mut command = Command::new("terraform");
+
+        command.args(&[
+            "output",
+            "-module=kaws",
+            &format!("-state=clusters/{}/terraform.tfstate", self.cluster),
+        ]);
+
+        if let Some(output) = self.output {
+            command.arg(output);
+        }
+
+        try!(command.status());
+
+        Ok(None)
     }
 
     pub fn plan(&mut self) -> KawsResult {
