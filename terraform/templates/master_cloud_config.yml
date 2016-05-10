@@ -468,7 +468,7 @@ write_files:
           }
         },
         "spec": {
-          "clusterIP": "{{.DNSServiceIP}}",
+          "clusterIP": "10.3.0.10",
           "ports": [
             {
               "protocol": "UDP",
