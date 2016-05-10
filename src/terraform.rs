@@ -1,4 +1,4 @@
-use std::process::Command;
+use std::process::{Command, Stdio};
 
 use clap::ArgMatches;
 use rusoto::{ChainProvider, ProvideAwsCredentials};
@@ -158,7 +158,7 @@ impl<'a> Terraform<'a> {
         let exit_status = try!(Command::new("terraform").args(&[
             "get",
             "terraform/kaws",
-        ]).status());
+        ]).stdout(Stdio::null()).status());
 
         if exit_status.success() {
             Ok(None)
