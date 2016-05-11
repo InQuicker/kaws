@@ -3,8 +3,8 @@
 An administrator, as is used by the `kaws admin` commands, is a user who has access to the Kubernetes API for a cluster.
 Credentials for the API are needed in order to administer the cluster with the `kubectl` command line tool.
 kaws configures Kubernetes clusters to use SSL client certificates for authentication.
-Each administrator's client certificate, certificate signing request, and private key are stored in the clusters directory in the kaws repository.
-The private keys for each administrator are encrypted using AWS KMS and can only be decrypted by the appropriate administrator.
+Each administrator's client certificate and certificate signing request are stored in the clusters directory in the kaws repository.
+The private keys for each administrator are not checked into Git and should be kept private.
 A separate SSL client certificate and private key is needed per administrator per cluster.
 
 ## Primary administrators

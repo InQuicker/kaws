@@ -1,6 +1,6 @@
 [package]
 authors = ["Jimmy Cuadra <jimmy@jimmycuadra.com>"]
-description = "A tool for installing and managing Kubernetes clusters."
+description = "Create and manage Kubernetes clusters on AWS using Terraform."
 homepage = "https://github.com/InQuicker/kaws"
 keywords = ["kubernetes", "coreos", "aws", "terraform", "infrastructure"]
 license = "MIT"

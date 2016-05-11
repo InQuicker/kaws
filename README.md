@@ -1,23 +1,27 @@
 # kaws
 
-**kaws** is a tool for deploying multiple [Kubernetes](http://kubernetes.io/) clusters.
+**kaws** is a tool for creating and managing [Kubernetes](http://kubernetes.io/) clusters on [AWS](https://aws.amazon.com/) using [Terraform](https://www.terraform.io/).
 It ties together several other tools to make Kubernetes deployment easy, repeatable, and secure.
 
-kaws is not intended to support every possible deployment scenario for a Kubernetes cluster.
-It takes a highly opinionated approach using specific software, services, and conventions.
-Specifically, kaws creates Kubernetes clusters in [AWS](https://aws.amazon.com/) using [CoreOS](https://coreos.com/) servers.
+kaws is not intended to support every possible deployment scenario for Kubernetes clusters.
+It follows a specific approach used by InQuicker, involving specific software, services, and conventions.
+Specifically, kaws creates Kubernetes clusters in AWS using [CoreOS](https://coreos.com/) servers, all managed by declarative configuration files with Terraform.
 
 ## Status
 
-kaws has not yet reached version 1.0, and is not recommended for production usage until it has. In accordanace with [Semantic Versioning](http://semver.org/), while kaws is < 1.0, backwards incompatible changes may occur. Major expected changes include using rkt as the container runtime for Kubernetes. See the [issues](https://github.com/InQuicker/kaws/issues) for details.
+kaws has not yet reached version 1.0, and is not recommended for production usage until it has.
+In accordanace with [Semantic Versioning](http://semver.org/), while kaws is < 1.0, backwards incompatible changes may occur.
+Major expected changes include using rkt as the container runtime for Kubernetes.
+See the [issues](https://github.com/InQuicker/kaws/issues) for details.
 
-**kaws has not been reviewed by security professionals.** For information about the threat model of kaws, see the [security](docs/concepts/security.md) document.
+**kaws has not been reviewed by security professionals.**
+For information about the threat model of kaws, see the [security](docs/concepts/security.md) document.
 
 ## Synopsis
 
 ```
 USAGE:
-	kaws [FLAGS] [SUBCOMMAND]
+    kaws [FLAGS] [SUBCOMMAND]
 
 FLAGS:
     -h, --help       Prints help information
@@ -26,9 +30,11 @@ FLAGS:
 SUBCOMMANDS:
     admin      Commands for managing cluster administrators
     cluster    Commands for managing a cluster's infrastructure
-    help       Prints this message
+    help       Prints this message or the help message of the given subcommand(s)
     init       Initializes a new repository for managing Kubernetes clusters
 ```
+
+Start by creating a new repository with the `init` command.
 
 ## Goals
 
@@ -36,6 +42,12 @@ SUBCOMMANDS:
 * Produce secure, highly available Kubernetes clusters with DNS built in
 * Generate and distribute Kubernetes API access credentials securely
 * Avoid shell scripting as much as possible
+
+## Known issues
+
+* Creation of the AWS KMS master key for each cluster will fail during the initial execution of `kaws cluster apply`.
+  Simply run it again and it will complete successfully.
+  See the Terraform issue at https://github.com/hashicorp/terraform/issues/6576 for details.
 
 ## Supported platforms
 
