@@ -23,5 +23,7 @@ If you want to customize the Terraform module used to deploy Kubernetes, you can
 This option is also useful when working on the kaws code itself, since you can point it at the repository on your local disk.
 
 Additional custom Terraform resources the user desires can be defined in additional `.tf` files in the terraform directory, alongside `kaws.tf`.
+If you have resources that are specific to a certain cluster, consider moving that cluster to a separate kaws repository.
+Each cluster within a single kaws repository is intended to have identical infrastructure, to encourage staging and production environments being identical.
 
 All files that are not ignored via the `.gitignore` files are intended to be checked into Git.
