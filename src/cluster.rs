@@ -418,21 +418,21 @@ IP.1 = 10.3.0.1
             try!(write!(
                 file,
                 "\
-cluster = \"{}\"
-coreos_ami = \"{}\"
-domain = \"{}\"
-etcd_01_initial_cluster_state = \"new\"
-etcd_02_initial_cluster_state = \"new\"
-etcd_03_initial_cluster_state = \"new\"
-instance_size = \"{}\"
-masters_max_size = \"{}\"
-masters_min_size = \"{}\"
-nodes_max_size = \"{}\"
-nodes_min_size = \"{}\"
-region = \"{}\"
-ssh_key = \"{}\"
-version = \"{}\"
-zone_id = \"{}\"
+kaws_cluster = \"{}\"
+kaws_coreos_ami = \"{}\"
+kaws_domain = \"{}\"
+kaws_etcd_01_initial_cluster_state = \"new\"
+kaws_etcd_02_initial_cluster_state = \"new\"
+kaws_etcd_03_initial_cluster_state = \"new\"
+kaws_instance_size = \"{}\"
+kaws_masters_max_size = \"{}\"
+kaws_masters_min_size = \"{}\"
+kaws_nodes_max_size = \"{}\"
+kaws_nodes_min_size = \"{}\"
+kaws_region = \"{}\"
+kaws_ssh_key = \"{}\"
+kaws_version = \"{}\"
+kaws_zone_id = \"{}\"
 ",
                 self.name,
                 self.coreos_ami.expect("AMI should have been required by clap"),

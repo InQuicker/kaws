@@ -2,7 +2,7 @@
 
 A kaws cluster is a Kubernetes cluster managed by kaws.
 Clusters are isolated from each other because they each exist in their own [AWS VPC](https://aws.amazon.com/vpc/).
-The AWS resources that comprise a cluster are defined in kaws's Terraform module, which is declared in directory `terraform/kaws` of a [kaws repository](repository.md).
+The AWS resources that comprise a cluster are defined in kaws's Terraform module, which is imported in the file `terraform/kaws.tf` of a [kaws repository](repository.md).
 
 Each Kubernetes cluster created by kaws:
 

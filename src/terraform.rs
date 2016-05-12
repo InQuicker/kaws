@@ -42,7 +42,7 @@ impl<'a> Terraform<'a> {
             command.args(self.terraform_args.as_ref().unwrap());
         }
 
-        command.arg("terraform/kaws").env(
+        command.arg("terraform").env(
             "AWS_ACCESS_KEY_ID",
             self.aws_credentials_provider.credentials().expect(
                 "Failed to get AWS credentials"
@@ -75,7 +75,7 @@ impl<'a> Terraform<'a> {
             command.args(self.terraform_args.as_ref().unwrap());
         }
 
-        command.arg("terraform/kaws").env(
+        command.arg("terraform").env(
             "AWS_ACCESS_KEY_ID",
             self.aws_credentials_provider.credentials().expect(
                 "Failed to get AWS credentials"
@@ -137,7 +137,7 @@ impl<'a> Terraform<'a> {
             command.args(self.terraform_args.as_ref().unwrap());
         }
 
-        command.arg("terraform/kaws").env(
+        command.arg("terraform").env(
             "AWS_ACCESS_KEY_ID",
             self.aws_credentials_provider.credentials().expect(
                 "Failed to get AWS credentials"
@@ -157,7 +157,7 @@ impl<'a> Terraform<'a> {
     fn get(&self) -> KawsResult {
         let exit_status = try!(Command::new("terraform").args(&[
             "get",
-            "terraform/kaws",
+            "terraform",
         ]).stdout(Stdio::null()).status());
 
         if exit_status.success() {
