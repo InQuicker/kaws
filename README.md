@@ -43,12 +43,6 @@ Start by creating a new repository with the `init` command.
 * Generate and distribute Kubernetes API access credentials securely
 * Avoid shell scripting as much as possible
 
-## Known issues
-
-* Creation of the AWS KMS master key for each cluster will fail during the initial execution of `kaws cluster apply`.
-  Simply run it again and it will complete successfully.
-  See the Terraform issue at https://github.com/hashicorp/terraform/issues/6576 for details.
-
 ## Supported platforms
 
 At this time, kaws has only been developed for and tested on OS X. Support for Linux is planned.

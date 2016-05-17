@@ -94,8 +94,8 @@ EOS
 }
 
 resource "aws_kms_key" "pki" {
+  depends_on = ["aws_iam_role.k8s_master", "aws_iam_role.k8s_node"]
   description = "kaws ${var.cluster} Kubernetes PKI"
-
   policy = "${file("clusters/${var.cluster}/kms-policy.json")}"
 }
 
