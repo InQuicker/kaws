@@ -114,8 +114,9 @@ write_files:
           command:
           - /hyperkube
           - proxy
-          - --master=https://${master_ip}:443
+          - --healthz-bind-address=0.0.0.0
           - --kubeconfig=/etc/kubernetes/node-kubeconfig.yml
+          - --master=https://${master_ip}:443
           - --proxy-mode=iptables
           securityContext:
             privileged: true
