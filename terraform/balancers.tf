@@ -47,10 +47,10 @@ resource "aws_elb" "k8s_nodes" {
 
   health_check {
     healthy_threshold = 2
-    interval = 120
+    interval = 30
     target = "http:10249/healthz"
-    timeout = 10
-    unhealthy_threshold = 5
+    timeout = 3
+    unhealthy_threshold = 2
   }
 
   tags {
