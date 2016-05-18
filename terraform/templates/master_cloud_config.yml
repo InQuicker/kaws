@@ -130,20 +130,19 @@ write_files:
           command:
           - /hyperkube
           - apiserver
+          - --admission-control=NamespaceLifecycle,NamespaceExists,LimitRanger,SecurityContextDeny,ServiceAccount,ResourceQuota
+          - --advertise-address=$private_ipv4
+          - --allow-privileged=true
           - --bind-address=0.0.0.0
+          - --client-ca-file=/etc/kubernetes/ssl/ca.pem
           - --etcd-servers=http://127.0.0.1:2379
           - --external-hostname=https://kubernetes.${domain}
-          - --allow-privileged=true
-          - --service-cluster-ip-range=10.3.0.1/24
           - --insecure-bind-address=0.0.0.0
           - --secure-port=443
-          - --advertise-address=$private_ipv4
-          - --admission-control=NamespaceLifecycle,NamespaceExists,LimitRanger,SecurityContextDeny,ServiceAccount,ResourceQuota
+          - --service-account-key-file=/etc/kubernetes/ssl/master-key.pem
+          - --service-cluster-ip-range=10.3.0.1/24
           - --tls-cert-file=/etc/kubernetes/ssl/master.pem
           - --tls-private-key-file=/etc/kubernetes/ssl/master-key.pem
-          - --client-ca-file=/etc/kubernetes/ssl/ca.pem
-          - --service-account-key-file=/etc/kubernetes/ssl/master-key.pem
-          - --cloud-provider=aws
           ports:
           - containerPort: 443
             hostPort: 443
@@ -222,11 +221,10 @@ write_files:
           command:
           - /hyperkube
           - controller-manager
-          - --master=http://127.0.0.1:8080
           - --leader-elect=true
-          - --service-account-private-key-file=/etc/kubernetes/ssl/master-key.pem
+          - --master=http://127.0.0.1:8080
           - --root-ca-file=/etc/kubernetes/ssl/ca.pem
-          - --cloud-provider=aws
+          - --service-account-private-key-file=/etc/kubernetes/ssl/master-key.pem
           livenessProbe:
             httpGet:
               host: 127.0.0.1
