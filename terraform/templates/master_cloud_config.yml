@@ -36,6 +36,8 @@ coreos:
             Requires=etcd2.service
             [Service]
             ExecStartPre=-/usr/bin/etcdctl mk /coreos.com/network/config "{\"Network\":\"10.2.0.0/16\"}"
+    - name: fleet.service
+      command: start
     - name: kaws-agent.service
       command: start
       content: |

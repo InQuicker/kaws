@@ -29,6 +29,8 @@ coreos:
             Environment=DOCKER_OPTS='--log-driver=journald'
     - name: flanneld.service
       command: start
+    - name: fleet.service
+      command: start
     - name: kaws-agent.service
       command: start
       content: |
