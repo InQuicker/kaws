@@ -10,6 +10,12 @@ coreos:
     listen_peer_urls: http://$private_ipv4:2380
     listen_client_urls: http://$private_ipv4:2379,http://127.0.0.1:2379
     advertise_client_urls: http://$private_ipv4:2379
+  fleet:
+    etcd_servers: http://127.0.0.1:2379
+    metadata: etcd=quorum,kubernetes=none
+    public_ip: $private_ipv4
   units:
     - name: etcd2.service
+      command: start
+    - name: fleet.service
       command: start
