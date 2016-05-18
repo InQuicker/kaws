@@ -78,7 +78,7 @@ resource "aws_launch_configuration" "k8s_masters" {
 
 resource "aws_autoscaling_group" "k8s_masters" {
   depends_on = ["null_resource.sync_pki", "aws_internet_gateway.outgoing"]
-  health_check_grace_period = 600
+  health_check_grace_period = 300
   health_check_type = "ELB"
   launch_configuration = "${aws_launch_configuration.k8s_masters.name}"
   load_balancers = ["${aws_elb.k8s_masters.name}"]
@@ -121,7 +121,7 @@ resource "aws_launch_configuration" "k8s_nodes" {
 
 resource "aws_autoscaling_group" "k8s_nodes" {
   depends_on = ["aws_autoscaling_group.k8s_masters", "aws_internet_gateway.outgoing"]
-  health_check_grace_period = 600
+  health_check_grace_period = 300
   health_check_type = "ELB"
   launch_configuration = "${aws_launch_configuration.k8s_nodes.name}"
   load_balancers = ["${aws_elb.k8s_nodes.name}"]
