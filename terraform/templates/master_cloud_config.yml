@@ -17,6 +17,10 @@ coreos:
             [Unit]
             Requires=flanneld.service
             After=flanneld.service
+        - name: 50-opts.conf
+          content: |
+            [Service]
+            Environment=DOCKER_OPTS='--log-driver=journald'
     - name: etcd2.service
       command: start
     - name: flanneld.service

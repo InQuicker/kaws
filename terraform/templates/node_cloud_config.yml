@@ -19,6 +19,10 @@ coreos:
             [Unit]
             Requires=flanneld.service
             AFter=flanneld.service
+        - name: 50-opts.conf
+          content: |
+            [Service]
+            Environment=DOCKER_OPTS='--log-driver=journald'
     - name: flanneld.service
       command: start
     - name: kaws-agent.service
