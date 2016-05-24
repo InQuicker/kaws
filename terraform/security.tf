@@ -60,6 +60,19 @@ resource "aws_iam_role_policy" "k8s_master" {
       "Effect": "Allow",
       "Action": ["elasticloadbalancing:*"],
       "Resource": ["*"]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ecr:GetAuthorizationToken",
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:GetRepositoryPolicy",
+        "ecr:DescribeRepositories",
+        "ecr:ListImages",
+        "ecr:BatchGetImage"
+      ],
+      "Resource": "*"
     }
   ]
 }
