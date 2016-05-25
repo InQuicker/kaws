@@ -32,14 +32,14 @@ resource "aws_elb" "k8s_nodes" {
   subnets = ["${aws_subnet.public.id}"]
 
   listener {
-    instance_port = 80
+    instance_port = 30000
     instance_protocol = "tcp"
     lb_port = 80
     lb_protocol = "tcp"
   }
 
   listener {
-    instance_port = 443
+    instance_port = 30001
     instance_protocol = "tcp"
     lb_port = 443
     lb_protocol = "tcp"
