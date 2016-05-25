@@ -2,8 +2,12 @@ output "domain" {
   value = "${var.domain}"
 }
 
-output "kubernetes_nodes_elb_name" {
-  value = "${aws_elb.k8s_nodes.name}"
+output "kubernetes_nodes_elb_dns_name" {
+  value = "${aws_elb.k8s_nodes.dns_name}"
+}
+
+output "kubernetes_nodes_elb_zone_id" {
+  value = "${aws_elb.k8s_nodes.zone_id}"
 }
 
 output "kubernetes_security_group_id" {
