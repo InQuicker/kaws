@@ -145,6 +145,7 @@ write_files:
           - --allow-privileged=true
           - --bind-address=0.0.0.0
           - --client-ca-file=/etc/kubernetes/ssl/ca.pem
+          - --cloud-provider=aws \
           - --etcd-servers=http://127.0.0.1:2379
           - --external-hostname=https://kubernetes.${domain}
           - --insecure-bind-address=0.0.0.0
@@ -231,6 +232,7 @@ write_files:
           command:
           - /hyperkube
           - controller-manager
+          - --cloud-provider=aws \
           - --leader-elect=true
           - --master=http://127.0.0.1:8080
           - --root-ca-file=/etc/kubernetes/ssl/ca.pem
