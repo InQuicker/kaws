@@ -3,7 +3,7 @@ use std::io::Write;
 use std::str::FromStr;
 
 use clap::ArgMatches;
-use etcd::Client;
+use etcd::{Client, Error};
 
 use decryption::Decryptor;
 
@@ -34,33 +34,32 @@ impl Agent {
 
     pub fn run(mut self) -> Result<Option<String>, String> {
         println!("kaws-agent is starting...");
-        println!("Checking initial modifiedIndex of /kaws key...");
-        let mut modified_index = match self.etcd.get("/kaws", false, false, false) {
-            Ok(key_space_info) => match key_space_info.node.unwrap().modified_index {
-                Some(new_index) => new_index,
-                None => return Err("WARNING: etcd node for /kaws had no initial modified index".to_owned()),
-            },
-            Err(errors) => return Err(errors[0].to_string()),
-        };
+        let mut watch_index = 0;
 
         if let Err(error) = self.refresh() {
-            println!("ERROR: {}", error);
+            println!("WARNING: {}", error);
         }
 
         loop {
-            println!("Watching /kaws key...");
-            match self.etcd.watch("/kaws", Some(modified_index + 1), true) {
+            println!("Watching /kaws key from index {}...", watch_index + 1);
+            match self.etcd.watch("/kaws", Some(watch_index + 1), true) {
                 Ok(key_space_info) => {
                     if let Err(error) = self.refresh() {
                         println!("WARNING: {}", error);
                     }
 
                     match key_space_info.node.unwrap().modified_index {
-                        Some(new_index) => modified_index = new_index,
+                        Some(new_index) => watch_index = new_index,
                         None => println!("WARNING: etcd node for watched key had no modified index"),
                     }
                 }
-                Err(errors) => println!("ERROR: {}", errors[0]),
+                Err(errors) => {
+                    println!("WARNING: {}", errors[0]);
+
+                    if let Error::Api(ref api_error) = errors[0] {
+                        watch_index = api_error.index;
+                    };
+                }
             }
         }
     }
