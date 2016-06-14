@@ -79,8 +79,7 @@ coreos:
           --logtostderr=true \
           --register-node=true \
           --tls-cert-file=/etc/kubernetes/ssl/node.pem \
-          --tls-private-key-file=/etc/kubernetes/ssl/node-key.pem \
-          --v=2
+          --tls-private-key-file=/etc/kubernetes/ssl/node-key.pem
         Restart=always
         RestartSec=10
         [Install]

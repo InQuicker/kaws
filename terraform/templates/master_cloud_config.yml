@@ -83,8 +83,7 @@ coreos:
           --config=/etc/kubernetes/manifests \
           --hostname-override=$private_ipv4 \
           --logtostderr=true \
-          --register-schedulable=false \
-          --v=2
+          --register-schedulable=false
         Restart=always
         RestartSec=10
         [Install]
