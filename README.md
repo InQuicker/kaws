@@ -39,7 +39,7 @@ Start by creating a new repository with the `init` command.
 ## Goals
 
 * Define infrastructure as code for predictability and repeatability
-* Produce secure, highly available Kubernetes clusters with DNS built in
+* Produce secure, highly available Kubernetes clusters
 * Generate and distribute Kubernetes API access credentials securely
 * Avoid shell scripting as much as possible
 
