@@ -139,7 +139,7 @@ write_files:
           command:
           - /hyperkube
           - apiserver
-          - --admission-control=NamespaceLifecycle,NamespaceExists,LimitRanger,SecurityContextDeny,ServiceAccount,ResourceQuota
+          - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,ResourceQuota
           - --advertise-address=$private_ipv4
           - --allow-privileged=true
           - --bind-address=0.0.0.0
