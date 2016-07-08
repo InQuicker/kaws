@@ -1,7 +1,7 @@
 use std::fs::{File, remove_file};
 use std::io::{ErrorKind, Read, Write};
 
-use rusoto::{AwsResult, ChainProvider, ProvideAwsCredentials, Region};
+use rusoto::{AwsError, AwsResult, ChainProvider, ProvideAwsCredentials, Region};
 use rusoto::kms::{
     DecryptRequest,
     DecryptResponse,
@@ -39,7 +39,7 @@ impl<'a> Encryptor<'a, ChainProvider> {
             ciphertext_blob: encrypted_data,
         };
 
-        self.client.decrypt(&request)
+        self.client.decrypt(&request).map_err(|error| AwsError::new(error.to_string()))
     }
 
     pub fn decrypt_file<'b>(&mut self, source: &'b str, destination: &'b str) -> KawsResult {
@@ -72,7 +72,7 @@ impl<'a> Encryptor<'a, ChainProvider> {
             grant_tokens: None,
         };
 
-        self.client.encrypt(&request)
+        self.client.encrypt(&request).map_err(|error| AwsError::new(error.to_string()))
     }
 
     pub fn encrypt_file<'b>(&mut self, source: &'b str, destination: &'b str) -> KawsResult {

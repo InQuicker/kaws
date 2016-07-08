@@ -10,12 +10,12 @@ repository = "https://github.com/InQuicker/kaws"
 version = "0.2.0"
 
 [dependencies]
-ansi_term = "0.7.2"
-clap = "2.4.0"
+ansi_term = "0.7.5"
+clap = "2.9.2"
 env_logger = "0.3.3"
 log = "0.3.6"
 rustc-serialize = "0.3.19"
 
 [dependencies.rusoto]
 features = ["kms"]
-version = "0.13.0"
+version = "0.15.2"
