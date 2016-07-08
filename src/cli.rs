@@ -236,6 +236,13 @@ fn cluster_init<'a, 'b>() -> App<'a, 'b> {
                 )
         )
         .arg(
+            Arg::with_name("rbac-super-user")
+                .long("rbac-super-user")
+                .takes_value(true)
+                .required(true)
+                .help("The Kubernetes username of an administrator who will set up initial RBAC policies, e.g. \"jimmy\"")
+        )
+        .arg(
             Arg::with_name("region")
                 .short("r")
                 .long("region")

@@ -44,6 +44,7 @@ r#"module "kaws" {{
     masters_min_size = "${{var.kaws_masters_min_size}}"
     nodes_max_size = "${{var.kaws_nodes_max_size}}"
     nodes_min_size = "${{var.kaws_nodes_min_size}}"
+    rbac_super_user = "${{var.kaws_rbac_super_user}}"
     region = "${{var.kaws_region}}"
     ssh_key = "${{var.kaws_ssh_key}}"
     version = "${{var.kaws_version}}"
@@ -92,6 +93,10 @@ variable "kaws_nodes_max_size" {{
 
 variable "kaws_nodes_min_size" {{
   description = "The minimum number of EC2 instances the Kubernetes nodes may autoscale to"
+}}
+
+variables "kaws_rbac_super_user" {{
+  description = "The Kubernetes username of an administrator who will set up initial RBAC policies."
 }}
 
 variable "kaws_region" {{

@@ -142,6 +142,8 @@ write_files:
           - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,ResourceQuota
           - --advertise-address=$private_ipv4
           - --allow-privileged=true
+          - --authorization-mode=RBAC
+          - --authorization-rbac-super-user=${rbac_super_user}
           - --bind-address=0.0.0.0
           - --client-ca-file=/etc/kubernetes/ssl/ca.pem
           - --cloud-provider=aws

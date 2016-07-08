@@ -42,6 +42,10 @@ variable "nodes_min_size" {
   description = "The minimum number of EC2 instances the Kubernetes nodes may autoscale to"
 }
 
+variables "rbac_super_user" {
+  description = "The Kubernetes username of an administrator who will set up initial RBAC policies."
+}
+
 variable "region" {
   description = "The AWS Region where the cluster will live, e.g. `us-east-1`"
 }

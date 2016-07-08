@@ -14,6 +14,7 @@ Each Kubernetes cluster created by kaws:
 * Uses master election of the Kubernetes master servers for high availability
 * Has an Autoscaling Group of Kubernetes node servers
 * Uses SSL client certificates for authentication to the Kubernetes API
+* Uses Kubernetes's RBAC (role-based authorization control) for authorizing API requests
 * Accepts external traffic to the Kubernetes API only via SSL on port 443
 * Accepts external traffic to Kubernetes nodes only on port 80 and 443 (though you should use HSTS to redirect requests from 80 to 443)
 * Includes Kubernetes's DNS addon, making all Kubernetes services all discoverable via DNS

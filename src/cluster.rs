@@ -37,6 +37,7 @@ pub struct Cluster<'a> {
     nodes_max_size: Option<&'a str>,
     nodes_min_size: Option<&'a str>,
     openssl_config_path: String,
+    rbac_super_user: Option<&'a str>,
     region: &'a str,
     ssh_key: Option<&'a str>,
     tfvars_path: String,
@@ -78,6 +79,7 @@ impl<'a> Cluster<'a> {
             nodes_max_size: matches.value_of("nodes-max-size"),
             nodes_min_size: matches.value_of("nodes-min-size"),
             openssl_config_path: format!("clusters/{}/openssl.cnf", name),
+            rbac_super_user: matches.value_of("rbac-super-user"),
             region: matches.value_of("region").expect("clap should have required region"),
             ssh_key: matches.value_of("ssh-key"),
             tfvars_path: format!("clusters/{}/terraform.tfvars", name),
@@ -429,6 +431,7 @@ kaws_masters_max_size = \"{}\"
 kaws_masters_min_size = \"{}\"
 kaws_nodes_max_size = \"{}\"
 kaws_nodes_min_size = \"{}\"
+kaws_rbac_super_user = \"{}\"
 kaws_region = \"{}\"
 kaws_ssh_key = \"{}\"
 kaws_version = \"{}\"
@@ -443,6 +446,7 @@ kaws_zone_id = \"{}\"
                 self.nodes_max_size.expect("nodes max size should have been required by clap"),
                 self.nodes_min_size.expect("nodes min size should have been required by clap"),
                 self.region,
+                self.rbac_super_user.expect("RBAC super user should have been required by clap"),
                 self.ssh_key.expect("ssh key should have been required by clap"),
                 self.kubernetes_version.expect("k8s version should have been required by clap"),
                 self.zone_id.expect("zone ID should have been required by clap"),

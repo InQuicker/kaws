@@ -47,6 +47,7 @@ resource "template_file" "master_cloud_config" {
   vars {
     cluster = "${var.cluster}"
     domain = "${var.domain}"
+    rbac_super_user = "${var.rbac_super_user}"
     region = "${var.region}"
     version = "${var.version}"
   }
