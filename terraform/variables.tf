@@ -1,3 +1,7 @@
+variable "availability_zone" {{
+    description = "Availability Zone for etcd instances and EBS volumes, e.g. `us-east-1a`"
+}}
+
 variable "cluster" {
   description = "The target cluster's name, e.g. `production`"
 }

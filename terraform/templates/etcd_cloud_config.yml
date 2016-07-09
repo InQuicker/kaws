@@ -10,6 +10,7 @@ coreos:
     listen_peer_urls: http://$private_ipv4:2380
     listen_client_urls: http://$private_ipv4:2379,http://127.0.0.1:2379
     advertise_client_urls: http://$private_ipv4:2379
+    data_dir: /var/lib/etcd2
   fleet:
     etcd_servers: http://127.0.0.1:2379
     metadata: etcd=quorum,kubernetes=none
@@ -17,5 +18,35 @@ coreos:
   units:
     - name: etcd2.service
       command: start
+      drop-ins:
+        - name: 10-wait-ebs.conf
+          content: |
+            [Unit]
+            Requires=var-lib-etcd2.mount
+            After=var-lib-etcd2.mount
     - name: fleet.service
       command: start
+    - name: format-etcd-ebs.service
+      command: start
+      content: |
+        [Unit]
+        Description=Formats EBS volume for etcd data
+        Requires=dev-sdf.device
+        After=dev-sdf.device
+        ConditionPathExists=!/dev/disk/by-label/ETCD
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=/usr/sbin/wipefs /dev/sdf
+        ExecStart=/usr/sbin/mkfs.ext4 -L ETCD /dev/sdf
+    - name: var-lib-etcd2.mount
+      command: start
+      content: |
+        [Unit]
+        Description=Mount EBS volume to /var/lib/etcd2
+        Requires=format-etcd-ebs.service
+        After=format-etcd-ebs.service
+        [Mount]
+        What=/dev/sdf
+        Where=/var/lib/etcd2
+        Type=ext4

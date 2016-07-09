@@ -130,6 +130,15 @@ resource "aws_kms_alias" "pki" {
   target_key_id = "${aws_kms_key.pki.key_id}"
 }
 
+resource "aws_kms_key" "etcd" {
+  description = "kaws ${var.cluster} EBS encryption for etcd"
+}
+
+resource "aws_kms_alias" "etcd" {
+  name = "alias/kaws-${var.cluster}-etcd"
+  target_key_id = "${aws_kms_key.etcd.key_id}"
+}
+
 resource "aws_security_group" "balancers" {
   name = "kaws-balancers-${var.cluster}"
   description = "Load balancers"

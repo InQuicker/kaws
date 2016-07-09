@@ -16,6 +16,7 @@ resource "aws_instance" "bastion" {
 resource "aws_instance" "etcd_01" {
   ami = "${var.coreos_ami}"
   associate_public_ip_address = true
+  availability_zone = "${var.availability_zone}"
   instance_type = "${var.instance_size}"
   key_name = "${var.ssh_key}"
   private_ip = "10.0.1.4"
@@ -32,6 +33,7 @@ resource "aws_instance" "etcd_01" {
 resource "aws_instance" "etcd_02" {
   ami = "${var.coreos_ami}"
   associate_public_ip_address = true
+  availability_zone = "${var.availability_zone}"
   instance_type = "${var.instance_size}"
   key_name = "${var.ssh_key}"
   private_ip = "10.0.1.5"
@@ -48,6 +50,7 @@ resource "aws_instance" "etcd_02" {
 resource "aws_instance" "etcd_03" {
   ami = "${var.coreos_ami}"
   associate_public_ip_address = true
+  availability_zone = "${var.availability_zone}"
   instance_type = "${var.instance_size}"
   key_name = "${var.ssh_key}"
   private_ip = "10.0.1.6"

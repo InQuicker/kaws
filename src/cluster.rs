@@ -10,6 +10,7 @@ use error::KawsResult;
 use process::execute_child_process;
 
 pub struct Cluster<'a> {
+    availability_zone: Option<&'a str>,
     aws_account_id: Option<&'a str>,
     aws_credentials_provider: ChainProvider,
     ca_cert_path: String,
@@ -49,6 +50,7 @@ impl<'a> Cluster<'a> {
         let name =  matches.value_of("cluster").expect("clap should have required cluster");
 
         Cluster {
+            availability_zone: matches.value_of("availability-zone"),
             aws_account_id: matches.value_of("aws-account-id"),
             aws_credentials_provider: credentials_provider(
                 matches.value_of("aws-credentials-path"),
@@ -420,6 +422,7 @@ IP.1 = 10.3.0.1
             try!(write!(
                 file,
                 "\
+kaws_availability_zone = \"{}\"
 kaws_cluster = \"{}\"
 kaws_coreos_ami = \"{}\"
 kaws_domain = \"{}\"
@@ -437,6 +440,7 @@ kaws_ssh_key = \"{}\"
 kaws_version = \"{}\"
 kaws_zone_id = \"{}\"
 ",
+                self.availability_zone.expect("AZ should have been required by clap"),
                 self.name,
                 self.coreos_ami.expect("AMI should have been required by clap"),
                 self.domain.expect("domain should have been required by clap"),

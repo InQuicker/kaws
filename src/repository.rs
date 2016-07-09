@@ -33,6 +33,7 @@ impl<'a> Repository<'a> {
 r#"module "kaws" {{
     source = "{}"
 
+    availability_zone = "${{var.kaws_availability_zone}}"
     cluster = "${{var.kaws_cluster}}"
     coreos_ami = "${{var.kaws_coreos_ami}}"
     domain = "${{var.kaws_domain}}"
@@ -49,6 +50,10 @@ r#"module "kaws" {{
     ssh_key = "${{var.kaws_ssh_key}}"
     version = "${{var.kaws_version}}"
     zone_id = "${{var.kaws_zone_id}}"
+}}
+
+variable "kaws_availability_zone" {{
+    description = "Availability Zone for etcd instances and EBS volumes, e.g. `us-east-1a`"
 }}
 
 variable "kaws_cluster" {{

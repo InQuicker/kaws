@@ -192,6 +192,13 @@ fn cluster_init<'a, 'b>() -> App<'a, 'b> {
                 .help("EC2 AMI ID to use for all CoreOS instances, e.g. \"ami-1234\"")
         )
         .arg(
+            Arg::with_name("availability-zone")
+                .long("availability-zone")
+                .takes_value(true)
+                .required(true)
+                .help("Availability Zone for etcd instances and EBS volumes, e.g. \"us-east-1a\"")
+        )
+        .arg(
             Arg::with_name("domain")
                 .short("d")
                 .long("domain")
