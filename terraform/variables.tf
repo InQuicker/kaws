@@ -1,6 +1,6 @@
-variable "availability_zone" {{
+variable "availability_zone" {
     description = "Availability Zone for etcd instances and EBS volumes, e.g. `us-east-1a`"
-}}
+}
 
 variable "cluster" {
   description = "The target cluster's name, e.g. `production`"
@@ -46,7 +46,7 @@ variable "nodes_min_size" {
   description = "The minimum number of EC2 instances the Kubernetes nodes may autoscale to"
 }
 
-variables "rbac_super_user" {
+variable "rbac_super_user" {
   description = "The Kubernetes username of an administrator who will set up initial RBAC policies."
 }
 

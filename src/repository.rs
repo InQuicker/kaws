@@ -100,7 +100,7 @@ variable "kaws_nodes_min_size" {{
   description = "The minimum number of EC2 instances the Kubernetes nodes may autoscale to"
 }}
 
-variables "kaws_rbac_super_user" {{
+variable "kaws_rbac_super_user" {{
   description = "The Kubernetes username of an administrator who will set up initial RBAC policies."
 }}
 
