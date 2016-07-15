@@ -50,3 +50,15 @@ coreos:
         What=/dev/xvdf
         Where=/var/lib/etcd2
         Type=ext4
+    - name: create-etcd2-data-dir.service
+      command: start
+      content: |
+        [Unit]
+        Description=Create etcd data dir and set ownership
+        Requires=var-lib-etcd2.mount
+        After=var-lib-etcd2.mount
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=/usr/bin/mkdir -p /var/lib/etcd2/data
+        ExecStart=/usr/bin/chown -R etcd:etcd /var/lib/etcd2/data
