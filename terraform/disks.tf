@@ -38,19 +38,19 @@ resource "aws_ebs_volume" "etcd_03" {
 }
 
 resource "aws_volume_attachment" "etcd_01" {
-  device_name = "/dev/sdf"
+  device_name = "/dev/xvdf"
   instance_id = "${aws_instance.etcd_01.id}"
   volume_id = "${aws_ebs_volume.etcd_01.id}"
 }
 
 resource "aws_volume_attachment" "etcd_02" {
-  device_name = "/dev/sdf"
+  device_name = "/dev/xvdf"
   instance_id = "${aws_instance.etcd_02.id}"
   volume_id = "${aws_ebs_volume.etcd_02.id}"
 }
 
 resource "aws_volume_attachment" "etcd_03" {
-  device_name = "/dev/sdf"
+  device_name = "/dev/xvdf"
   instance_id = "${aws_instance.etcd_03.id}"
   volume_id = "${aws_ebs_volume.etcd_03.id}"
 }

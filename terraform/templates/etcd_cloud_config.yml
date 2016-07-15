@@ -31,14 +31,14 @@ coreos:
       content: |
         [Unit]
         Description=Formats EBS volume for etcd data
-        Requires=dev-sdf.device
-        After=dev-sdf.device
+        Requires=dev-xvdf.device
+        After=dev-xvdf.device
         ConditionPathExists=!/dev/disk/by-label/ETCD
         [Service]
         Type=oneshot
         RemainAfterExit=yes
-        ExecStart=/usr/sbin/wipefs /dev/sdf
-        ExecStart=/usr/sbin/mkfs.ext4 -L ETCD /dev/sdf
+        ExecStart=/usr/sbin/wipefs /dev/xvdf
+        ExecStart=/usr/sbin/mkfs.ext4 -L ETCD /dev/xvdf
     - name: var-lib-etcd2.mount
       command: start
       content: |
@@ -47,6 +47,6 @@ coreos:
         Requires=format-etcd-ebs.service
         After=format-etcd-ebs.service
         [Mount]
-        What=/dev/sdf
+        What=/dev/xvdf
         Where=/var/lib/etcd2
         Type=ext4
