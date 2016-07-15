@@ -422,6 +422,7 @@ IP.1 = 10.3.0.1
             try!(write!(
                 file,
                 "\
+kaws_account_id = \"{}\"
 kaws_availability_zone = \"{}\"
 kaws_cluster = \"{}\"
 kaws_coreos_ami = \"{}\"
@@ -440,6 +441,7 @@ kaws_ssh_key = \"{}\"
 kaws_version = \"{}\"
 kaws_zone_id = \"{}\"
 ",
+                self.aws_account_id.expect("account ID should have been required by clap"),
                 self.availability_zone.expect("AZ should have been required by clap"),
                 self.name,
                 self.coreos_ami.expect("AMI should have been required by clap"),

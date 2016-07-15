@@ -33,6 +33,7 @@ impl<'a> Repository<'a> {
 r#"module "kaws" {{
     source = "{}"
 
+    account_id = "${{var.kaws_account_id}}"
     availability_zone = "${{var.kaws_availability_zone}}"
     cluster = "${{var.kaws_cluster}}"
     coreos_ami = "${{var.kaws_coreos_ami}}"
@@ -50,6 +51,10 @@ r#"module "kaws" {{
     ssh_key = "${{var.kaws_ssh_key}}"
     version = "${{var.kaws_version}}"
     zone_id = "${{var.kaws_zone_id}}"
+}}
+
+variable "kaws_account_id" {{
+  description = "Numerical account ID of the AWS account to use, e.g. `12345678`"
 }}
 
 variable "kaws_availability_zone" {{

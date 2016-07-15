@@ -1,3 +1,7 @@
+variable "account_id" {
+  description = "Numerical account ID of the AWS account to use, e.g. `12345678`"
+}
+
 variable "availability_zone" {
     description = "Availability Zone for etcd instances and EBS volumes, e.g. `us-east-1a`"
 }

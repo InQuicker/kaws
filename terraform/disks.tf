@@ -1,7 +1,7 @@
 resource "aws_ebs_volume" "etcd_01" {
   availability_zone = "${var.availability_zone}"
   encrypted = true
-  kms_key_id = "${aws_kms_key.etcd.key_id}"
+  kms_key_id = "arn:aws:kms:${var.region}:${var.account_id}:key/${aws_kms_key.etcd.key_id}"
   size = "10"
   type = "gp2"
 
@@ -14,7 +14,7 @@ resource "aws_ebs_volume" "etcd_01" {
 resource "aws_ebs_volume" "etcd_02" {
   availability_zone = "${var.availability_zone}"
   encrypted = true
-  kms_key_id = "${aws_kms_key.etcd.key_id}"
+  kms_key_id = "arn:aws:kms:${var.region}:${var.account_id}:key/${aws_kms_key.etcd.key_id}"
   size = "10"
   type = "gp2"
 
@@ -27,7 +27,7 @@ resource "aws_ebs_volume" "etcd_02" {
 resource "aws_ebs_volume" "etcd_03" {
   availability_zone = "${var.availability_zone}"
   encrypted = true
-  kms_key_id = "${aws_kms_key.etcd.key_id}"
+  kms_key_id = "arn:aws:kms:${var.region}:${var.account_id}:key/${aws_kms_key.etcd.key_id}"
   size = "10"
   type = "gp2"
 
