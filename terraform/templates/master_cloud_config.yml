@@ -140,7 +140,7 @@ write_files:
           - --etcd-servers=http://127.0.0.1:2379
           - --external-hostname=https://kubernetes.${domain}
           - --insecure-bind-address=0.0.0.0
-          - --runtime-config=rbac.authorization/v1alpha=true
+          - --runtime-config=rbac.authorization/v1alpha1=true
           - --secure-port=443
           - --service-account-key-file=/etc/kubernetes/ssl/master-key.pem
           - --service-cluster-ip-range=10.3.0.1/24
