@@ -14,6 +14,10 @@ output "kubernetes_security_group_id" {
   value = "${aws_security_group.kubernetes.id}"
 }
 
+output "pki_kms_key" {
+  value = "${aws_kms_key.pki.key_id}"
+}
+
 output "region" {
   value = "${var.region}"
 }
