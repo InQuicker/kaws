@@ -248,7 +248,7 @@ impl<'a> Cluster<'a> {
                 "-out",
                 &self.master_csr_path,
                 "-subj",
-                &format!("/CN=kaws-master-{}", self.name),
+                &format!("/CN=kaws-master"),
                 "-config",
                 &self.openssl_config_path,
             ]));
@@ -302,7 +302,7 @@ impl<'a> Cluster<'a> {
                 "-out",
                 &self.node_csr_path,
                 "-subj",
-                &format!("/CN=kaws-node-{}", self.name),
+                &format!("/CN=kaws-node"),
             ]));
         });
 
@@ -382,7 +382,7 @@ IP.1 = 10.3.0.1
                 "-out",
                 &self.ca_cert_path,
                 "-subj",
-                &format!("/CN=kaws-ca-{}", self.name),
+                &format!("/CN=kaws-ca"),
             ]));
         });
 
