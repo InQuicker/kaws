@@ -64,7 +64,7 @@ impl<'a> Admin<'a> {
                 "-out",
                 &admin_csr_path,
                 "-subj",
-                &format!("/CN=kaws-{}-{}", self.cluster, self.admin),
+                &format!("/CN={}", self.admin),
             ]));
         });
 
