@@ -22,6 +22,10 @@ output "region" {
   value = "${var.region}"
 }
 
+output "route_table_id" {
+  value = "${aws_route_table.public.id}"
+}
+
 output "subnet_id" {
   value = "${aws_subnet.public.id}"
 }
