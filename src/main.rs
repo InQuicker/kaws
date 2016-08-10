@@ -29,7 +29,7 @@ use std::process::exit;
 use ansi_term::Colour::Green;
 
 use admin::Admin;
-use cluster::Cluster;
+use cluster::{ExistingCluster, NewCluster};
 use error::KawsResult;
 use repository::Repository;
 use terraform::Terraform;
@@ -74,8 +74,8 @@ fn execute_cli() -> KawsResult {
         ("cluster", Some(cluster_matches)) => match cluster_matches.subcommand() {
             ("apply", Some(matches)) => Terraform::new(matches).apply(),
             ("destroy", Some(matches)) => Terraform::new(matches).destroy(),
-            ("init", Some(matches)) => Cluster::new(matches).init(),
-            ("genpki", Some(matches)) => Cluster::new(matches).generate_pki(),
+            ("init", Some(matches)) => NewCluster::new(matches).init(),
+            ("genpki", Some(matches)) => ExistingCluster::new(matches).generate_pki(),
             ("output", Some(matches)) => Terraform::new(matches).output(),
             ("plan", Some(matches)) => Terraform::new(matches).plan(),
             _ => {
