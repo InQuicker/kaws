@@ -51,9 +51,9 @@ At this time, kaws has only been developed for and tested on OS X. Support for L
 
 kaws requires the following other programs to be available on your system:
 
-* [Terraform](https://terraform.io/)
+* [Terraform](https://terraform.io/), version 0.7 or greater
 * [OpenSSL](https://www.openssl.org/)
-* [kubectl](http://kubernetes.io/)
+* [kubectl](http://kubernetes.io/), version 1.3.0 or greater
 
 ### OS X
 
