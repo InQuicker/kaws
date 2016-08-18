@@ -1,4 +1,4 @@
-resource "template_file" "etcd_01_cloud_config" {
+data "template_file" "etcd_01_cloud_config" {
   template = "${file("${path.module}/templates/etcd_cloud_config.yml")}"
 
   lifecycle {
@@ -11,7 +11,7 @@ resource "template_file" "etcd_01_cloud_config" {
   }
 }
 
-resource "template_file" "etcd_02_cloud_config" {
+data "template_file" "etcd_02_cloud_config" {
   template = "${file("${path.module}/templates/etcd_cloud_config.yml")}"
 
   lifecycle {
@@ -24,7 +24,7 @@ resource "template_file" "etcd_02_cloud_config" {
   }
 }
 
-resource "template_file" "etcd_03_cloud_config" {
+data "template_file" "etcd_03_cloud_config" {
   template = "${file("${path.module}/templates/etcd_cloud_config.yml")}"
 
   lifecycle {
@@ -37,7 +37,7 @@ resource "template_file" "etcd_03_cloud_config" {
   }
 }
 
-resource "template_file" "master_cloud_config" {
+data "template_file" "master_cloud_config" {
   template = "${file("${path.module}/templates/master_cloud_config.yml")}"
 
   lifecycle {
@@ -53,7 +53,7 @@ resource "template_file" "master_cloud_config" {
   }
 }
 
-resource "template_file" "node_cloud_config" {
+data "template_file" "node_cloud_config" {
   template = "${file("${path.module}/templates/node_cloud_config.yml")}"
 
   lifecycle {

@@ -21,7 +21,7 @@ resource "aws_instance" "etcd_01" {
   key_name = "${var.ssh_key}"
   private_ip = "10.0.1.4"
   subnet_id = "${aws_subnet.public.id}"
-  user_data = "${template_file.etcd_01_cloud_config.rendered}"
+  user_data = "${data.template_file.etcd_01_cloud_config.rendered}"
   vpc_security_group_ids = ["${aws_security_group.etcd.id}"]
 
   tags {
@@ -38,7 +38,7 @@ resource "aws_instance" "etcd_02" {
   key_name = "${var.ssh_key}"
   private_ip = "10.0.1.5"
   subnet_id = "${aws_subnet.public.id}"
-  user_data = "${template_file.etcd_02_cloud_config.rendered}"
+  user_data = "${data.template_file.etcd_02_cloud_config.rendered}"
   vpc_security_group_ids = ["${aws_security_group.etcd.id}"]
 
   tags {
@@ -55,7 +55,7 @@ resource "aws_instance" "etcd_03" {
   key_name = "${var.ssh_key}"
   private_ip = "10.0.1.6"
   subnet_id = "${aws_subnet.public.id}"
-  user_data = "${template_file.etcd_03_cloud_config.rendered}"
+  user_data = "${data.template_file.etcd_03_cloud_config.rendered}"
   vpc_security_group_ids = ["${aws_security_group.etcd.id}"]
 
   tags {
@@ -72,7 +72,7 @@ resource "aws_launch_configuration" "k8s_masters" {
   key_name = "${var.ssh_key}"
   name_prefix = "kaws-k8s-masters-${var.cluster}-"
   security_groups = ["${aws_security_group.kubernetes.id}"]
-  user_data = "${template_file.master_cloud_config.rendered}"
+  user_data = "${data.template_file.master_cloud_config.rendered}"
 
   lifecycle {
     create_before_destroy = true
@@ -115,7 +115,7 @@ resource "aws_launch_configuration" "k8s_nodes" {
   key_name = "${var.ssh_key}"
   name_prefix = "kaws-k8s-nodes-${var.cluster}-"
   security_groups = ["${aws_security_group.kubernetes.id}"]
-  user_data = "${template_file.node_cloud_config.rendered}"
+  user_data = "${data.template_file.node_cloud_config.rendered}"
 
   lifecycle {
     create_before_destroy = true
