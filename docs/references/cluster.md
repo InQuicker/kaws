@@ -20,6 +20,7 @@ SUBCOMMANDS:
     init       Initializes all the configuration files for a new cluster
     output     Displays the Terraform outputs for the target cluster
     plan       Displays the Terraform plan for the target cluster
+    refresh    Refreshes the Terraform state for the target cluster
 ```
 
 ## Subcommands
@@ -178,3 +179,26 @@ ARGS:
 
 This command is a simple wrapper around `terraform plan` that points at the right Terraform configuration and state files for the target cluster.
 Any arguments following a literal `--` will be passed directly as options to `terraform plan`.
+
+### refresh
+
+`kaws cluster refresh` refreshes the Terraform state for the target cluster.
+
+```
+USAGE:
+    kaws cluster refresh [OPTIONS] <cluster> [ARGS]
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+        --aws-credentials-path <aws-credentials-path>          Path to the AWS credentials file, defaults to ~/.aws/credentials
+        --aws-credentials-profile <aws-credentials-profile>    Name of the AWS credentials profile to use, defaults to "default"
+
+ARGS:
+    <cluster>    The cluster whose plan should be displayed
+```
+
+This command is a simple wrapper around `terraform refresh` that points at the right Terraform configuration and state files for the target cluster.
+Any arguments following a literal `--` will be passed directly as options to `terraform refresh`.

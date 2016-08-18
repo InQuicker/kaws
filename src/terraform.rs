@@ -127,8 +127,40 @@ impl<'a> Terraform<'a> {
 
         command.args(&[
             "plan",
-            "-backup=-",
             "-module-depth=-1",
+            &format!("-state=clusters/{}/terraform.tfstate", self.cluster),
+            &format!("-var-file=clusters/{}/terraform.tfvars", self.cluster),
+        ]);
+
+        if self.terraform_args.is_some() {
+            command.args(self.terraform_args.as_ref().unwrap());
+        }
+
+        command.arg("terraform").env(
+            "AWS_ACCESS_KEY_ID",
+            self.aws_credentials_provider.credentials().expect(
+                "Failed to get AWS credentials"
+            ).aws_access_key_id(),
+        ).env(
+            "AWS_SECRET_ACCESS_KEY",
+            self.aws_credentials_provider.credentials().expect(
+                "Failed to get AWS credentials"
+            ).aws_secret_access_key(),
+        );
+
+        try!(command.status());
+
+        Ok(None)
+    }
+
+    pub fn refresh(&mut self) -> KawsResult {
+        try!(self.get());
+
+        let mut command = Command::new("terraform");
+
+        command.args(&[
+            "refresh",
+            "-backup=-",
             &format!("-state=clusters/{}/terraform.tfstate", self.cluster),
             &format!("-var-file=clusters/{}/terraform.tfvars", self.cluster),
         ]);

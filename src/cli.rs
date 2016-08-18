@@ -96,10 +96,11 @@ fn cluster<'a, 'b>() -> App<'a, 'b> {
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .subcommand(cluster_apply())
         .subcommand(cluster_destroy())
-        .subcommand(cluster_init())
         .subcommand(cluster_genpki())
+        .subcommand(cluster_init())
         .subcommand(cluster_output())
         .subcommand(cluster_plan())
+        .subcommand(cluster_refresh())
 }
 
 fn cluster_apply<'a, 'b>() -> App<'a, 'b> {
@@ -373,6 +374,38 @@ fn cluster_plan<'a, 'b>() -> App<'a, 'b> {
                 .help("Additional arguments to be passed on to `terraform plan`")
         )
         .after_help("\nAny arguments following a literal -- will be passed directly as options to `terraform plan`.")
+}
+
+fn cluster_refresh<'a, 'b>() -> App<'a, 'b> {
+    SubCommand::with_name("refresh")
+        .about("Refreshes the Terraform state for the target cluster")
+        .setting(AppSettings::TrailingVarArg)
+        .arg(
+            Arg::with_name("cluster")
+                .index(1)
+                .required(true)
+                .help("The cluster whose plan should be displayed")
+        )
+        .arg(
+            Arg::with_name("aws-credentials-path")
+                .long("aws-credentials-path")
+                .takes_value(true)
+                .help("Path to the AWS credentials file, defaults to ~/.aws/credentials")
+        )
+        .arg(
+            Arg::with_name("aws-credentials-profile")
+                .long("aws-credentials-profile")
+                .takes_value(true)
+                .help("Name of the AWS credentials profile to use, defaults to \"default\"")
+        )
+        .arg(
+            Arg::with_name("terraform-args")
+                .index(2)
+                .multiple(true)
+                .hidden(true)
+                .help("Additional arguments to be passed on to `terraform refresh`")
+        )
+        .after_help("\nAny arguments following a literal -- will be passed directly as options to `terraform refresh`.")
 }
 
 fn init<'a, 'b>() -> App<'a, 'b> {
