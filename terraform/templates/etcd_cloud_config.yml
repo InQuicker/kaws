@@ -22,8 +22,8 @@ coreos:
         - name: 10-wait-ebs.conf
           content: |
             [Unit]
-            Requires=var-lib-etcd2.mount
-            After=var-lib-etcd2.mount
+            Requires=create-etcd2-data-dir.service
+            After=create-etcd2-data-dir.service
     - name: fleet.service
       command: start
     - name: format-etcd-ebs.service
