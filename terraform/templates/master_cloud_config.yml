@@ -71,18 +71,18 @@ coreos:
         Requires=kaws-agent.service
         After=kaws-agent.service
         [Service]
-        ExecStartPre=/usr/bin/mkdir -p /var/lib/kubelet /opt/bin
-        ExecStartPre=/usr/bin/curl -L -o /opt/bin/kubelet -z /opt/bin/kubelet https://storage.googleapis.com/kubernetes-release/release/v${version}/bin/linux/amd64/kubelet
-        ExecStartPre=/usr/bin/chmod +x /opt/bin/kubelet
-        ExecStart=/opt/bin/kubelet \
+        Environment=KUBELET_VERSION=v${version}
+        Environment=KUBELET_ACI=docker://gcr.io/google_containers/hyperkube
+        Environment="RKT_OPTS=--volume resolv,kind=host,source=/etc/resolv.conf --mount volume=resolv,target=/etc/resolv.conf"
+        ExecStart=/opt/bin/kubelet-wrapper \
           --allow-privileged=true \
           --api-servers=http://127.0.0.1:8080 \
           --cloud-provider=aws \
           --cluster-dns=10.3.0.10 \
           --cluster-domain=cluster.local \
-          --config=/etc/kubernetes/manifests \
           --hostname-override=$private_ipv4 \
           --logtostderr=true \
+          --pod-manifest-path=/etc/kubernetes/manifests \
           --register-schedulable=false
         Restart=always
         RestartSec=10
@@ -129,7 +129,7 @@ write_files:
           command:
           - /hyperkube
           - apiserver
-          - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,ResourceQuota
+          - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota
           - --advertise-address=$private_ipv4
           - --allow-privileged=true
           - --authorization-mode=RBAC

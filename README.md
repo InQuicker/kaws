@@ -53,7 +53,7 @@ kaws requires the following other programs to be available on your system:
 
 * [Terraform](https://terraform.io/), version 0.7 or greater
 * [OpenSSL](https://www.openssl.org/)
-* [kubectl](http://kubernetes.io/), version 1.3.0 or greater
+* [kubectl](http://kubernetes.io/), version 1.4.0 or greater
 
 ### OS X
 
