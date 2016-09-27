@@ -33,12 +33,10 @@ coreos:
         Description=Formats EBS volume for etcd data
         Requires=dev-xvdf.device
         After=dev-xvdf.device
-        ConditionPathExists=!/dev/disk/by-label/ETCD
         [Service]
         Type=oneshot
         RemainAfterExit=yes
-        ExecStart=/usr/sbin/wipefs /dev/xvdf
-        ExecStart=/usr/sbin/mkfs.ext4 -L ETCD /dev/xvdf
+        ExecStart=/usr/bin/bash /opt/kaws/format-etcd-ebs.sh
     - name: var-lib-etcd2.mount
       command: start
       content: |
@@ -62,3 +60,19 @@ coreos:
         RemainAfterExit=yes
         ExecStart=/usr/bin/mkdir -p /var/lib/etcd2/data
         ExecStart=/usr/bin/chown -R etcd:etcd /var/lib/etcd2/data
+write_files:
+  - path: /opt/kaws/format-etcd-ebs.sh
+    permissions: "0755"
+    owner: root
+    content: |
+      !#/usr/bin/bash
+
+      test -b /dev/disk/by-label/ETCD
+
+      if [ "$?" = "0" ]; then
+        echo "EBS volume already formatted for use by etcd"
+        exit 0
+      else
+        /usr/sbin/wipefs /dev/xvdf
+        /usr/sbin/mkfs.ext4 -L ETCD /dev/xvdf
+      fi
