@@ -65,7 +65,7 @@ write_files:
     permissions: "0755"
     owner: root
     content: |
-      !#/usr/bin/bash
+      #!/usr/bin/bash
 
       test -b /dev/disk/by-label/ETCD
 
