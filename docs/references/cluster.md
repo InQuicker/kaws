@@ -99,27 +99,28 @@ This command is executed by a Terraform provisioner during `kaws cluster apply` 
 
 ```
 USAGE:
-    kaws cluster init [FLAGS] <cluster> --aws-account-id <aws-account-id> --ami <ami> --domain <domain> --masters-max-size <masters-max-size> --masters-min-size <masters-min-size> --nodes-max-size <nodes-max-size> --nodes-min-size <nodes-min-size> --rbac-super-user <rbac-super-user> --region <region> --iam-user <iam-users>... --instance-size <size> --ssh-key <ssh-key> --kubernetes-version <k8s-version> --zone-id <zone-id>
+    kaws cluster init <cluster> --aws-account-id <aws-account-id> --ami <ami> --availability-zone <availability-zone> --domain <domain> --masters-max-size <masters-max-size> --masters-min-size <masters-min-size> --nodes-max-size <nodes-max-size> --nodes-min-size <nodes-min-size> --rbac-super-user <rbac-super-user> --region <region> --iam-user <iam-users>... --instance-size <size> --ssh-key <ssh-key> --kubernetes-version <k8s-version> --zone-id <zone-id>
 
 FLAGS:
     -h, --help       Prints help information
     -V, --version    Prints version information
 
 OPTIONS:
-    -a, --ami <ami>                              EC2 AMI ID to use for all CoreOS instances, e.g. "ami-1234"
-    -A, --aws-account-id <aws-account-id>        The numeric ID of the AWS account, e.g. "123456789012"
-    -d, --domain <domain>                        The base domain name for the cluster, e.g. "example.com"
-    -i, --iam-user <iam-users>                   The name of an IAM user who will have access to cluster PKI secrets, e.g. "alice"
-    -v, --kubernetes-version <k8s-version>       Version of Kubernetes to use, e.g. "1.0.0"
-        --masters-max-size <masters-max-size>    The maximum number of EC2 instances the Kubernetes masters may autoscale to
-        --masters-min-size <masters-min-size>    The minimum number of EC2 instances the Kubernetes masters may autoscale to
-        --nodes-max-size <nodes-max-size>        The maximum number of EC2 instances the Kubernetes nodes may autoscale to
-        --nodes-min-size <nodes-min-size>        The minimum number of EC2 instances the Kubernetes nodes may autoscale to
-        --rbac-super-user <rbac-super-user>      The Kubernetes username of an administrator who will set up initial RBAC policies, e.g. "jimmy"
-    -r, --region <region>                        AWS Region to create the resources in, e.g. "us-east-1"
-    -s, --instance-size <size>                   EC2 instance size to use for all instances, e.g. "m3.medium"
-    -K, --ssh-key <ssh-key>                      Name of the SSH key in AWS for accessing EC2 instances, e.g. "alice"
-    -z, --zone-id <zone-id>                      Route 53 hosted zone ID
+    -a, --ami <ami>                                EC2 AMI ID to use for all CoreOS instances, e.g. "ami-1234"
+        --availability-zone <availability-zone>    Availability Zone for etcd instances and EBS volumes, e.g. "us-east-1a"
+    -A, --aws-account-id <aws-account-id>          The numeric ID of the AWS account, e.g. "123456789012"
+    -d, --domain <domain>                          The base domain name for the cluster, e.g. "example.com"
+    -i, --iam-user <iam-users>                     A comma-separated list of IAM user names who will have access to cluster PKI secrets, e.g. "alice"
+    -v, --kubernetes-version <k8s-version>         Version of Kubernetes to use, e.g. "1.0.0"
+        --masters-max-size <masters-max-size>      The maximum number of EC2 instances the Kubernetes masters may autoscale to
+        --masters-min-size <masters-min-size>      The minimum number of EC2 instances the Kubernetes masters may autoscale to
+        --nodes-max-size <nodes-max-size>          The maximum number of EC2 instances the Kubernetes nodes may autoscale to
+        --nodes-min-size <nodes-min-size>          The minimum number of EC2 instances the Kubernetes nodes may autoscale to
+        --rbac-super-user <rbac-super-user>        The Kubernetes username of an administrator who will set up initial RBAC policies, e.g. "jimmy"
+    -r, --region <region>                          AWS Region to create the resources in, e.g. "us-east-1"
+    -s, --instance-size <size>                     EC2 instance size to use for all instances, e.g. "m3.medium"
+    -K, --ssh-key <ssh-key>                        Name of the SSH key in AWS for accessing EC2 instances, e.g. "alice"
+    -z, --zone-id <zone-id>                        Route 53 hosted zone ID
 
 ARGS:
     <cluster>    The name of the cluster to create, e.g. "production"

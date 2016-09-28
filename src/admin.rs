@@ -10,20 +10,22 @@ use error::KawsResult;
 use process::execute_child_process;
 
 pub struct Admin<'a> {
+    admin: &'a str,
     aws_credentials_provider: ChainProvider,
     cluster: &'a str,
-    admin: &'a str,
+    groups: Option<Vec<&'a str>>,
 }
 
 impl<'a> Admin<'a> {
     pub fn new(matches: &'a ArgMatches) -> Self {
         Admin {
+            admin: matches.value_of("name").expect("clap should have required name"),
             aws_credentials_provider: credentials_provider(
                 matches.value_of("aws-credentials-path"),
                 matches.value_of("aws-credentials-profile"),
             ),
             cluster: matches.value_of("cluster").expect("clap should have required cluster"),
-            admin: matches.value_of("name").expect("clap should have required name"),
+            groups: matches.values_of("groups").map(|values| values.collect()),
         }
     }
 
@@ -55,6 +57,14 @@ impl<'a> Admin<'a> {
         });
 
         // create CSR
+        let mut subject = format!("/CN={}", self.admin);
+
+        if self.groups.is_some() {
+            for group in self.groups.as_ref().unwrap() {
+                subject.push_str(&format!("/O={}", group));
+            }
+        }
+
         log_wrap!("Creating Kubernetes admin certificate signing request", {
             try!(execute_child_process("openssl", &[
                 "req",
@@ -64,7 +74,7 @@ impl<'a> Admin<'a> {
                 "-out",
                 &admin_csr_path,
                 "-subj",
-                &format!("/CN={}", self.admin),
+                &subject,
             ]));
         });
 

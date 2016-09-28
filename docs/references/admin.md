@@ -27,11 +27,14 @@ SUBCOMMANDS:
 
 ```
 USAGE:
-    kaws admin create [FLAGS] <cluster> <name>
+    kaws admin create [OPTIONS] <cluster> <name>
 
 FLAGS:
     -h, --help       Prints help information
     -V, --version    Prints version information
+
+OPTIONS:
+    -g, --group <groups>    A comma-separated list of Kubernetes groups this user belongs to
 
 ARGS:
     <cluster>    The cluster the new administrator should be able to access

@@ -36,6 +36,14 @@ fn admin_create<'a, 'b>() -> App<'a, 'b> {
                 .required(true)
                 .help("The new administrator's name")
         )
+        .arg(
+            Arg::with_name("groups")
+                .short("g")
+                .long("group")
+                .takes_value(true)
+                .multiple(true)
+            .help("A comma-separated list of Kubernetes groups this user belongs to")
+        )
         .after_help(
             "\nCreates the following files:\n\n\
             * clusters/CLUSTER/NAME-key.pem: The admin's private key\n\
@@ -265,7 +273,7 @@ fn cluster_init<'a, 'b>() -> App<'a, 'b> {
                 .takes_value(true)
                 .multiple(true)
                 .required(true)
-                .help("The name of an IAM user who will have access to cluster PKI secrets, e.g. \"alice\"")
+                .help("A comma-separated list of IAM user names who will have access to cluster PKI secrets, e.g. \"alice\"")
         )
         .arg(
             Arg::with_name("size")
