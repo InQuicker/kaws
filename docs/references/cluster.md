@@ -99,7 +99,7 @@ This command is executed by a Terraform provisioner during `kaws cluster apply` 
 
 ```
 USAGE:
-    kaws cluster init <cluster> --aws-account-id <aws-account-id> --ami <ami> --availability-zone <availability-zone> --domain <domain> --masters-max-size <masters-max-size> --masters-min-size <masters-min-size> --nodes-max-size <nodes-max-size> --nodes-min-size <nodes-min-size> --rbac-super-user <rbac-super-user> --region <region> --iam-user <iam-users>... --instance-size <size> --ssh-key <ssh-key> --kubernetes-version <k8s-version> --zone-id <zone-id>
+    kaws cluster init <cluster> --aws-account-id <aws-account-id> --ami <ami> --availability-zone <availability-zone> --domain <domain> --masters-max-size <masters-max-size> --masters-min-size <masters-min-size> --nodes-max-size <nodes-max-size> --nodes-min-size <nodes-min-size> --rbac-super-user <rbac-super-user> --region <region> --iam-user <iam-user>... --instance-size <size> --ssh-key <ssh-key> --kubernetes-version <k8s-version> --zone-id <zone-id>
 
 FLAGS:
     -h, --help       Prints help information
@@ -110,7 +110,7 @@ OPTIONS:
         --availability-zone <availability-zone>    Availability Zone for etcd instances and EBS volumes, e.g. "us-east-1a"
     -A, --aws-account-id <aws-account-id>          The numeric ID of the AWS account, e.g. "123456789012"
     -d, --domain <domain>                          The base domain name for the cluster, e.g. "example.com"
-    -i, --iam-user <iam-users>                     A comma-separated list of IAM user names who will have access to cluster PKI secrets, e.g. "alice"
+    -i, --iam-user <iam-user>                      An IAM user name who will have access to cluster PKI secrets, e.g. \"alice\"; this option can be specified more than once
     -v, --kubernetes-version <k8s-version>         Version of Kubernetes to use, e.g. "1.0.0"
         --masters-max-size <masters-max-size>      The maximum number of EC2 instances the Kubernetes masters may autoscale to
         --masters-min-size <masters-min-size>      The minimum number of EC2 instances the Kubernetes masters may autoscale to

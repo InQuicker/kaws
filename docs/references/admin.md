@@ -34,7 +34,7 @@ FLAGS:
     -V, --version    Prints version information
 
 OPTIONS:
-    -g, --group <groups>    A comma-separated list of Kubernetes groups this user belongs to
+    -g, --group <group>    A Kubernetes groups this user belongs to; this option can be specified more than once
 
 ARGS:
     <cluster>    The cluster the new administrator should be able to access

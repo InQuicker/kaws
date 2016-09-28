@@ -317,7 +317,7 @@ impl<'a> NewCluster<'a> {
             coreos_ami: matches.value_of("ami").expect("missing ami"),
             domain: matches.value_of("domain").expect("missing domain"),
             iam_users: matches
-                .values_of("iam-users")
+                .values_of("iam-user")
                 .expect("missing iam-users")
                 .collect(),
             instance_size: matches.value_of("size").expect("missing instance size"),

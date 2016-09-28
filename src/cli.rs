@@ -37,12 +37,13 @@ fn admin_create<'a, 'b>() -> App<'a, 'b> {
                 .help("The new administrator's name")
         )
         .arg(
-            Arg::with_name("groups")
+            Arg::with_name("group")
                 .short("g")
                 .long("group")
                 .takes_value(true)
                 .multiple(true)
-            .help("A comma-separated list of Kubernetes groups this user belongs to")
+                .number_of_values(1)
+            .help("A Kubernetes groups this user belongs to; this option can be specified more than once")
         )
         .after_help(
             "\nCreates the following files:\n\n\
@@ -267,13 +268,14 @@ fn cluster_init<'a, 'b>() -> App<'a, 'b> {
                 .help("AWS Region to create the resources in, e.g. \"us-east-1\"")
         )
         .arg(
-            Arg::with_name("iam-users")
+            Arg::with_name("iam-user")
                 .short("i")
                 .long("iam-user")
                 .takes_value(true)
                 .multiple(true)
                 .required(true)
-                .help("A comma-separated list of IAM user names who will have access to cluster PKI secrets, e.g. \"alice\"")
+                .number_of_values(1)
+                .help("An IAM user name who will have access to cluster PKI secrets, e.g. \"alice\"; this option can be specified more than once")
         )
         .arg(
             Arg::with_name("size")

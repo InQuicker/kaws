@@ -25,7 +25,7 @@ impl<'a> Admin<'a> {
                 matches.value_of("aws-credentials-profile"),
             ),
             cluster: matches.value_of("cluster").expect("clap should have required cluster"),
-            groups: matches.values_of("groups").map(|values| values.collect()),
+            groups: matches.values_of("group").map(|values| values.collect()),
         }
     }
 
