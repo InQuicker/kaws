@@ -3,7 +3,8 @@ use std::fmt::{Debug, Display, Formatter};
 use std::fmt::Error as FmtError;
 use std::str::Utf8Error;
 
-use rusoto::{AwsError, ParseRegionError};
+use rusoto::ParseRegionError;
+use rusoto::kms::{DecryptError, EncryptError};
 use rustc_serialize::base64::FromBase64Error;
 
 pub struct KawsError {
@@ -52,8 +53,16 @@ impl From<Utf8Error> for KawsError {
     }
 }
 
-impl From<AwsError> for KawsError {
-    fn from(error: AwsError) -> Self {
+impl From<DecryptError> for KawsError {
+    fn from(error: DecryptError) -> Self {
+        KawsError {
+            message: format!("{}", error),
+        }
+    }
+}
+
+impl From<EncryptError> for KawsError {
+    fn from(error: EncryptError) -> Self {
         KawsError {
             message: format!("{}", error),
         }

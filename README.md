@@ -61,11 +61,13 @@ All the dependencies can be installed with [Homebrew](http://brew.sh/):
 
 ```
 brew install terraform openssl kubernetes-cli
-brew link --force openssl
 ```
 
-The `brew link` command is necessary because the openssl formula is "keg only," in turn because OS X ships with an older version already installed.
-Running the link command makes the newer one installed by Homebrew the default.
+To use the Homebrew-installed OpenSSL, prefix the `cargo build` command (in the section on build from source below) with:
+
+``` bash
+OPENSSL_INCLUDE_DIR=`brew --prefix openssl`/include OPENSSL_LIB_DIR=`brew --prefix openssl`/lib
+```
 
 ## Installing kaws
 

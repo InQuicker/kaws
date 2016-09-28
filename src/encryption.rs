@@ -1,10 +1,13 @@
 use std::fs::{File, remove_file};
 use std::io::{ErrorKind, Read, Write};
 
-use rusoto::{AwsError, AwsResult, ChainProvider, ProvideAwsCredentials, Region};
+use hyper::Client as HyperClient;
+use rusoto::{ChainProvider, DispatchSignedRequest, ProvideAwsCredentials, Region};
 use rusoto::kms::{
+    DecryptError,
     DecryptRequest,
     DecryptResponse,
+    EncryptError,
     EncryptRequest,
     EncryptResponse,
     KmsClient,
@@ -13,18 +16,18 @@ use rustc_serialize::base64::{FromBase64, STANDARD, ToBase64};
 
 use error::{KawsError, KawsResult};
 
-pub struct Encryptor<'a, P> where P: ProvideAwsCredentials {
-    client: KmsClient<P>,
+pub struct Encryptor<'a, P, D> where P: ProvideAwsCredentials, D: DispatchSignedRequest {
+    client: KmsClient<P, D>,
     decrypted_files: Vec<String>,
     kms_master_key_id: Option<&'a str>,
 }
 
-impl<'a> Encryptor<'a, ChainProvider> {
+impl<'a> Encryptor<'a, ChainProvider, HyperClient> {
     pub fn new(
         provider: ChainProvider,
         region: Region,
         kms_master_key_id: Option<&'a str>,
-    ) -> Encryptor<'a, ChainProvider> {
+    ) -> Encryptor<'a, ChainProvider, HyperClient> {
         Encryptor {
             client: KmsClient::new(provider, region),
             decrypted_files: vec![],
@@ -32,14 +35,15 @@ impl<'a> Encryptor<'a, ChainProvider> {
         }
     }
 
-    pub fn decrypt<'b>(&mut self, encrypted_data: Vec<u8>) -> AwsResult<DecryptResponse> {
+    pub fn decrypt<'b>(&mut self, encrypted_data: Vec<u8>)
+    -> Result<DecryptResponse, DecryptError> {
         let request = DecryptRequest {
             encryption_context: None,
             grant_tokens: None,
             ciphertext_blob: encrypted_data,
         };
 
-        self.client.decrypt(&request).map_err(|error| AwsError::new(error.to_string()))
+        self.client.decrypt(&request)
     }
 
     pub fn decrypt_file<'b>(&mut self, source: &'b str, destination: &'b str) -> KawsResult {
@@ -64,7 +68,8 @@ impl<'a> Encryptor<'a, ChainProvider> {
         Ok(None)
     }
 
-    pub fn encrypt<'b>(&mut self, decrypted_data: Vec<u8>) -> AwsResult<EncryptResponse> {
+    pub fn encrypt<'b>(&mut self, decrypted_data: Vec<u8>)
+    -> Result<EncryptResponse, EncryptError> {
         let request = EncryptRequest {
             plaintext: decrypted_data,
             encryption_context: None,
@@ -72,7 +77,7 @@ impl<'a> Encryptor<'a, ChainProvider> {
             grant_tokens: None,
         };
 
-        self.client.encrypt(&request).map_err(|error| AwsError::new(error.to_string()))
+        self.client.encrypt(&request)
     }
 
     pub fn encrypt_file<'b>(&mut self, source: &'b str, destination: &'b str) -> KawsResult {
@@ -101,7 +106,8 @@ impl<'a> Encryptor<'a, ChainProvider> {
     }
 }
 
-impl<'a, P> Drop for Encryptor<'a, P> where P: ProvideAwsCredentials {
+impl<'a, P, D> Drop for Encryptor<'a, P, D>
+where P: ProvideAwsCredentials, D: DispatchSignedRequest {
     fn drop(&mut self) {
         let mut failures = vec![];
 

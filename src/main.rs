@@ -1,6 +1,7 @@
 extern crate ansi_term;
 extern crate env_logger;
 extern crate clap;
+extern crate hyper;
 extern crate rusoto;
 extern crate rustc_serialize;
 #[macro_use]
