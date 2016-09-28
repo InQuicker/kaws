@@ -113,7 +113,10 @@ write_files:
     owner: root
     content: |
       #!/usr/bin/bash -ex
-      docker kill $(docker ps -q -f label=io.kubernetes.container.name=kube-proxy)
+      cid=$(docker ps -q -f label=io.kubernetes.container.name=kube-proxy)
+      if [ -n "$cid" ]; then
+        docker kill $cid
+      fi
       systemctl restart kubelet
   - path: /etc/kubernetes/manifests/kube-proxy.yml
     content: |

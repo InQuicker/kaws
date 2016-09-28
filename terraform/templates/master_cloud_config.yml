@@ -117,8 +117,14 @@ write_files:
     owner: root
     content: |
       #!/usr/bin/bash -ex
-      docker kill $(docker ps -q -f label=io.kubernetes.container.name=kube-apiserver)
-      docker kill $(docker ps -q -f label=io.kubernetes.container.name=kube-controller-manager)
+      cid=$(docker ps -q -f label=io.kubernetes.container.name=kube-apiserver)
+      if [ -n "$cid" ]; then
+        docker kill $cid
+      fi
+      cid=$(docker ps -q -f label=io.kubernetes.container.name=kube-controller-manager)
+      if [ -n "$cid" ]; then
+        docker kill $cid
+      fi
       systemctl restart kubelet
   - path: /etc/kubernetes/manifests/kube-apiserver.yml
     permissions: "0644"
