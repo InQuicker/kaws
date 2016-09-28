@@ -88,30 +88,38 @@ coreos:
         RestartSec=10
         [Install]
         WantedBy=multi-user.target
-    - name: restart-kubelet@.path
+    - name: restart-kube-components@.path
       content: |
         [Unit]
-        Description=Restart kubelet if %f changes
+        Description=Restart Kubernetes system components if %f changes
         [Path]
         PathChanged=%f
-        Unit=restart-kube.service
-    - name: restart-kubelet@etc-kubernetes-ssl-ca.pem.path
+        Unit=restart-kube-components.service
+    - name: restart-kube-components@etc-kubernetes-ssl-ca.pem.path
       enable: true
       command: start
-    - name: restart-kubelet@etc-kubernetes-ssl-master.pem.path
+    - name: restart-kube-components@etc-kubernetes-ssl-master.pem.path
       enable: true
       command: start
-    - name: restart-kubelet@etc-kubernetes-ssl-master\x2dkey.pem.path
+    - name: restart-kube-components@etc-kubernetes-ssl-master\x2dkey.pem.path
       enable: true
       command: start
-    - name: restart-kubelet.service
+    - name: restart-kube-components.service
       content: |
         [Unit]
-        Description=Restart kubelet
+        Description=Restart Kubernetes system components
         [Service]
         Type=oneshot
-        ExecStart=/usr/bin/systemctl restart kubelet
+        ExecStart=/opt/bin/restart-kube-components.sh
 write_files:
+  - path: /opt/bin/restart-kube-components.sh
+    permissions: "0755"
+    owner: root
+    content: |
+      #!/usr/bin/bash -ex
+      docker kill $(docker ps -q -f label=io.kubernetes.container.name=kube-apiserver)
+      docker kill $(docker ps -q -f label=io.kubernetes.container.name=kube-controller-manager)
+      systemctl restart kubelet
   - path: /etc/kubernetes/manifests/kube-apiserver.yml
     permissions: "0644"
     owner: root
