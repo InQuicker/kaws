@@ -88,6 +88,15 @@ Signed precompiled binaries for tagged version numbers are available for downloa
 
 Detailed documentation is available in the [docs](docs) directory. A good place to start is the [overview](docs/overview.md).
 
+## Development
+
+To package the current release for distribution, update `TAG` in the Makefile and then run `make`.
+Release artifacts will be written to the `dist` directory.
+Your GPG secret key will be required to sign `sha256sums.txt`.
+
+Docker images for `inquicker/kaws` and `inquicker/kaws:$TAG` will be created, but you must push them manually.
+`cargo publish` must be run manually to release to crates.io.
+
 ## Legal
 
 kaws is released under the MIT license. See `LICENSE` for details.
