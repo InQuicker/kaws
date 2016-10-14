@@ -41,6 +41,7 @@ r#"module "kaws" {{
     etcd_01_initial_cluster_state = "${{var.kaws_etcd_01_initial_cluster_state}}"
     etcd_02_initial_cluster_state = "${{var.kaws_etcd_02_initial_cluster_state}}"
     etcd_03_initial_cluster_state = "${{var.kaws_etcd_03_initial_cluster_state}}"
+    iam_users = ["${{var.kaws_iam_users}}"]
     instance_size = "${{var.kaws_instance_size}}"
     masters_max_size = "${{var.kaws_masters_max_size}}"
     masters_min_size = "${{var.kaws_masters_min_size}}"
@@ -58,7 +59,7 @@ variable "kaws_account_id" {{
 }}
 
 variable "kaws_availability_zone" {{
-    description = "Availability Zone for etcd instances and EBS volumes, e.g. `us-east-1a`"
+  description = "Availability Zone for etcd instances and EBS volumes, e.g. `us-east-1a`"
 }}
 
 variable "kaws_cluster" {{
@@ -83,6 +84,11 @@ variable "kaws_etcd_02_initial_cluster_state" {{
 
 variable "kaws_etcd_03_initial_cluster_state" {{
   description = "The initial cluster state for the third etcd node. One of `new` or `existing`"
+}}
+
+variable "kaws_iam_users" {{
+  description = "A list of IAM user names who will have access to cluster PKI secrets"
+  type = "list"
 }}
 
 variable "kaws_instance_size" {{

@@ -1,3 +1,108 @@
+data "aws_iam_policy_document" "kms_key" {
+  statement {
+    actions = [
+      "kms:*",
+    ]
+
+    principals {
+      type = "AWS"
+      identifiers = [
+        "arn:aws:iam::${var.account_id}:root",
+      ]
+    }
+
+    resources = [
+      "*",
+    ]
+
+    sid = "Enable IAM User Permissions"
+  }
+
+  statement {
+    actions = [
+        "kms:Create*",
+        "kms:Describe*",
+        "kms:Enable*",
+        "kms:List*",
+        "kms:Put*",
+        "kms:Update*",
+        "kms:Revoke*",
+        "kms:Disable*",
+        "kms:Get*",
+        "kms:Delete*",
+        "kms:ScheduleKeyDeletion",
+        "kms:CancelKeyDeletion",
+    ]
+
+    principals {
+      type = "AWS"
+      identifiers = ["${formatlist("arn:aws:iam::%s:user/%s", var.account_id, var.iam_users)}"]
+    }
+
+    resources = [
+      "*",
+    ]
+
+    sid = "Allow access for Key Administrators"
+  }
+
+  statement {
+    actions = [
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey",
+    ]
+
+    principals {
+      type = "AWS"
+      identifiers = [
+        "${
+          concat(
+            formatlist(
+              "arn:aws:iam::%s:role/kaws-k8s-%s",
+              var.account_id,
+              list("master-${var.cluster}", "node-${var.cluster}")
+            ),
+            formatlist("arn:aws:iam::%s:user/%s", var.account_id, var.iam_users)
+          )
+        }"
+      ]
+    }
+
+    resources = [
+      "*",
+    ]
+
+    sid = "Allow use of the key"
+  }
+
+  statement {
+    actions = [
+      "kms:CreateGrant",
+      "kms:ListGrants",
+      "kms:RevokeGrant",
+    ]
+
+    condition {
+      test = "Bool"
+
+      values = [
+        true,
+      ]
+
+      variable = "kms:GrantIsForAWSResource"
+    }
+
+    resources = [
+      "*",
+    ]
+
+    sid = "Allow attachment of persistent resources"
+  }
+}
+
 resource "aws_iam_instance_profile" "k8s_master" {
   name = "kaws-k8s-master-${var.cluster}"
   roles = ["${aws_iam_role.k8s_master.name}"]
@@ -122,7 +227,7 @@ EOS
 resource "aws_kms_key" "pki" {
   depends_on = ["aws_iam_role.k8s_master", "aws_iam_role.k8s_node"]
   description = "kaws ${var.cluster} Kubernetes PKI"
-  policy = "${file("clusters/${var.cluster}/kms-policy.json")}"
+  policy = "${data.aws_iam_policy_document.kms_key.json}"
 }
 
 resource "aws_kms_alias" "pki" {

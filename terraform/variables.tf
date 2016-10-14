@@ -30,6 +30,11 @@ variable "etcd_03_initial_cluster_state" {
   description = "The initial cluster state for the third etcd node. One of `new` or `existing`"
 }
 
+variable "iam_users" {
+  description = "A list of IAM user names who will have access to cluster PKI secrets"
+  type = "list"
+}
+
 variable "instance_size" {
   description = "The EC2 instance size, e.g. `m3.medium`"
 }

@@ -70,10 +70,6 @@ impl<'a> Cluster<'a> {
         format!("clusters/{}/.gitignore", self.name)
     }
 
-    fn kms_policy_path(&self) -> String {
-        format!("clusters/{}/kms-policy.json", self.name)
-    }
-
     fn master_cert_path(&self) -> String {
         format!("clusters/{}/master.pem", self.name)
     }
@@ -345,7 +341,6 @@ impl<'a> NewCluster<'a> {
         try!(self.create_gitignore());
         try!(self.create_tfvars());
         try!(self.create_openssl_config());
-        try!(self.create_kms_policy());
         try!(self.create_pki_stubs());
 
         Ok(Some(format!(
@@ -387,6 +382,7 @@ kaws_domain = \"{}\"
 kaws_etcd_01_initial_cluster_state = \"new\"
 kaws_etcd_02_initial_cluster_state = \"new\"
 kaws_etcd_03_initial_cluster_state = \"new\"
+kaws_iam_users = [{}]
 kaws_instance_size = \"{}\"
 kaws_masters_max_size = \"{}\"
 kaws_masters_min_size = \"{}\"
@@ -403,13 +399,16 @@ kaws_zone_id = \"{}\"
                 self.cluster.name(),
                 self.coreos_ami,
                 self.domain,
+                self.iam_users.iter().map(|iam_user| {
+                    format!("\"{}\"", iam_user)
+                }).collect::<Vec<String>>().join(", "),
                 self.instance_size,
                 self.masters_max_size,
                 self.masters_min_size,
                 self.nodes_max_size,
                 self.nodes_min_size,
-                self.cluster.region(),
                 self.rbac_super_user,
+                self.cluster.region(),
                 self.ssh_key,
                 self.kubernetes_version,
                 self.zone_id,
@@ -441,107 +440,6 @@ DNS.3 = kubernetes.{}
 IP.1 = 10.3.0.1
 ",
                 self.domain,
-            ));
-        });
-
-        Ok(None)
-    }
-
-    fn create_kms_policy(&self) -> KawsResult {
-        log_wrap!("Creating KMS policy file", {
-            let mut file = try!(File::create(&self.cluster.kms_policy_path()));
-
-            let iam_user_arns = self.iam_users.iter().map(|iam_user| {
-                format!("\"arn:aws:iam::{}:user/{}\"", self.aws_account_id, iam_user)
-            }).collect::<Vec<String>>().join(",");
-
-            try!(write!(
-                file,
-                r#"{{
-  "Version": "2012-10-17",
-  "Statement": [
-    {{
-      "Sid": "Enable IAM User Permissions",
-      "Effect": "Allow",
-      "Principal": {{
-        "AWS": [
-          "arn:aws:iam::{aws_account_id}:root"
-        ]
-      }},
-      "Action": "kms:*",
-      "Resource": "*"
-    }},
-    {{
-      "Sid": "Allow access for Key Administrators",
-      "Effect": "Allow",
-      "Principal": {{
-        "AWS": [
-          {iam_user_arns}
-        ]
-      }},
-      "Action": [
-        "kms:Create*",
-        "kms:Describe*",
-        "kms:Enable*",
-        "kms:List*",
-        "kms:Put*",
-        "kms:Update*",
-        "kms:Revoke*",
-        "kms:Disable*",
-        "kms:Get*",
-        "kms:Delete*",
-        "kms:ScheduleKeyDeletion",
-        "kms:CancelKeyDeletion"
-      ],
-      "Resource": "*"
-    }},
-    {{
-      "Sid": "Allow use of the key",
-      "Effect": "Allow",
-      "Principal": {{
-        "AWS": [
-          "arn:aws:iam::{aws_account_id}:role/kaws-k8s-master-{cluster}",
-          "arn:aws:iam::{aws_account_id}:role/kaws-k8s-node-{cluster}",
-          {iam_user_arns}
-        ]
-      }},
-      "Action": [
-        "kms:Encrypt",
-        "kms:Decrypt",
-        "kms:ReEncrypt*",
-        "kms:GenerateDataKey*",
-        "kms:DescribeKey"
-      ],
-      "Resource": "*"
-    }},
-    {{
-      "Sid": "Allow attachment of persistent resources",
-      "Effect": "Allow",
-      "Principal": {{
-        "AWS": [
-          "arn:aws:iam::{aws_account_id}:role/kaws-k8s-master-{cluster}",
-          "arn:aws:iam::{aws_account_id}:role/kaws-k8s-node-{cluster}",
-          {iam_user_arns}
-        ]
-      }},
-      "Action": [
-        "kms:CreateGrant",
-        "kms:ListGrants",
-        "kms:RevokeGrant"
-      ],
-      "Resource": "*",
-      "Condition": {{
-        "Bool": {{
-          "kms:GrantIsForAWSResource": true
-        }}
-      }}
-    }}
-  ]
-}}
-"#,
-                aws_account_id = self.aws_account_id,
-                cluster = self.cluster.name(),
-                iam_user_arns = iam_user_arns,
             ));
         });
 
