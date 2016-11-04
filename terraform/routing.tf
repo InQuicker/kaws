@@ -1,4 +1,5 @@
 resource "aws_route_table" "public" {
+  propagating_vgws = ["${var.propagating_vgws}"]
   vpc_id = "${aws_vpc.kubernetes.id}"
 
   tags {

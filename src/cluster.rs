@@ -388,6 +388,7 @@ kaws_masters_max_size = \"{}\"
 kaws_masters_min_size = \"{}\"
 kaws_nodes_max_size = \"{}\"
 kaws_nodes_min_size = \"{}\"
+kaws_propagating_vgws = []
 kaws_rbac_super_user = \"{}\"
 kaws_region = \"{}\"
 kaws_ssh_key = \"{}\"

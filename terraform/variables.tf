@@ -55,6 +55,11 @@ variable "nodes_min_size" {
   description = "The minimum number of EC2 instances the Kubernetes nodes may autoscale to"
 }
 
+variable "propagating_vgws" {
+  description = "A list of virtual gateways that should propagate routes to the route table"
+  type = "list"
+}
+
 variable "rbac_super_user" {
   description = "The Kubernetes username of an administrator who will set up initial RBAC policies."
 }

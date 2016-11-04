@@ -47,6 +47,7 @@ r#"module "kaws" {{
     masters_min_size = "${{var.kaws_masters_min_size}}"
     nodes_max_size = "${{var.kaws_nodes_max_size}}"
     nodes_min_size = "${{var.kaws_nodes_min_size}}"
+    propagating_vgws = ["${{var.kaws_propagating_vgws}}"]
     rbac_super_user = "${{var.kaws_rbac_super_user}}"
     region = "${{var.kaws_region}}"
     ssh_key = "${{var.kaws_ssh_key}}"
@@ -109,6 +110,11 @@ variable "kaws_nodes_max_size" {{
 
 variable "kaws_nodes_min_size" {{
   description = "The minimum number of EC2 instances the Kubernetes nodes may autoscale to"
+}}
+
+variable "kaws_propagating_vgws" {{
+  description = "A list of virtual gateways that should propagate routes to the route table"
+  type = "list"
 }}
 
 variable "kaws_rbac_super_user" {{
