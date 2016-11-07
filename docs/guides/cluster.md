@@ -13,3 +13,14 @@ The process of creating a cluster involves the following steps:
 ## Destroying a cluster
 
 To destroy a cluster, simply run the [kaws cluster destroy](../references/cluster.md#destroy) command, then remove the cluster's directory from the kaws repository.
+
+## Adding a VPN connection to a cluster
+
+If applications in your cluster require a VPN connection to access resources on other networks, you can specify this using kaws.
+
+1. Create a VPN connection in AWS, either using the AWS console, API, or by defining it in Terraform configuration in your kaws repository.
+2. Add the ID of the VPN connection's Virtual Private Gateway (in the form "vgw-1234abc") to the `kaws_propagating_vgws` list in the file at `clusters/CLUSTER_NAME/terraform.tfvars`.
+3. Optional: Use the [kaws cluster plan](../references/cluster.md#plan) command to display the Terraform plan and see what AWS resources will be modified.
+4. Run [kaws cluster apply](../references/cluster.md#apply) to apply the Terraform plan, modifying the cluster.
+
+Routes from the VPN connection will now be propgated into the cluster's public route table.
