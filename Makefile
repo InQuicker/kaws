@@ -1,4 +1,4 @@
-TAG = 0.2.0
+TAG = 0.3.0
 
 all: dist
 
