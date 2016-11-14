@@ -10,7 +10,7 @@ Specifically, kaws creates Kubernetes clusters in AWS using [CoreOS](https://cor
 ## Status
 
 kaws has not yet reached version 1.0, and is not recommended for production usage until it has.
-In accordanace with [Semantic Versioning](http://semver.org/), while kaws is < 1.0, backwards incompatible changes may occur.
+In accordance with [Semantic Versioning](http://semver.org/), while kaws is < 1.0, backwards incompatible changes may occur.
 Major expected changes include using rkt as the container runtime for Kubernetes.
 See the [issues](https://github.com/InQuicker/kaws/issues) for details.
 
