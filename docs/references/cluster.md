@@ -110,7 +110,7 @@ OPTIONS:
         --availability-zone <availability-zone>    Availability Zone for etcd instances and EBS volumes, e.g. "us-east-1a"
     -A, --aws-account-id <aws-account-id>          The numeric ID of the AWS account, e.g. "123456789012"
     -d, --domain <domain>                          The base domain name for the cluster, e.g. "example.com"
-    -i, --iam-user <iam-user>                      An IAM user name who will have access to cluster PKI secrets, e.g. \"alice\"; this option can be specified more than once
+    -i, --iam-user <iam-user>                      An IAM user name who will have access to cluster PKI secrets, e.g. "alice"; this option can be specified more than once
     -v, --kubernetes-version <k8s-version>         Version of Kubernetes to use, e.g. "1.0.0"
         --masters-max-size <masters-max-size>      The maximum number of EC2 instances the Kubernetes masters may autoscale to
         --masters-min-size <masters-min-size>      The minimum number of EC2 instances the Kubernetes masters may autoscale to
@@ -119,7 +119,7 @@ OPTIONS:
         --rbac-super-user <rbac-super-user>        The Kubernetes username of an administrator who will set up initial RBAC policies, e.g. "jimmy"
     -r, --region <region>                          AWS Region to create the resources in, e.g. "us-east-1"
     -s, --instance-size <size>                     EC2 instance size to use for all instances, e.g. "m3.medium"
-    -K, --ssh-key <ssh-key>                        Name of the SSH key in AWS for accessing EC2 instances, e.g. "alice"
+    -K, --ssh-key <ssh-key>...                     SSH public key to add to ~/.ssh/authorized_keys on each server; this option can be specified more than once
     -z, --zone-id <zone-id>                        Route 53 hosted zone ID
 
 ARGS:

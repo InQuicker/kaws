@@ -3,8 +3,8 @@ resource "aws_instance" "bastion" {
   associate_public_ip_address = true
   depends_on = ["aws_instance.etcd_01", "aws_instance.etcd_02", "aws_instance.etcd_03"]
   instance_type = "t2.micro"
-  key_name = "${var.ssh_key}"
   subnet_id = "${aws_subnet.public.id}"
+  user_data = "${data.template_file.bastion_cloud_config.rendered}"
   vpc_security_group_ids = ["${aws_security_group.bastion.id}"]
 
   tags {
@@ -18,7 +18,6 @@ resource "aws_instance" "etcd_01" {
   associate_public_ip_address = true
   availability_zone = "${var.availability_zone}"
   instance_type = "${var.instance_size}"
-  key_name = "${var.ssh_key}"
   private_ip = "10.0.1.4"
   subnet_id = "${aws_subnet.public.id}"
   user_data = "${data.template_file.etcd_01_cloud_config.rendered}"
@@ -35,7 +34,6 @@ resource "aws_instance" "etcd_02" {
   associate_public_ip_address = true
   availability_zone = "${var.availability_zone}"
   instance_type = "${var.instance_size}"
-  key_name = "${var.ssh_key}"
   private_ip = "10.0.1.5"
   subnet_id = "${aws_subnet.public.id}"
   user_data = "${data.template_file.etcd_02_cloud_config.rendered}"
@@ -52,7 +50,6 @@ resource "aws_instance" "etcd_03" {
   associate_public_ip_address = true
   availability_zone = "${var.availability_zone}"
   instance_type = "${var.instance_size}"
-  key_name = "${var.ssh_key}"
   private_ip = "10.0.1.6"
   subnet_id = "${aws_subnet.public.id}"
   user_data = "${data.template_file.etcd_03_cloud_config.rendered}"
@@ -69,7 +66,6 @@ resource "aws_launch_configuration" "k8s_masters" {
   iam_instance_profile = "${aws_iam_instance_profile.k8s_master.name}"
   image_id = "${var.coreos_ami}"
   instance_type = "${var.instance_size}"
-  key_name = "${var.ssh_key}"
   name_prefix = "kaws-k8s-masters-${var.cluster}-"
   security_groups = ["${aws_security_group.kubernetes.id}"]
   user_data = "${data.template_file.master_cloud_config.rendered}"
@@ -112,7 +108,6 @@ resource "aws_launch_configuration" "k8s_nodes" {
   iam_instance_profile = "${aws_iam_instance_profile.k8s_node.name}"
   image_id = "${var.coreos_ami}"
   instance_type = "${var.instance_size}"
-  key_name = "${var.ssh_key}"
   name_prefix = "kaws-k8s-nodes-${var.cluster}-"
   security_groups = ["${aws_security_group.kubernetes.id}"]
   user_data = "${data.template_file.node_cloud_config.rendered}"

@@ -50,7 +50,7 @@ r#"module "kaws" {{
     propagating_vgws = ["${{var.kaws_propagating_vgws}}"]
     rbac_super_user = "${{var.kaws_rbac_super_user}}"
     region = "${{var.kaws_region}}"
-    ssh_key = "${{var.kaws_ssh_key}}"
+    ssh_keys = ["${{var.kaws_ssh_keys}}"]
     version = "${{var.kaws_version}}"
     zone_id = "${{var.kaws_zone_id}}"
 }}
@@ -125,8 +125,9 @@ variable "kaws_region" {{
   description = "The AWS Region where the cluster will live, e.g. `us-east-1`"
 }}
 
-variable "kaws_ssh_key" {{
-  description = "Name of the SSH key in AWS that should have acccess to EC2 instances, e.g. `jimmy`"
+variable "kaws_ssh_keys" {{
+  description = "SSH public keys to add to ~/.ssh/authorized_keys on each server"
+  type = "list"
 }}
 
 variable "kaws_version" {{

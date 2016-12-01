@@ -60,6 +60,7 @@ coreos:
         RemainAfterExit=yes
         ExecStart=/usr/bin/mkdir -p /var/lib/etcd2/data
         ExecStart=/usr/bin/chown -R etcd:etcd /var/lib/etcd2/data
+ssh_authorized_keys: [${ssh_public_keys}]
 write_files:
   - path: /opt/kaws/format-etcd-ebs.sh
     permissions: "0755"

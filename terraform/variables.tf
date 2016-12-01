@@ -68,8 +68,9 @@ variable "region" {
   description = "The AWS Region where the cluster will live, e.g. `us-east-1`"
 }
 
-variable "ssh_key" {
-  description = "Name of the SSH key in AWS that should have acccess to EC2 instances, e.g. `jimmy`"
+variable "ssh_keys" {
+  description = "SSH public keys to add to ~/.ssh/authorized_keys on each server"
+  type = "list"
 }
 
 variable "version" {

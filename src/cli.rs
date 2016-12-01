@@ -290,8 +290,10 @@ fn cluster_init<'a, 'b>() -> App<'a, 'b> {
                 .short("K")
                 .long("ssh-key")
                 .takes_value(true)
+                .multiple(true)
                 .required(true)
-                .help("Name of the SSH key in AWS for accessing EC2 instances, e.g. \"alice\"")
+                .number_of_values(1)
+                .help("SSH public key to add to ~/.ssh/authorized_keys on each server; this option can be specified more than once")
         )
         .arg(
             Arg::with_name("k8s-version")

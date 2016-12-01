@@ -34,7 +34,7 @@ pub struct NewCluster<'a> {
     nodes_max_size: &'a str,
     nodes_min_size: &'a str,
     rbac_super_user: &'a str,
-    ssh_key: &'a str,
+    ssh_keys: Vec<&'a str>,
     zone_id: &'a str,
 }
 
@@ -331,7 +331,7 @@ impl<'a> NewCluster<'a> {
                 .value_of("nodes-min-size")
                 .expect("missing nodes-min-size"),
             rbac_super_user: matches.value_of("rbac-super-user").expect("missing rbac-super-user"),
-            ssh_key: matches.value_of("ssh-key").expect("missing ssh-key"),
+            ssh_keys: matches.values_of("ssh-key").expect("missing ssh-keys").collect(),
             zone_id: matches.value_of("zone-id").expect("missing zone-id"),
         }
     }
@@ -391,7 +391,7 @@ kaws_nodes_min_size = \"{}\"
 kaws_propagating_vgws = []
 kaws_rbac_super_user = \"{}\"
 kaws_region = \"{}\"
-kaws_ssh_key = \"{}\"
+kaws_ssh_keys = [{}]
 kaws_version = \"{}\"
 kaws_zone_id = \"{}\"
 ",
@@ -410,7 +410,9 @@ kaws_zone_id = \"{}\"
                 self.nodes_min_size,
                 self.rbac_super_user,
                 self.cluster.region(),
-                self.ssh_key,
+                self.ssh_keys.iter().map(|ssh_key| {
+                    format!("\"{}\"", ssh_key)
+                }).collect::<Vec<String>>().join(", "),
                 self.kubernetes_version,
                 self.zone_id,
             ));

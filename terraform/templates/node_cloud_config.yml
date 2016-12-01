@@ -107,6 +107,7 @@ coreos:
         [Service]
         Type=oneshot
         ExecStart=/opt/bin/restart-kube-components.sh
+ssh_authorized_keys: [${ssh_public_keys}]
 write_files:
   - path: /opt/bin/restart-kube-components.sh
     permissions: "0755"
