@@ -2,6 +2,10 @@ output "domain" {
   value = "${var.domain}"
 }
 
+output "internet_gateway_id" {
+  value = "${aws_internet_gateway.outgoing.id}"
+}
+
 output "kubernetes_nodes_elb_dns_name" {
   value = "${aws_elb.k8s_nodes.dns_name}"
 }
