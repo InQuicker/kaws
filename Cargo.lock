@@ -1,6 +1,6 @@
 [root]
 name = "kaws"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "ansi_term 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "clap 2.19.2 (registry+https://github.com/rust-lang/crates.io-index)",
