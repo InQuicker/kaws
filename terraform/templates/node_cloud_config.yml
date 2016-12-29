@@ -69,7 +69,6 @@ coreos:
         Environment="RKT_OPTS=--volume resolv,kind=host,source=/etc/resolv.conf --mount volume=resolv,target=/etc/resolv.conf --insecure-options=image"
         ExecStart=/usr/lib/coreos/kubelet-wrapper \
           --allow-privileged=true \
-          --anonymous-auth=false \
           --api-servers=https://${master_ip}:443 \
           --client-ca-file=/etc/kubernetes/ssl/ca.pem \
           --cloud-provider=aws \
