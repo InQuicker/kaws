@@ -21,7 +21,7 @@ resource "aws_elb" "k8s_masters" {
 
   tags {
     Name = "kaws-k8s-masters"
-    Cluster = "${var.cluster}"
+    KubernetesCluster = "${var.cluster}"
   }
 }
 
@@ -55,6 +55,6 @@ resource "aws_elb" "k8s_nodes" {
 
   tags {
     Name = "kaws-k8s-nodes"
-    Cluster = "${var.cluster}"
+    KubernetesCluster = "${var.cluster}"
   }
 }

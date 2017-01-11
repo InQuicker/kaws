@@ -9,7 +9,7 @@ resource "aws_instance" "bastion" {
 
   tags {
     Name = "kaws-bastion-${var.cluster}"
-    Cluster = "${var.cluster}"
+    KubernetesCluster = "${var.cluster}"
   }
 }
 
@@ -25,7 +25,7 @@ resource "aws_instance" "etcd_01" {
 
   tags {
     Name = "kaws-etcd-${var.cluster}-01"
-    Cluster = "${var.cluster}"
+    KubernetesCluster = "${var.cluster}"
   }
 }
 
@@ -41,7 +41,7 @@ resource "aws_instance" "etcd_02" {
 
   tags {
     Name = "kaws-etcd-${var.cluster}-02"
-    Cluster = "${var.cluster}"
+    KubernetesCluster = "${var.cluster}"
   }
 }
 
@@ -57,7 +57,7 @@ resource "aws_instance" "etcd_03" {
 
   tags {
     Name = "kaws-etcd-${var.cluster}-03"
-    Cluster = "${var.cluster}"
+    KubernetesCluster = "${var.cluster}"
   }
 }
 
@@ -97,7 +97,7 @@ resource "aws_autoscaling_group" "k8s_masters" {
   }
 
   tag {
-    key = "Cluster"
+    key = "KubernetesCluster"
     value = "${var.cluster}"
     propagate_at_launch = true
   }
@@ -139,7 +139,7 @@ resource "aws_autoscaling_group" "k8s_nodes" {
   }
 
   tag {
-    key = "Cluster"
+    key = "KubernetesCluster"
     value = "${var.cluster}"
     propagate_at_launch = true
   }

@@ -7,7 +7,7 @@ resource "aws_ebs_volume" "etcd_01" {
 
   tags {
     Name = "kaws-etcd-${var.cluster}-01"
-    Cluster = "${var.cluster}"
+    KubernetesCluster = "${var.cluster}"
   }
 }
 
@@ -20,7 +20,7 @@ resource "aws_ebs_volume" "etcd_02" {
 
   tags {
     Name = "kaws-etcd-${var.cluster}-02"
-    Cluster = "${var.cluster}"
+    KubernetesCluster = "${var.cluster}"
   }
 }
 
@@ -33,7 +33,7 @@ resource "aws_ebs_volume" "etcd_03" {
 
   tags {
     Name = "kaws-etcd-${var.cluster}-03"
-    Cluster = "${var.cluster}"
+    KubernetesCluster = "${var.cluster}"
   }
 }
 

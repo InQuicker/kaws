@@ -3,6 +3,6 @@ resource "aws_internet_gateway" "outgoing" {
 
   tags {
     Name = "kaws-outgoing-${var.cluster}"
-    Cluster = "${var.cluster}"
+    KubernetesCluster = "${var.cluster}"
   }
 }

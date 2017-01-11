@@ -4,6 +4,6 @@ resource "aws_vpc" "kubernetes" {
 
   tags {
     Name = "kaws-${var.cluster}"
-    Cluster = "${var.cluster}"
+    KubernetesCluster = "${var.cluster}"
   }
 }
