@@ -2,7 +2,13 @@ use std::fs::{File, remove_file};
 use std::io::{ErrorKind, Read, Write};
 
 use hyper::Client as HyperClient;
-use rusoto::{ChainProvider, DispatchSignedRequest, ProvideAwsCredentials, Region};
+use rusoto::{
+    ChainProvider,
+    DispatchSignedRequest,
+    ProvideAwsCredentials,
+    Region,
+    default_tls_client,
+};
 use rusoto::kms::{
     DecryptError,
     DecryptRequest,
@@ -29,7 +35,11 @@ impl<'a> Encryptor<'a, ChainProvider, HyperClient> {
         kms_master_key_id: Option<&'a str>,
     ) -> Encryptor<'a, ChainProvider, HyperClient> {
         Encryptor {
-            client: KmsClient::new(provider, region),
+            client: KmsClient::new(
+                default_tls_client().expect("failed to create HTTP client with TLS"),
+                provider,
+                region,
+            ),
             decrypted_files: vec![],
             kms_master_key_id: kms_master_key_id,
         }
