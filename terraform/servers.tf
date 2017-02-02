@@ -73,6 +73,11 @@ resource "aws_launch_configuration" "k8s_masters" {
   lifecycle {
     create_before_destroy = true
   }
+
+  root_block_device {
+    volume_type = "gp2"
+    volume_size = 30
+  }
 }
 
 resource "aws_autoscaling_group" "k8s_masters" {
@@ -114,6 +119,11 @@ resource "aws_launch_configuration" "k8s_nodes" {
 
   lifecycle {
     create_before_destroy = true
+  }
+
+  root_block_device {
+    volume_type = "gp2"
+    volume_size = 30
   }
 }
 
