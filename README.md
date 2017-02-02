@@ -63,12 +63,6 @@ All the dependencies can be installed with [Homebrew](http://brew.sh/):
 brew install terraform openssl kubernetes-cli
 ```
 
-To use the Homebrew-installed OpenSSL, prefix the `cargo build` command (in the section on build from source below) with:
-
-``` bash
-OPENSSL_INCLUDE_DIR=`brew --prefix openssl`/include OPENSSL_LIB_DIR=`brew --prefix openssl`/lib
-```
-
 ## Installing kaws
 
 Once all the required dependencies are installed on your system, you can install kaws.
