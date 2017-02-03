@@ -22,6 +22,7 @@ mod cluster;
 mod dependencies;
 mod encryption;
 mod error;
+mod pki;
 mod process;
 mod repository;
 mod terraform;

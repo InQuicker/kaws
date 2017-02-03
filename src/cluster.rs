@@ -7,6 +7,7 @@ use rusoto::ChainProvider;
 use aws::credentials_provider;
 use encryption::Encryptor;
 use error::KawsResult;
+use pki::{CertificateAuthority, CertificateSigningRequest, PrivateKey};
 use process::execute_child_process;
 
 pub struct Cluster<'a> {
@@ -127,10 +128,28 @@ impl<'a> ExistingCluster<'a> {
     }
 
     pub fn generate_pki(&mut self) -> KawsResult {
+        // self.generate_etcd_pki()?;
+        // self.generate_etcd_peer_pki()?;
+        self.generate_k8s_pki()?;
+
         try!(self.create_ca());
         try!(self.create_master_credentials());
         try!(self.create_node_credentials());
+
         try!(self.encrypt_secrets(self.kms_master_key_id));
+
+        Ok(None)
+    }
+
+    fn generate_k8s_pki(&self) -> KawsResult {
+        let ca = CertificateAuthority::new(&format!("kaws-k8s-{}", self.cluster.name))?;
+
+        let master_key = PrivateKey::new()?;
+        let master_csr = CertificateSigningRequest::new(
+            &format!("kaws-master-{}", self.cluster.name),
+            &master_key,
+        )?;
+        let master_cert = ca.sign(&master_csr)?;
 
         Ok(None)
     }
