@@ -4,25 +4,31 @@ use std::process::{Command, Stdio};
 
 use hyper::Client;
 use rusoto::ChainProvider;
+use serde_json::from_slice;
 
 use encryption::Encryptor;
 use error::{KawsError, KawsResult};
 
-pub struct Certificate {
-    bytes: Vec<u8>,
-}
+pub struct Certificate(Vec<u8>);
 
 pub struct CertificateAuthority {
-    bytes: Vec<u8>,
-    private_key: PrivateKey,
+    cert: Certificate,
+    key: PrivateKey,
 }
 
-pub struct CertificateSigningRequest {
-    bytes: Vec<u8>,
+pub struct CertificateSigningRequest(Vec<u8>);
+
+pub struct PrivateKey(Vec<u8>);
+
+#[derive(Deserialize)]
+struct CfsslGencertResponse {
+    cert: Vec<u8>,
+    key: Vec<u8>,
 }
 
-pub struct PrivateKey {
-    bytes: Vec<u8>
+#[derive(Deserialize)]
+struct CfsslSignResponse {
+    cert: Vec<u8>,
 }
 
 impl Certificate {
@@ -34,27 +40,24 @@ impl Certificate {
     }
 
     pub fn as_bytes(&self) -> &[u8] {
-        &self.bytes
+        &self.0
+    }
+}
+
+impl From<Vec<u8>> for Certificate {
+    fn from(vec: Vec<u8>) -> Self {
+        Certificate(vec)
     }
 }
 
 impl CertificateAuthority {
-    pub fn new(common_name: &str) -> Result<Self, KawsError> {
-        let private_key = PrivateKey::new()?;
-
-        let mut command = Command::new("openssl");
+    pub fn generate(common_name: &str) -> Result<Self, KawsError> {
+        let mut command = Command::new("cfssl");
 
         command.args(&[
-            "req",
-            "-x509",
-            "-new",
-            "-nodes",
-            "-key",
-            "/dev/stdin",
-            "-days",
-            "10000",
-            "-subj",
-            &format!("/CN={}", common_name),
+            "gencert",
+            "-initca",
+            "-",
         ]);
 
         command.stdin(Stdio::piped());
@@ -65,43 +68,94 @@ impl CertificateAuthority {
 
         match child.stdin.as_mut() {
             Some(stdin) => {
-                stdin.write_all(private_key.as_bytes())?;
+                stdin.write_all(
+                    &format!(
+                        r#"{{"CN":"{}","key":{{"algo":"rsa","size":2048}}}}}}"#,
+                        common_name
+                    ).as_bytes()
+                )?;
             }
             None => {
                 return Err(
                     KawsError::new("failed to acquire handle to stdin of child process".to_owned())
                 );
             }
-        };
+        }
 
         let output = child.wait_with_output()?;
 
         if output.status.success() {
-            Ok(CertificateAuthority {
-                bytes: output.stdout,
-                private_key: private_key,
-            })
+            let raw: CfsslGencertResponse = from_slice(&output.stdout)?;
+            Ok(raw.into())
         } else {
-            Err(KawsError::new("Execution of `openssl req` failed.".to_owned()))
+            Err(KawsError::new("Execution of `cfssl genkey` failed.".to_owned()))
+        }
+    }
+
+    pub fn generate_cert(&self, common_name: &str, san: Option<&[&str]>)
+    -> Result<(Certificate, PrivateKey), KawsError> {
+        let mut command = Command::new("cfssl");
+
+        command.args(&[
+            "gencert",
+            "-ca",
+            "{}", // TODO: write cert to tempdir and include path here
+            "-ca-key",
+            "{}", // TODO: write key to tempdir and include path here
+        ]);
+
+        if let Some(san) = san {
+            command.args(&[
+                "-hostname",
+                &san.join(","),
+            ]);
+        }
+
+        command.arg("-");
+
+        command.stdin(Stdio::piped());
+        command.stdout(Stdio::piped());
+        command.stderr(Stdio::piped());
+
+        let mut child = command.spawn()?;
+
+        match child.stdin.as_mut() {
+            Some(stdin) => {
+                stdin.write_all(
+                    &format!(
+                        r#"{{"CN":"{}","key":{{"algo":"rsa","size":2048}}}}}}"#,
+                        common_name
+                    ).as_bytes()
+                )?;
+            }
+            None => {
+                return Err(
+                    KawsError::new("failed to acquire handle to stdin of child process".to_owned())
+                );
+            }
+        }
+
+        let output = child.wait_with_output()?;
+
+        if output.status.success() {
+            let raw: CfsslGencertResponse = from_slice(&output.stdout)?;
+
+            Ok((raw.cert.into(), raw.key.into()))
+        } else {
+            Err(KawsError::new("Execution of `cfssl gencert` failed.".to_owned()))
         }
     }
 
     pub fn sign(&self, csr: &CertificateSigningRequest) -> Result<Certificate, KawsError> {
-        let mut command = Command::new("openssl");
+        let mut command = Command::new("cfssl");
 
         command.args(&[
-            "x509",
-            "-req",
-            "-CA",
-            "/dev/stdin",
-            "-CAkey",
-            "/dev/stdin",
-            "-days",
-            "3650",
-            "-extensions",
-            "v3_req",
-            "-extfile",
-            "/dev/stdin",
+            "sign",
+            "-ca",
+            "{}", // TODO: write cert to tempdir and include path here
+            "-ca-key",
+            "{}", // TODO: write key to tempdir and include path here
+            "-"
         ]);
 
         command.stdin(Stdio::piped());
@@ -109,9 +163,27 @@ impl CertificateAuthority {
         command.stderr(Stdio::piped());
 
         let mut child = command.spawn()?;
-        Ok(Certificate {
-            bytes: Vec::new(),
-        })
+
+        match child.stdin.as_mut() {
+            Some(stdin) => {
+                stdin.write_all(csr.as_bytes())?;
+            }
+            None => {
+                return Err(
+                    KawsError::new("failed to acquire handle to stdin of child process".to_owned())
+                );
+            }
+        }
+
+        let output = child.wait_with_output()?;
+
+        if output.status.success() {
+            let response: CfsslSignResponse = from_slice(&output.stdout)?;
+
+            Ok(response.cert.into())
+        } else {
+            Err(KawsError::new("Execution of `cfssl gencert` failed.".to_owned()))
+        }
     }
 
     pub fn write_to_files(
@@ -123,18 +195,27 @@ impl CertificateAuthority {
         let mut cert_file = File::create(cert_file_path)?;
         cert_file.write_all(self.as_bytes())?;
 
-        encryptor.encrypt_and_write_file(self.private_key.as_bytes(), key_file_path)?;
+        encryptor.encrypt_and_write_file(self.key.as_bytes(), key_file_path)?;
 
         Ok(None)
     }
 
     pub fn as_bytes(&self) -> &[u8] {
-        &self.bytes
+        self.cert.as_bytes()
+    }
+}
+
+impl From<CfsslGencertResponse> for CertificateAuthority {
+    fn from(raw: CfsslGencertResponse) -> Self {
+        CertificateAuthority {
+            cert: raw.cert.into(),
+            key: raw.key.into(),
+        }
     }
 }
 
 impl CertificateSigningRequest {
-    pub fn new(common_name: &str, private_key: &PrivateKey) -> Result<Self, KawsError> {
+    pub fn generate(common_name: &str, private_key: &PrivateKey) -> Result<Self, KawsError> {
         let mut command = Command::new("openssl");
 
         command.args(&[
@@ -166,17 +247,25 @@ impl CertificateSigningRequest {
         let output = child.wait_with_output()?;
 
         if output.status.success() {
-            Ok(CertificateSigningRequest {
-                bytes: output.stdout,
-            })
+            Ok(CertificateSigningRequest(output.stdout))
         } else {
             Err(KawsError::new("Execution of `openssl req` failed.".to_owned()))
         }
     }
+
+    pub fn as_bytes(&self) -> &[u8] {
+        &self.0
+    }
+}
+
+impl From<Vec<u8>> for CertificateSigningRequest {
+    fn from(vec: Vec<u8>) -> Self {
+        CertificateSigningRequest(vec)
+    }
 }
 
 impl PrivateKey {
-    pub fn new() -> Result<Self, KawsError> {
+    pub fn generate() -> Result<Self, KawsError> {
         let mut command = Command::new("openssl");
 
         command.args(&["genrsa", "2048"]);
@@ -184,16 +273,14 @@ impl PrivateKey {
         let output = command.output()?;
 
         if output.status.success() {
-            Ok(PrivateKey {
-                bytes: output.stdout,
-            })
+            Ok(PrivateKey(output.stdout))
         } else {
             Err(KawsError::new("Execution of `openssl genrsa` failed.".to_owned()))
         }
     }
 
     pub fn as_bytes(&self) -> &[u8] {
-        &self.bytes
+        &self.0
     }
 
     pub fn write_to_file(
@@ -204,5 +291,11 @@ impl PrivateKey {
         encryptor.encrypt_and_write_file(self.as_bytes(), file_path)?;
 
         Ok(None)
+    }
+}
+
+impl From<Vec<u8>> for PrivateKey {
+    fn from(vec: Vec<u8>) -> Self {
+        PrivateKey(vec)
     }
 }

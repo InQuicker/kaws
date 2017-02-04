@@ -16,6 +16,9 @@ env_logger = "0.4.0"
 hyper = "0.10.4"
 log = "0.3.6"
 rustc-serialize = "0.3.22"
+serde = "0.9.6"
+serde_derive = "0.9.6"
+serde_json = "0.9.5"
 
 [dependencies.rusoto]
 features = ["kms"]

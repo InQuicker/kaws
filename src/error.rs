@@ -6,6 +6,7 @@ use std::str::Utf8Error;
 use rusoto::ParseRegionError;
 use rusoto::kms::{DecryptError, EncryptError};
 use rustc_serialize::base64::FromBase64Error;
+use serde_json::Error as SerdeJsonError;
 
 pub struct KawsError {
     message: String,
@@ -79,6 +80,14 @@ impl From<FromBase64Error> for KawsError {
 
 impl From<ParseRegionError> for KawsError {
     fn from(error: ParseRegionError) -> Self {
+        KawsError {
+            message: format!("{}", error),
+        }
+    }
+}
+
+impl From<SerdeJsonError> for KawsError {
+    fn from(error: SerdeJsonError) -> Self {
         KawsError {
             message: format!("{}", error),
         }

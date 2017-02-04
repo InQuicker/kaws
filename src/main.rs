@@ -1,11 +1,15 @@
 extern crate ansi_term;
 extern crate env_logger;
 extern crate clap;
+#[macro_use]
+extern crate log;
 extern crate hyper;
 extern crate rusoto;
 extern crate rustc_serialize;
+extern crate serde;
 #[macro_use]
-extern crate log;
+extern crate serde_derive;
+extern crate serde_json;
 
 macro_rules! log_wrap {
     ($m:expr, $b:block) => {

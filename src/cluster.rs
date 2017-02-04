@@ -7,7 +7,7 @@ use rusoto::ChainProvider;
 use aws::credentials_provider;
 use encryption::Encryptor;
 use error::KawsResult;
-use pki::{CertificateAuthority, CertificateSigningRequest, PrivateKey};
+use pki::CertificateAuthority;
 use process::execute_child_process;
 
 pub struct Cluster<'a> {
@@ -142,21 +142,24 @@ impl<'a> ExistingCluster<'a> {
     }
 
     fn generate_k8s_pki(&self, kms_key_id: &str) -> KawsResult {
-        let ca = CertificateAuthority::new(&format!("kaws-k8s-ca-{}", self.cluster.name))?;
+        let ca = CertificateAuthority::generate(&format!("kaws-k8s-ca-{}", self.cluster.name))?;
 
-        let master_key = PrivateKey::new()?;
-        let master_csr = CertificateSigningRequest::new(
+        let (master_cert, master_key) = ca.generate_cert(
             &format!("kaws-k8s-master-{}", self.cluster.name),
-            &master_key,
+            Some(&[
+                "kubernetes",
+                "kubernetes.default",
+                "kubernetes.default.svc",
+                "kubernetes.default.svc.cluster.local",
+                &format!("kubernetes.{}", "TODO: this should be the real domain!"), // FIXME
+                "10.3.0.1",
+            ]),
         )?;
-        let master_cert = ca.sign(&master_csr)?;
 
-        let node_key = PrivateKey::new()?;
-        let node_csr = CertificateSigningRequest::new(
+        let (node_cert, node_key) = ca.generate_cert(
             &format!("kaws-k8s-node-{}", self.cluster.name),
-            &node_key,
+            None,
         )?;
-        let node_cert = ca.sign(&node_csr)?;
 
         let mut encryptor = Encryptor::new(
             self.aws_credentials_provider.clone(),
@@ -170,17 +173,17 @@ impl<'a> ExistingCluster<'a> {
             &format!("clusters/{}/k8s-ca-key-encrypted.base64", self.cluster.name),
         )?;
 
+        master_cert.write_to_file(&format!("clusters/{}/k8s-master.pem", self.cluster.name))?;
         master_key.write_to_file(
             &mut encryptor,
             &format!("clusters/{}/k8s-master-key-encrypted.base64", self.cluster.name),
         )?;
-        master_cert.write_to_file(&format!("clusters/{}/k8s-master.pem", self.cluster.name))?;
 
+        node_cert.write_to_file(&format!("clusters/{}/k8s-node.pem", self.cluster.name))?;
         node_key.write_to_file(
             &mut encryptor,
             &format!("clusters/{}/k8s-node-key-encrypted.base64", self.cluster.name),
         )?;
-        node_cert.write_to_file(&format!("clusters/{}/k8s-node.pem", self.cluster.name))?;
 
         Ok(None)
     }
