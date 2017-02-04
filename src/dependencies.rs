@@ -3,11 +3,11 @@ use std::process::{Command, Stdio};
 use error::{KawsError, KawsResult};
 
 pub fn ensure_dependencies() -> KawsResult {
-    ensure_openssl().and(ensure_kubectl()).and(ensure_terraform())
+    ensure_cfssl().and(ensure_kubectl()).and(ensure_terraform())
 }
 
-fn ensure_openssl() -> KawsResult {
-    let installed = match Command::new("openssl")
+fn ensure_cfssl() -> KawsResult {
+    let installed = match Command::new("cfssl")
         .arg("version")
         .stdout(Stdio::null())
         .stderr(Stdio::null())
@@ -19,7 +19,7 @@ fn ensure_openssl() -> KawsResult {
     if installed {
         Ok(None)
     } else {
-        Err(KawsError::new("openssl must be installed".to_string()))
+        Err(KawsError::new("cfssl must be installed".to_string()))
     }
 }
 
