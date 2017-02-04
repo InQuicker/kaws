@@ -1,4 +1,4 @@
-use std::fs::{create_dir_all, File, remove_file};
+use std::fs::{create_dir_all, File};
 use std::io::Write;
 
 use clap::ArgMatches;
@@ -8,7 +8,6 @@ use aws::credentials_provider;
 use encryption::Encryptor;
 use error::KawsResult;
 use pki::CertificateAuthority;
-use process::execute_child_process;
 
 pub struct Cluster<'a> {
     name: &'a str,
@@ -52,14 +51,6 @@ impl<'a> Cluster<'a> {
         format!("clusters/{}/ca.pem", self.name)
     }
 
-    fn ca_key_path(&self) -> String {
-        format!("clusters/{}/ca-key.pem", self.name)
-    }
-
-    fn encrypted_ca_key_path(&self) -> String {
-        format!("clusters/{}/ca-key-encrypted.base64", self.name)
-    }
-
     fn encrypted_master_key_path(&self) -> String {
         format!("clusters/{}/master-key-encrypted.base64", self.name)
     }
@@ -76,28 +67,12 @@ impl<'a> Cluster<'a> {
         format!("clusters/{}/master.pem", self.name)
     }
 
-    fn master_csr_path(&self) -> String {
-        format!("clusters/{}/master-csr.pem", self.name)
-    }
-
-    fn master_key_path(&self) -> String {
-        format!("clusters/{}/master-key.pem", self.name)
-    }
-
     fn name(&self) -> &str {
         self.name
     }
 
     fn node_cert_path(&self) -> String {
         format!("clusters/{}/node.pem", self.name)
-    }
-
-    fn node_csr_path(&self) -> String {
-        format!("clusters/{}/node-csr.pem", self.name)
-    }
-
-    fn node_key_path(&self) -> String {
-        format!("clusters/{}/node-key.pem", self.name)
     }
 
     fn openssl_config_path(&self) -> String {
@@ -130,15 +105,88 @@ impl<'a> ExistingCluster<'a> {
     }
 
     pub fn generate_pki(&mut self) -> KawsResult {
-        // self.generate_etcd_pki()?;
-        // self.generate_etcd_peer_pki()?;
+        self.generate_etcd_pki(self.kms_master_key_id)?;
+        self.generate_etcd_peer_pki(self.kms_master_key_id)?;
         self.generate_k8s_pki(self.kms_master_key_id)?;
 
-        try!(self.create_ca());
-        try!(self.create_master_credentials());
-        try!(self.create_node_credentials());
+        Ok(None)
+    }
 
-        try!(self.encrypt_secrets(self.kms_master_key_id));
+    fn generate_etcd_pki(&self, kms_key_id: &str) -> KawsResult {
+        let ca = CertificateAuthority::generate(&format!("kaws-etcd-ca-{}", self.cluster.name))?;
+
+        let (server_cert, server_key) = ca.generate_cert(
+            &format!("kaws-etcd-server-{}", self.cluster.name),
+            Some(&[
+                "10.0.1.4",
+                "10.0.1.5",
+                "10.0.1.6",
+            ]),
+        )?;
+
+        let (client_cert, client_key) = ca.generate_cert(
+            &format!("kaws-etcd-client-{}", self.cluster.name),
+            None,
+        )?;
+
+        let mut encryptor = Encryptor::new(
+            self.aws_credentials_provider.clone(),
+            self.cluster.region().parse()?,
+            Some(kms_key_id),
+        );
+
+        ca.write_to_files(
+            &mut encryptor,
+            &format!("clusters/{}/etcd-ca.pem", self.cluster.name),
+            &format!("clusters/{}/etcd-ca-key-encrypted.base64", self.cluster.name),
+        )?;
+
+        server_cert.write_to_file(&format!("clusters/{}/etcd-server.pem", self.cluster.name))?;
+        server_key.write_to_file(
+            &mut encryptor,
+            &format!("clusters/{}/etcd-server-key-encrypted.base64", self.cluster.name),
+        )?;
+
+        client_cert.write_to_file(&format!("clusters/{}/etcd-client.pem", self.cluster.name))?;
+        client_key.write_to_file(
+            &mut encryptor,
+            &format!("clusters/{}/etcd-client-key-encrypted.base64", self.cluster.name),
+        )?;
+
+        Ok(None)
+    }
+
+    fn generate_etcd_peer_pki(&self, kms_key_id: &str) -> KawsResult {
+        let ca = CertificateAuthority::generate(
+            &format!("kaws-etcd-peer-ca-{}", self.cluster.name)
+        )?;
+
+        let (peer_cert, peer_key) = ca.generate_cert(
+            &format!("kaws-etcd-peer-{}", self.cluster.name),
+            Some(&[
+                "10.0.1.4",
+                "10.0.1.5",
+                "10.0.1.6",
+            ]),
+        )?;
+
+        let mut encryptor = Encryptor::new(
+            self.aws_credentials_provider.clone(),
+            self.cluster.region().parse()?,
+            Some(kms_key_id),
+        );
+
+        ca.write_to_files(
+            &mut encryptor,
+            &format!("clusters/{}/etcd-peer-ca.pem", self.cluster.name),
+            &format!("clusters/{}/etcd-peer-ca-key-encrypted.base64", self.cluster.name),
+        )?;
+
+        peer_cert.write_to_file(&format!("clusters/{}/etcd-peer.pem", self.cluster.name))?;
+        peer_key.write_to_file(
+            &mut encryptor,
+            &format!("clusters/{}/etcd-peer-key-encrypted.base64", self.cluster.name),
+        )?;
 
         Ok(None)
     }
@@ -186,169 +234,6 @@ impl<'a> ExistingCluster<'a> {
             &mut encryptor,
             &format!("clusters/{}/k8s-node-key-encrypted.base64", self.cluster.name),
         )?;
-
-        Ok(None)
-    }
-
-    fn create_master_credentials(&self) -> KawsResult {
-        log_wrap!("Creating Kubernetes master private key", {
-            try!(execute_child_process("openssl", &[
-                "genrsa",
-                "-out",
-                &self.cluster.master_key_path(),
-                "2048",
-            ]));
-        });
-
-        log_wrap!("Creating Kubernetes master certificate signing request", {
-            try!(execute_child_process("openssl", &[
-                "req",
-                "-new",
-                "-key",
-                &self.cluster.master_key_path(),
-                "-out",
-                &self.cluster.master_csr_path(),
-                "-subj",
-                &format!("/CN=kaws-master"),
-                "-config",
-                &self.cluster.openssl_config_path(),
-            ]));
-        });
-
-        log_wrap!("Creating Kubernetes master certificate", {
-            try!(execute_child_process("openssl", &[
-                "x509",
-                "-req",
-                "-in",
-                &self.cluster.master_csr_path(),
-                "-CA",
-                &self.cluster.ca_cert_path(),
-                "-CAkey",
-                &self.cluster.ca_key_path(),
-                "-CAcreateserial",
-                "-out",
-                &self.cluster.master_cert_path(),
-                "-days",
-                "365",
-                "-extensions",
-                "v3_req",
-                "-extfile",
-                &self.cluster.openssl_config_path(),
-            ]));
-        });
-
-        log_wrap!("Removing Kubernetes master certificate signing request", {
-            try!(remove_file(&self.cluster.master_csr_path()));
-        });
-
-        Ok(None)
-    }
-
-    fn create_node_credentials(&self) -> KawsResult {
-        log_wrap!("Creating Kubernetes node private key", {
-            try!(execute_child_process("openssl", &[
-                "genrsa",
-                "-out",
-                &self.cluster.node_key_path(),
-                "2048",
-            ]));
-        });
-
-        log_wrap!("Creating Kubernetes node certificate signing request", {
-            try!(execute_child_process("openssl", &[
-                "req",
-                "-new",
-                "-key",
-                &self.cluster.node_key_path(),
-                "-out",
-                &self.cluster.node_csr_path(),
-                "-subj",
-                &format!("/CN=kaws-node"),
-            ]));
-        });
-
-        log_wrap!("Creating Kubernetes node certificate", {
-            try!(execute_child_process("openssl", &[
-                "x509",
-                "-req",
-                "-in",
-                &self.cluster.node_csr_path(),
-                "-CA",
-                &self.cluster.ca_cert_path(),
-                "-CAkey",
-                &self.cluster.ca_key_path(),
-                "-CAcreateserial",
-                "-out",
-                &self.cluster.node_cert_path(),
-                "-days",
-                "365",
-            ]));
-        });
-
-        log_wrap!("Removing Kubernetes node certificate signing request", {
-            try!(remove_file(&self.cluster.node_csr_path()));
-        });
-
-        Ok(None)
-    }
-
-    fn create_ca(&self) -> KawsResult {
-        log_wrap!("Creating Kubernetes certificate authority private key", {
-            try!(execute_child_process("openssl", &[
-                "genrsa",
-                "-out",
-                &self.cluster.ca_key_path(),
-                "2048",
-            ]));
-        });
-
-        log_wrap!("Creating Kubernetes certificate authority certificate", {
-            try!(execute_child_process("openssl", &[
-                "req",
-                "-x509",
-                "-new",
-                "-nodes",
-                "-key",
-                &self.cluster.ca_key_path(),
-                "-days",
-                "10000",
-                "-out",
-                &self.cluster.ca_cert_path(),
-                "-subj",
-                &format!("/CN=kaws-ca"),
-            ]));
-        });
-
-        Ok(None)
-    }
-
-    fn encrypt_secrets<'b>(&self, kms_key_id: &'b str) -> KawsResult {
-        let mut encryptor = Encryptor::new(
-            self.aws_credentials_provider.clone(),
-            try!(self.cluster.region().parse()),
-            Some(kms_key_id),
-        );
-
-        log_wrap!("Encrypting Kubernetes certificate authority private key", {
-            try!(encryptor.encrypt_file_to_file(
-                &self.cluster.ca_key_path(),
-                &self.cluster.encrypted_ca_key_path(),
-            ));
-        });
-
-        log_wrap!("Encrypting Kubernetes master private key", {
-            try!(encryptor.encrypt_file_to_file(
-                &self.cluster.master_key_path(),
-                &self.cluster.encrypted_master_key_path(),
-            ));
-        });
-
-        log_wrap!("Encrypting Kubernetes node private key", {
-            try!(encryptor.encrypt_file_to_file(
-                &self.cluster.node_key_path(),
-                &self.cluster.encrypted_node_key_path(),
-            ));
-        });
 
         Ok(None)
     }
