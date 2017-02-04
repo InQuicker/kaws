@@ -32,6 +32,12 @@ struct CfsslSignResponse {
     cert: Vec<u8>,
 }
 
+#[derive(Deserialize)]
+struct CfsslGenkeyResponse {
+    csr: Vec<u8>,
+    key: Vec<u8>,
+}
+
 impl Certificate {
     pub fn write_to_file(&self, file_path: &str) -> KawsResult {
         let mut file = File::create(file_path)?;
@@ -70,7 +76,7 @@ impl CertificateAuthority {
         match child.stdin.as_mut() {
             Some(stdin) => {
                 stdin.write_all(
-                    &format!(
+                    format!(
                         r#"{{"CN":"{}","key":{{"algo":"rsa","size":2048}}}}}}"#,
                         common_name
                     ).as_bytes()
@@ -87,6 +93,7 @@ impl CertificateAuthority {
 
         if output.status.success() {
             let raw: CfsslGencertResponse = from_slice(&output.stdout)?;
+
             Ok(raw.into())
         } else {
             Err(KawsError::new("Execution of `cfssl genkey` failed.".to_owned()))
@@ -126,7 +133,7 @@ impl CertificateAuthority {
         match child.stdin.as_mut() {
             Some(stdin) => {
                 stdin.write_all(
-                    &format!(
+                    format!(
                         r#"{{"CN":"{}","key":{{"algo":"rsa","size":2048}}}}}}"#,
                         common_name
                     ).as_bytes()
@@ -253,16 +260,13 @@ impl From<CfsslGencertResponse> for CertificateAuthority {
 }
 
 impl CertificateSigningRequest {
-    pub fn generate(common_name: &str, private_key: &PrivateKey) -> Result<Self, KawsError> {
-        let mut command = Command::new("openssl");
+    pub fn generate(common_name: &str)
+    -> Result<(CertificateSigningRequest, PrivateKey), KawsError> {
+        let mut command = Command::new("cfssl");
 
         command.args(&[
-            "req",
-            "-new",
-            "-key",
-            "/dev/stdin",
-            "-subj",
-            &format!("/CN={}", common_name),
+            "genkey",
+            "-",
         ]);
 
         command.stdin(Stdio::piped());
@@ -273,7 +277,12 @@ impl CertificateSigningRequest {
 
         match child.stdin.as_mut() {
             Some(stdin) => {
-                stdin.write_all(private_key.as_bytes())?;
+                stdin.write_all(
+                    format!(
+                        r#"{{"CN":"{}","key":{{"algo":"rsa","size":2048}}}}}}"#,
+                        common_name
+                    ).as_bytes(),
+                )?;
             }
             None => {
                 return Err(
@@ -285,9 +294,11 @@ impl CertificateSigningRequest {
         let output = child.wait_with_output()?;
 
         if output.status.success() {
-            Ok(CertificateSigningRequest(output.stdout))
+            let raw: CfsslGenkeyResponse = from_slice(&output.stdout)?;
+
+            Ok((CertificateSigningRequest(raw.csr), PrivateKey(raw.key)))
         } else {
-            Err(KawsError::new("Execution of `openssl req` failed.".to_owned()))
+            Err(KawsError::new("Execution of `cfssl genkey` failed.".to_owned()))
         }
     }
 
