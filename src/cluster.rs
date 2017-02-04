@@ -75,10 +75,6 @@ impl<'a> Cluster<'a> {
         format!("clusters/{}/node.pem", self.name)
     }
 
-    fn openssl_config_path(&self) -> String {
-        format!("clusters/{}/openssl.cnf", self.name)
-    }
-
     fn region(&self) -> &str {
         self.region
     }
@@ -280,7 +276,6 @@ impl<'a> NewCluster<'a> {
         try!(self.create_directories());
         try!(self.create_gitignore());
         try!(self.create_tfvars());
-        try!(self.create_openssl_config());
         try!(self.create_pki_stubs());
 
         Ok(Some(format!(
@@ -355,34 +350,6 @@ kaws_zone_id = \"{}\"
                 }).collect::<Vec<String>>().join(", "),
                 self.kubernetes_version,
                 self.zone_id,
-            ));
-        });
-
-        Ok(None)
-    }
-
-    fn create_openssl_config(&self) -> KawsResult {
-        log_wrap!("Creating OpenSSL config file", {
-            let mut file = try!(File::create(&self.cluster.openssl_config_path()));
-
-            try!(write!(
-                file,
-                "\
-[req]
-req_extensions = v3_req
-distinguished_name = req_distinguished_name
-[req_distinguished_name]
-[v3_req]
-basicConstraints = CA:FALSE
-keyUsage = nonRepudiation, digitalSignature, keyEncipherment
-subjectAltName = @alt_names
-[alt_names]
-DNS.1 = kubernetes
-DNS.2 = kubernetes.default
-DNS.3 = kubernetes.{}
-IP.1 = 10.3.0.1
-",
-                self.domain,
             ));
         });
 
