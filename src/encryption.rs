@@ -45,18 +45,8 @@ impl<'a> Encryptor<'a, ChainProvider, HyperClient> {
         }
     }
 
-    pub fn decrypt<'b>(&mut self, encrypted_data: Vec<u8>)
-    -> Result<DecryptResponse, DecryptError> {
-        let request = DecryptRequest {
-            encryption_context: None,
-            grant_tokens: None,
-            ciphertext_blob: encrypted_data,
-        };
-
-        self.client.decrypt(&request)
-    }
-
-    pub fn decrypt_file<'b>(&mut self, source: &'b str, destination: &'b str) -> KawsResult {
+    pub fn decrypt_file_to_file<'b>(&mut self, source: &'b str, destination: &'b str)
+    -> KawsResult {
         let mut src = try!(File::open(source));
 
         let mut encoded_data = String::new();
@@ -78,19 +68,24 @@ impl<'a> Encryptor<'a, ChainProvider, HyperClient> {
         Ok(None)
     }
 
-    pub fn encrypt<'b>(&mut self, decrypted_data: Vec<u8>)
-    -> Result<EncryptResponse, EncryptError> {
-        let request = EncryptRequest {
-            plaintext: decrypted_data,
-            encryption_context: None,
-            key_id: self.kms_master_key_id.expect("KMS key must be supplied to encrypt").to_owned(),
-            grant_tokens: None,
-        };
+    pub fn encrypt_and_write_file(&mut self, data: &[u8], file_path: &str) -> KawsResult {
+        let encrypted_data = self.encrypt(data.to_owned())?;
+        let mut file = File::create(file_path)?;
 
-        self.client.encrypt(&request)
+        match encrypted_data.ciphertext_blob {
+            Some(ref ciphertext_blob) => {
+                let encoded_data = ciphertext_blob.to_base64(STANDARD);
+
+                file.write_all(encoded_data.as_bytes())?;
+            }
+            None => return Err(KawsError::new("No ciphertext was returned from KMS".to_owned())),
+        }
+
+        Ok(None)
     }
 
-    pub fn encrypt_file<'b>(&mut self, source: &'b str, destination: &'b str) -> KawsResult {
+    pub fn encrypt_file_to_file<'b>(&mut self, source: &'b str, destination: &'b str)
+    -> KawsResult {
         let mut src = try!(File::open(source));
 
         let mut contents = vec![];
@@ -114,6 +109,30 @@ impl<'a> Encryptor<'a, ChainProvider, HyperClient> {
 
         Ok(None)
     }
+
+    // Private
+
+    fn decrypt<'b>(&mut self, encrypted_data: Vec<u8>) -> Result<DecryptResponse, DecryptError> {
+        let request = DecryptRequest {
+            encryption_context: None,
+            grant_tokens: None,
+            ciphertext_blob: encrypted_data,
+        };
+
+        self.client.decrypt(&request)
+    }
+
+    fn encrypt<'b>(&mut self, decrypted_data: Vec<u8>) -> Result<EncryptResponse, EncryptError> {
+        let request = EncryptRequest {
+            plaintext: decrypted_data,
+            encryption_context: None,
+            key_id: self.kms_master_key_id.expect("KMS key must be supplied to encrypt").to_owned(),
+            grant_tokens: None,
+        };
+
+        self.client.encrypt(&request)
+    }
+
 }
 
 impl<'a, P, D> Drop for Encryptor<'a, P, D>

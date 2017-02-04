@@ -130,7 +130,7 @@ impl<'a> ExistingCluster<'a> {
     pub fn generate_pki(&mut self) -> KawsResult {
         // self.generate_etcd_pki()?;
         // self.generate_etcd_peer_pki()?;
-        self.generate_k8s_pki()?;
+        self.generate_k8s_pki(self.kms_master_key_id)?;
 
         try!(self.create_ca());
         try!(self.create_master_credentials());
@@ -141,15 +141,46 @@ impl<'a> ExistingCluster<'a> {
         Ok(None)
     }
 
-    fn generate_k8s_pki(&self) -> KawsResult {
-        let ca = CertificateAuthority::new(&format!("kaws-k8s-{}", self.cluster.name))?;
+    fn generate_k8s_pki(&self, kms_key_id: &str) -> KawsResult {
+        let ca = CertificateAuthority::new(&format!("kaws-k8s-ca-{}", self.cluster.name))?;
 
         let master_key = PrivateKey::new()?;
         let master_csr = CertificateSigningRequest::new(
-            &format!("kaws-master-{}", self.cluster.name),
+            &format!("kaws-k8s-master-{}", self.cluster.name),
             &master_key,
         )?;
         let master_cert = ca.sign(&master_csr)?;
+
+        let node_key = PrivateKey::new()?;
+        let node_csr = CertificateSigningRequest::new(
+            &format!("kaws-k8s-node-{}", self.cluster.name),
+            &node_key,
+        )?;
+        let node_cert = ca.sign(&node_csr)?;
+
+        let mut encryptor = Encryptor::new(
+            self.aws_credentials_provider.clone(),
+            self.cluster.region().parse()?,
+            Some(kms_key_id),
+        );
+
+        ca.write_to_files(
+            &mut encryptor,
+            &format!("clusters/{}/k8s-ca.pem", self.cluster.name),
+            &format!("clusters/{}/k8s-ca-key-encrypted.base64", self.cluster.name),
+        )?;
+
+        master_key.write_to_file(
+            &mut encryptor,
+            &format!("clusters/{}/k8s-master-key-encrypted.base64", self.cluster.name),
+        )?;
+        master_cert.write_to_file(&format!("clusters/{}/k8s-master.pem", self.cluster.name))?;
+
+        node_key.write_to_file(
+            &mut encryptor,
+            &format!("clusters/{}/k8s-node-key-encrypted.base64", self.cluster.name),
+        )?;
+        node_cert.write_to_file(&format!("clusters/{}/k8s-node.pem", self.cluster.name))?;
 
         Ok(None)
     }
@@ -294,21 +325,21 @@ impl<'a> ExistingCluster<'a> {
         );
 
         log_wrap!("Encrypting Kubernetes certificate authority private key", {
-            try!(encryptor.encrypt_file(
+            try!(encryptor.encrypt_file_to_file(
                 &self.cluster.ca_key_path(),
                 &self.cluster.encrypted_ca_key_path(),
             ));
         });
 
         log_wrap!("Encrypting Kubernetes master private key", {
-            try!(encryptor.encrypt_file(
+            try!(encryptor.encrypt_file_to_file(
                 &self.cluster.master_key_path(),
                 &self.cluster.encrypted_master_key_path(),
             ));
         });
 
         log_wrap!("Encrypting Kubernetes node private key", {
-            try!(encryptor.encrypt_file(
+            try!(encryptor.encrypt_file_to_file(
                 &self.cluster.node_key_path(),
                 &self.cluster.encrypted_node_key_path(),
             ));

@@ -149,7 +149,7 @@ impl<'a> Admin<'a> {
         );
 
         // decrypt CA key
-        try!(encryptor.decrypt_file(&encrypted_ca_key_path, &ca_key_path));
+        try!(encryptor.decrypt_file_to_file(&encrypted_ca_key_path, &ca_key_path));
 
         // generate admin cert
         log_wrap!("Creating Kubernetes admin certificate", {
