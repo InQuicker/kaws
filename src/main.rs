@@ -10,6 +10,7 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
+extern crate tempdir;
 
 macro_rules! log_wrap {
     ($m:expr, $b:block) => {

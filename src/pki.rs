@@ -5,6 +5,7 @@ use std::process::{Command, Stdio};
 use hyper::Client;
 use rusoto::ChainProvider;
 use serde_json::from_slice;
+use tempdir::TempDir;
 
 use encryption::Encryptor;
 use error::{KawsError, KawsResult};
@@ -94,14 +95,17 @@ impl CertificateAuthority {
 
     pub fn generate_cert(&self, common_name: &str, san: Option<&[&str]>)
     -> Result<(Certificate, PrivateKey), KawsError> {
+        let (tempdir, cert_path, key_path) = self.temporary_write()?;
+
         let mut command = Command::new("cfssl");
 
         command.args(&[
             "gencert",
             "-ca",
-            "{}", // TODO: write cert to tempdir and include path here
+            &cert_path,
             "-ca-key",
-            "{}", // TODO: write key to tempdir and include path here
+            &key_path,
+            "-",
         ]);
 
         if let Some(san) = san {
@@ -137,24 +141,30 @@ impl CertificateAuthority {
 
         let output = child.wait_with_output()?;
 
-        if output.status.success() {
+        let result = if output.status.success() {
             let raw: CfsslGencertResponse = from_slice(&output.stdout)?;
 
             Ok((raw.cert.into(), raw.key.into()))
         } else {
             Err(KawsError::new("Execution of `cfssl gencert` failed.".to_owned()))
-        }
+        };
+
+        tempdir.close()?;
+
+        result
     }
 
     pub fn sign(&self, csr: &CertificateSigningRequest) -> Result<Certificate, KawsError> {
+        let (tempdir, cert_path, key_path) = self.temporary_write()?;
+
         let mut command = Command::new("cfssl");
 
         command.args(&[
             "sign",
             "-ca",
-            "{}", // TODO: write cert to tempdir and include path here
+            &cert_path,
             "-ca-key",
-            "{}", // TODO: write key to tempdir and include path here
+            &key_path,
             "-"
         ]);
 
@@ -177,13 +187,17 @@ impl CertificateAuthority {
 
         let output = child.wait_with_output()?;
 
-        if output.status.success() {
+        let result = if output.status.success() {
             let response: CfsslSignResponse = from_slice(&output.stdout)?;
 
             Ok(response.cert.into())
         } else {
             Err(KawsError::new("Execution of `cfssl gencert` failed.".to_owned()))
-        }
+        };
+
+        tempdir.close()?;
+
+        result
     }
 
     pub fn write_to_files(
@@ -203,6 +217,30 @@ impl CertificateAuthority {
     pub fn as_bytes(&self) -> &[u8] {
         self.cert.as_bytes()
     }
+
+    // Private
+
+    fn temporary_write(&self) -> Result<(TempDir, String, String), KawsError> {
+        let tempdir = TempDir::new("kaws")?;
+
+        let cert_path = tempdir.path().join("cert.pem");
+        let key_path = tempdir.path().join("key.pem");
+        let cert_path_string = match cert_path.to_str() {
+            Some(value) => value.to_owned(),
+            None => return Err(KawsError::new("Temporary path was invalid UTF-8".to_owned())),
+        };
+        let key_path_string = match key_path.to_str() {
+            Some(value) => value.to_owned(),
+            None => return Err(KawsError::new("Temporary path was invalid UTF-8".to_owned())),
+        };
+        let mut cert_file = File::create(cert_path)?;
+        let mut key_file = File::create(key_path)?;
+        cert_file.write_all(self.cert.as_bytes())?;
+        key_file.write_all(self.key.as_bytes())?;
+
+        Ok((tempdir, cert_path_string, key_path_string))
+    }
+
 }
 
 impl From<CfsslGencertResponse> for CertificateAuthority {
@@ -265,20 +303,6 @@ impl From<Vec<u8>> for CertificateSigningRequest {
 }
 
 impl PrivateKey {
-    pub fn generate() -> Result<Self, KawsError> {
-        let mut command = Command::new("openssl");
-
-        command.args(&["genrsa", "2048"]);
-
-        let output = command.output()?;
-
-        if output.status.success() {
-            Ok(PrivateKey(output.stdout))
-        } else {
-            Err(KawsError::new("Execution of `openssl genrsa` failed.".to_owned()))
-        }
-    }
-
     pub fn as_bytes(&self) -> &[u8] {
         &self.0
     }
