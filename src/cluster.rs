@@ -17,6 +17,7 @@ pub struct Cluster<'a> {
 
 pub struct ExistingCluster<'a> {
     aws_credentials_provider: ChainProvider,
+    domain: &'a str,
     cluster: Cluster<'a>,
     kms_master_key_id: &'a str,
 }
@@ -123,6 +124,7 @@ impl<'a> ExistingCluster<'a> {
                 matches.value_of("cluster").expect("missing cluster name"),
                 matches.value_of("region").expect("missing region"),
             ),
+            domain: matches.value_of("domain").expect("missing domain"),
             kms_master_key_id: matches.value_of("kms-key").expect("missing kms-key"),
         }
     }
@@ -151,7 +153,7 @@ impl<'a> ExistingCluster<'a> {
                 "kubernetes.default",
                 "kubernetes.default.svc",
                 "kubernetes.default.svc.cluster.local",
-                &format!("kubernetes.{}", "TODO: this should be the real domain!"), // FIXME
+                &format!("kubernetes.{}", self.domain),
                 "10.3.0.1",
             ]),
         )?;

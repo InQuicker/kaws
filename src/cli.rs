@@ -323,6 +323,14 @@ fn cluster_genpki<'a, 'b>() -> App<'a, 'b> {
                 .help("The cluster whose plan should be applied")
         )
         .arg(
+            Arg::with_name("domain")
+                .short("d")
+                .long("domain")
+                .takes_value(true)
+                .required(true)
+                .help("The base domain name for the cluster, e.g. \"example.com\"")
+        )
+        .arg(
             Arg::with_name("kms-key")
                 .short("k")
                 .long("kms-key")
