@@ -47,32 +47,76 @@ impl<'a> Cluster<'a> {
         }
     }
 
-    fn ca_cert_path(&self) -> String {
-        format!("clusters/{}/ca.pem", self.name)
+    fn etcd_ca_cert_path(&self) -> String {
+        format!("clusters/{}/etcd-ca.pem", self.name)
     }
 
-    fn encrypted_master_key_path(&self) -> String {
-        format!("clusters/{}/master-key-encrypted.base64", self.name)
+    fn etcd_encrypted_ca_key_path(&self) -> String {
+        format!("clusters/{}/etcd-ca-key-encrypted.base64", self.name)
     }
 
-    fn encrypted_node_key_path(&self) -> String {
-        format!("clusters/{}/node-key-encrypted.base64", self.name)
+    fn etcd_server_cert_path(&self) -> String {
+        format!("clusters/{}/etcd-server.pem", self.name)
+    }
+
+    fn etcd_encrypted_server_key_path(&self) -> String {
+        format!("clusters/{}/etcd-server-key-encrypted.base64", self.name)
+    }
+
+    fn etcd_client_cert_path(&self) -> String {
+        format!("clusters/{}/etcd-client.pem", self.name)
+    }
+
+    fn etcd_encrypted_client_key_path(&self) -> String {
+        format!("clusters/{}/etcd-client-key-encrypted.base64", self.name)
+    }
+
+    fn etcd_peer_ca_cert_path(&self) -> String {
+        format!("clusters/{}/etcd-peer-ca.pem", self.name)
+    }
+
+    fn etcd_peer_encrypted_ca_key_path(&self) -> String {
+        format!("clusters/{}/etcd-peer-ca-key-encrypted.base64", self.name)
+    }
+
+    fn etcd_peer_cert_path(&self) -> String {
+        format!("clusters/{}/etcd-peer.pem", self.name)
+    }
+
+    fn etcd_peer_encrypted_key_path(&self) -> String {
+        format!("clusters/{}/etcd-peer-key-encrypted.base64", self.name)
+    }
+
+    fn k8s_ca_cert_path(&self) -> String {
+        format!("clusters/{}/k8s-ca.pem", self.name)
+    }
+
+    fn k8s_encrypted_ca_key_path(&self) -> String {
+        format!("clusters/{}/k8s-ca-key-encrypted.base64", self.name)
+    }
+
+    fn k8s_encrypted_master_key_path(&self) -> String {
+        format!("clusters/{}/k8s-master-key-encrypted.base64", self.name)
+    }
+
+    fn k8s_encrypted_node_key_path(&self) -> String {
+        format!("clusters/{}/k8s-node-key-encrypted.base64", self.name)
     }
 
     fn gitignore_path(&self) -> String {
         format!("clusters/{}/.gitignore", self.name)
     }
 
-    fn master_cert_path(&self) -> String {
-        format!("clusters/{}/master.pem", self.name)
+    fn k8s_master_cert_path(&self) -> String {
+        format!("clusters/{}/k8s-master.pem", self.name)
     }
 
     fn name(&self) -> &str {
         self.name
     }
 
-    fn node_cert_path(&self) -> String {
-        format!("clusters/{}/node.pem", self.name)
+    fn k8s_node_cert_path(&self) -> String {
+        format!("clusters/{}/k8s-node.pem", self.name)
     }
 
     fn region(&self) -> &str {
@@ -133,20 +177,20 @@ impl<'a> ExistingCluster<'a> {
 
         ca.write_to_files(
             &mut encryptor,
-            &format!("clusters/{}/etcd-ca.pem", self.cluster.name),
-            &format!("clusters/{}/etcd-ca-key-encrypted.base64", self.cluster.name),
+            &self.cluster.etcd_ca_cert_path(),
+            &self.cluster.etcd_encrypted_ca_key_path(),
         )?;
 
-        server_cert.write_to_file(&format!("clusters/{}/etcd-server.pem", self.cluster.name))?;
+        server_cert.write_to_file(&self.cluster.etcd_server_cert_path())?;
         server_key.write_to_file(
             &mut encryptor,
-            &format!("clusters/{}/etcd-server-key-encrypted.base64", self.cluster.name),
+            &self.cluster.etcd_encrypted_server_key_path(),
         )?;
 
-        client_cert.write_to_file(&format!("clusters/{}/etcd-client.pem", self.cluster.name))?;
+        client_cert.write_to_file(&self.cluster.etcd_client_cert_path())?;
         client_key.write_to_file(
             &mut encryptor,
-            &format!("clusters/{}/etcd-client-key-encrypted.base64", self.cluster.name),
+            &self.cluster.etcd_encrypted_client_key_path(),
         )?;
 
         Ok(None)
@@ -174,14 +218,14 @@ impl<'a> ExistingCluster<'a> {
 
         ca.write_to_files(
             &mut encryptor,
-            &format!("clusters/{}/etcd-peer-ca.pem", self.cluster.name),
-            &format!("clusters/{}/etcd-peer-ca-key-encrypted.base64", self.cluster.name),
+            &self.cluster.etcd_peer_ca_cert_path(),
+            &self.cluster.etcd_peer_encrypted_ca_key_path(),
         )?;
 
-        peer_cert.write_to_file(&format!("clusters/{}/etcd-peer.pem", self.cluster.name))?;
+        peer_cert.write_to_file(&self.cluster.etcd_peer_cert_path())?;
         peer_key.write_to_file(
             &mut encryptor,
-            &format!("clusters/{}/etcd-peer-key-encrypted.base64", self.cluster.name),
+            &self.cluster.etcd_peer_encrypted_key_path(),
         )?;
 
         Ok(None)
@@ -215,20 +259,20 @@ impl<'a> ExistingCluster<'a> {
 
         ca.write_to_files(
             &mut encryptor,
-            &format!("clusters/{}/k8s-ca.pem", self.cluster.name),
-            &format!("clusters/{}/k8s-ca-key-encrypted.base64", self.cluster.name),
+            &self.cluster.k8s_ca_cert_path(),
+            &self.cluster.k8s_encrypted_ca_key_path(),
         )?;
 
-        master_cert.write_to_file(&format!("clusters/{}/k8s-master.pem", self.cluster.name))?;
+        master_cert.write_to_file(&self.cluster.k8s_master_cert_path())?;
         master_key.write_to_file(
             &mut encryptor,
-            &format!("clusters/{}/k8s-master-key-encrypted.base64", self.cluster.name),
+            &self.cluster.k8s_encrypted_master_key_path(),
         )?;
 
-        node_cert.write_to_file(&format!("clusters/{}/k8s-node.pem", self.cluster.name))?;
+        node_cert.write_to_file(&self.cluster.k8s_node_cert_path())?;
         node_key.write_to_file(
             &mut encryptor,
-            &format!("clusters/{}/k8s-node-key-encrypted.base64", self.cluster.name),
+            &self.cluster.k8s_encrypted_node_key_path(),
         )?;
 
         Ok(None)
@@ -358,11 +402,21 @@ kaws_zone_id = \"{}\"
 
     fn create_pki_stubs(&self) -> KawsResult {
         let paths = [
-            &self.cluster.ca_cert_path(),
-            &self.cluster.master_cert_path(),
-            &self.cluster.encrypted_master_key_path(),
-            &self.cluster.node_cert_path(),
-            &self.cluster.encrypted_node_key_path(),
+            &self.cluster.etcd_ca_cert_path(),
+            &self.cluster.etcd_server_cert_path(),
+            &self.cluster.etcd_encrypted_server_key_path(),
+            &self.cluster.etcd_client_cert_path(),
+            &self.cluster.etcd_encrypted_client_key_path(),
+
+            &self.cluster.etcd_peer_ca_cert_path(),
+            &self.cluster.etcd_peer_cert_path(),
+            &self.cluster.etcd_peer_encrypted_key_path(),
+
+            &self.cluster.k8s_ca_cert_path(),
+            &self.cluster.k8s_master_cert_path(),
+            &self.cluster.k8s_encrypted_master_key_path(),
+            &self.cluster.k8s_node_cert_path(),
+            &self.cluster.k8s_encrypted_node_key_path(),
         ];
 
         for path in paths.iter() {
