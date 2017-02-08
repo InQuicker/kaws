@@ -10,8 +10,14 @@ data "template_file" "etcd_01_cloud_config" {
   template = "${file("${path.module}/templates/etcd_cloud_config.yml")}"
 
   vars {
-    initial_cluster_state = "${var.etcd_01_initial_cluster_state}"
+    etcd_ca_cert: "${file("clusters/${var.cluster}/etcd-ca.pem")}",
+    etcd_server_cert: "${file("clusters/${var.cluster}/etcd-server.pem")}",
+    etcd_server_key: "${file("clusters/${var.cluster}/etcd-server-key-encrypted.base64")}",
+    etcd_peer_ca_cert: "${file("clusters/${var.cluster}/etcd-peer-ca.pem")}",
+    etcd_peer_cert: "${file("clusters/${var.cluster}/etcd-peer.pem")}",
+    etcd_peer_key: "${file("clusters/${var.cluster}/etcd-peer-key-encrypted.base64")}",
     name = "etcd_01"
+    region = "${var.region}"
     ssh_public_keys = "${join(", ", var.ssh_keys)}"
   }
 }
@@ -20,8 +26,14 @@ data "template_file" "etcd_02_cloud_config" {
   template = "${file("${path.module}/templates/etcd_cloud_config.yml")}"
 
   vars {
-    initial_cluster_state = "${var.etcd_02_initial_cluster_state}"
     name = "etcd_02"
+    etcd_ca_cert: "${file("clusters/${var.cluster}/etcd-ca.pem")}",
+    etcd_server_cert: "${file("clusters/${var.cluster}/etcd-server.pem")}",
+    etcd_server_key: "${file("clusters/${var.cluster}/etcd-server-key-encrypted.base64")}",
+    etcd_peer_ca_cert: "${file("clusters/${var.cluster}/etcd-peer-ca.pem")}",
+    etcd_peer_cert: "${file("clusters/${var.cluster}/etcd-peer.pem")}",
+    etcd_peer_key: "${file("clusters/${var.cluster}/etcd-peer-key-encrypted.base64")}",
+    region = "${var.region}"
     ssh_public_keys = "${join(", ", var.ssh_keys)}"
   }
 }
@@ -30,8 +42,14 @@ data "template_file" "etcd_03_cloud_config" {
   template = "${file("${path.module}/templates/etcd_cloud_config.yml")}"
 
   vars {
-    initial_cluster_state = "${var.etcd_03_initial_cluster_state}"
     name = "etcd_03"
+    etcd_ca_cert: "${file("clusters/${var.cluster}/etcd-ca.pem")}",
+    etcd_server_cert: "${file("clusters/${var.cluster}/etcd-server.pem")}",
+    etcd_server_key: "${file("clusters/${var.cluster}/etcd-server-key-encrypted.base64")}",
+    etcd_peer_ca_cert: "${file("clusters/${var.cluster}/etcd-peer-ca.pem")}",
+    etcd_peer_cert: "${file("clusters/${var.cluster}/etcd-peer.pem")}",
+    etcd_peer_key: "${file("clusters/${var.cluster}/etcd-peer-key-encrypted.base64")}",
+    region = "${var.region}"
     ssh_public_keys = "${join(", ", var.ssh_keys)}"
   }
 }

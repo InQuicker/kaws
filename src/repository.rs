@@ -38,9 +38,6 @@ r#"module "kaws" {{
     cluster = "${{var.kaws_cluster}}"
     coreos_ami = "${{var.kaws_coreos_ami}}"
     domain = "${{var.kaws_domain}}"
-    etcd_01_initial_cluster_state = "${{var.kaws_etcd_01_initial_cluster_state}}"
-    etcd_02_initial_cluster_state = "${{var.kaws_etcd_02_initial_cluster_state}}"
-    etcd_03_initial_cluster_state = "${{var.kaws_etcd_03_initial_cluster_state}}"
     iam_users = ["${{var.kaws_iam_users}}"]
     instance_size = "${{var.kaws_instance_size}}"
     masters_max_size = "${{var.kaws_masters_max_size}}"
@@ -73,18 +70,6 @@ variable "kaws_coreos_ami" {{
 
 variable "kaws_domain" {{
   description = "The domain name for the cluster, e.g. `example.com`"
-}}
-
-variable "kaws_etcd_01_initial_cluster_state" {{
-  description = "The initial cluster state for the first etcd node. One of `new` or `existing`"
-}}
-
-variable "kaws_etcd_02_initial_cluster_state" {{
-  description = "The initial cluster state for the second etcd node. One of `new` or `existing`"
-}}
-
-variable "kaws_etcd_03_initial_cluster_state" {{
-  description = "The initial cluster state for the third etcd node. One of `new` or `existing`"
 }}
 
 variable "kaws_iam_users" {{

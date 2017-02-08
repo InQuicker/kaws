@@ -18,18 +18,6 @@ variable "domain" {
   description = "The domain name for the cluster, e.g. `example.com`"
 }
 
-variable "etcd_01_initial_cluster_state" {
-  description = "The initial cluster state for the first etcd node. One of `new` or `existing`"
-}
-
-variable "etcd_02_initial_cluster_state" {
-  description = "The initial cluster state for the second etcd node. One of `new` or `existing`"
-}
-
-variable "etcd_03_initial_cluster_state" {
-  description = "The initial cluster state for the third etcd node. One of `new` or `existing`"
-}
-
 variable "iam_users" {
   description = "A list of IAM user names who will have access to cluster PKI secrets"
   type = "list"

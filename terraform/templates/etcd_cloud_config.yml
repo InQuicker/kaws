@@ -4,17 +4,21 @@
 coreos:
   etcd2:
     name: ${name}
-    initial_cluster: etcd_01=http://10.0.1.4:2380,etcd_02=http://10.0.1.5:2380,etcd_03=http://10.0.1.6:2380
-    initial_cluster_state: ${initial_cluster_state}
-    initial_advertise_peer_urls: http://$private_ipv4:2380
-    listen_peer_urls: http://$private_ipv4:2380
-    listen_client_urls: http://$private_ipv4:2379,http://127.0.0.1:2379
-    advertise_client_urls: http://$private_ipv4:2379
     data_dir: /var/lib/etcd2/data
-  fleet:
-    etcd_servers: http://127.0.0.1:2379
-    metadata: etcd=quorum,kubernetes=none
-    public_ip: $private_ipv4
+    initial_cluster_state: new
+    initial_cluster: etcd_01=https://10.0.1.4:2380,etcd_02=https://10.0.1.5:2380,etcd_03=https://10.0.1.6:2380
+    advertise_client_urls: https://$private_ipv4:2379
+    initial_advertise_peer_urls: https://$private_ipv4:2380
+    listen_client_urls: https://$private_ipv4:2379
+    listen_peer_urls: https://$private_ipv4:2380
+    client_cert_auth: true
+    cert_file: /etc/etcd2/ssl/etcd-server.pem
+    key_file: /etc/etcd2/ssl/etcd-server-key.pem
+    trusted_ca_file: /etc/etcd2/ssl/etcd-ca.pem
+    peer_client_cert_auth: true
+    peer_cert_file: /etc/etcd2/ssl/etcd-peer.pem
+    peer_key_file: /etc/etcd2/ssl/etcd-peer-key.pem
+    peer_trusted_ca_file: /etc/etcd2/ssl/etcd-peer-ca.pem
   units:
     - name: etcd2.service
       command: start
@@ -24,8 +28,11 @@ coreos:
             [Unit]
             Requires=create-etcd2-data-dir.service
             After=create-etcd2-data-dir.service
-    - name: fleet.service
-      command: start
+        - name: 20-wait-tls.service
+          content: |
+            [Unit]
+            Requires=decrypt-pki.service
+            After=decrypt-pki.service
     - name: format-etcd-ebs.service
       command: start
       content: |
@@ -60,16 +67,23 @@ coreos:
         RemainAfterExit=yes
         ExecStart=/usr/bin/mkdir -p /var/lib/etcd2/data
         ExecStart=/usr/bin/chown -R etcd:etcd /var/lib/etcd2/data
+    - name: decrypt-pki.service
+      content: |
+        [Unit]
+        Description=Decrypt etcd PKI using KMS
+        Before=etcd2.service
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=/opt/kaws/decrypt-pki
 ssh_authorized_keys: [${ssh_public_keys}]
 write_files:
   - path: /opt/kaws/format-etcd-ebs.sh
     permissions: "0755"
     owner: root
     content: |
-      #!/usr/bin/bash
-
+      #!/bin/bash -e
       test -b /dev/disk/by-label/ETCD
-
       if [ "$?" = "0" ]; then
         echo "EBS volume already formatted for use by etcd"
         exit 0
@@ -77,3 +91,30 @@ write_files:
         /usr/sbin/wipefs /dev/xvdf
         /usr/sbin/mkfs.ext4 -L ETCD /dev/xvdf
       fi
+  - path: "/opt/kaws/decrypt-pki"
+    owner: "root"
+    permissions: "0700"
+    content: |
+      #!/bin/bash -e
+      for file in $(find /etc/etcd2/ssl/*.base64);do
+        rkt run \
+          --insecure-options image \
+          --volumes etc-etcd2-ssl,kind=host,source=/etc/etcd2/ssl \
+          --mount volume=etcd-etcd2-ssl,target=/etc/etcd2/ssl \
+          --stage1-from-dir stage1-fly.aci \
+          docker://quay.io/coreos/awscli \
+          -- \
+          aws --region ${region} kms decrypt --ciphertext-blob fileb://$file --output text --query Plaintext | base64 --decode > ${file/-encrypted.base64/.pem}
+      done
+  - path: /etc/etcd2/ssl/etcd-ca.pem
+    content: ${etcd_ca_cert}
+  - path: /etc/etcd2/ssl/etcd-server.pem
+    content: ${etcd_server_cert}
+  - path: /etc/etcd2/ssl/etcd-server-key-encrypted.base64
+    content: ${etcd_server_key}
+  - path: /etc/etcd2/ssl/etcd-peer-ca.pem
+    content: ${etcd_peer_ca_cert}
+  - path: /etc/etcd2/ssl/etcd-peer.pem
+    content: ${etcd_peer_cert}
+  - path: /etc/etcd2/ssl/etcd-peer-key-encrypted.base64
+    content: ${etcd_peer_key}
