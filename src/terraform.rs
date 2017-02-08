@@ -27,7 +27,7 @@ impl<'a> Terraform<'a> {
     }
 
     pub fn apply(&mut self) -> KawsResult {
-        try!(self.get());
+        self.get()?;
 
         let mut command = Command::new("terraform");
 
@@ -54,13 +54,13 @@ impl<'a> Terraform<'a> {
             ).aws_secret_access_key(),
         );
 
-        try!(command.status());
+        command.status()?;
 
         Ok(None)
     }
 
     pub fn destroy(&mut self) -> KawsResult {
-        try!(self.get());
+        self.get()?;
 
         let mut command = Command::new("terraform");
 
@@ -87,7 +87,7 @@ impl<'a> Terraform<'a> {
             ).aws_secret_access_key(),
         );
 
-        let exit_status = try!(command.status());
+        let exit_status = command.status()?;
 
         if exit_status.success() {
             Ok(Some(format!(
@@ -101,7 +101,7 @@ impl<'a> Terraform<'a> {
     }
 
     pub fn output(&mut self) -> KawsResult {
-        try!(self.get());
+        self.get()?;
 
         let mut command = Command::new("terraform");
 
@@ -115,13 +115,13 @@ impl<'a> Terraform<'a> {
             command.arg(output);
         }
 
-        try!(command.status());
+        command.status()?;
 
         Ok(None)
     }
 
     pub fn plan(&mut self) -> KawsResult {
-        try!(self.get());
+        self.get()?;
 
         let mut command = Command::new("terraform");
 
@@ -148,13 +148,13 @@ impl<'a> Terraform<'a> {
             ).aws_secret_access_key(),
         );
 
-        try!(command.status());
+        command.status()?;
 
         Ok(None)
     }
 
     pub fn refresh(&mut self) -> KawsResult {
-        try!(self.get());
+        self.get()?;
 
         let mut command = Command::new("terraform");
 
@@ -181,16 +181,16 @@ impl<'a> Terraform<'a> {
             ).aws_secret_access_key(),
         );
 
-        try!(command.status());
+        command.status()?;
 
         Ok(None)
     }
 
     fn get(&self) -> KawsResult {
-        let exit_status = try!(Command::new("terraform").args(&[
+        let exit_status = Command::new("terraform").args(&[
             "get",
             "terraform",
-        ]).stdout(Stdio::null()).status());
+        ]).stdout(Stdio::null()).status()?;
 
         if exit_status.success() {
             Ok(None)

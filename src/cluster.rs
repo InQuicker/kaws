@@ -317,10 +317,10 @@ impl<'a> NewCluster<'a> {
     }
 
     pub fn init(&mut self) -> KawsResult {
-        try!(self.create_directories());
-        try!(self.create_gitignore());
-        try!(self.create_tfvars());
-        try!(self.create_pki_stubs());
+        self.create_directories()?;
+        self.create_gitignore()?;
+        self.create_tfvars()?;
+        self.create_pki_stubs()?;
 
         Ok(Some(format!(
             "Cluster \"{name}\" initialized! Commit clusters/{name} to Git.",
@@ -330,7 +330,7 @@ impl<'a> NewCluster<'a> {
 
     fn create_directories(&self) -> KawsResult {
         log_wrap!("Creating directories for the new cluster", {
-            try!(create_dir_all(format!("clusters/{}", self.cluster.name)));
+            create_dir_all(format!("clusters/{}", self.cluster.name))?;
         });
 
         Ok(None)
@@ -338,9 +338,9 @@ impl<'a> NewCluster<'a> {
 
     fn create_gitignore(&self) -> KawsResult {
         log_wrap!("Creating .gitignore file", {
-            let mut file = try!(File::create(&self.cluster.gitignore_path()));
+            let mut file = File::create(&self.cluster.gitignore_path())?;
 
-            try!(write!(file, "*-key.pem"));
+            write!(file, "*-key.pem")?;
         });
 
         Ok(None)
@@ -348,9 +348,9 @@ impl<'a> NewCluster<'a> {
 
     fn create_tfvars(&self) -> KawsResult {
         log_wrap!("Creating tfvars file", {
-            let mut file = try!(File::create(&self.cluster.tfvars_path()));
+            let mut file = File::create(&self.cluster.tfvars_path())?;
 
-            try!(write!(
+            write!(
                 file,
                 "\
 kaws_account_id = \"{}\"
@@ -394,7 +394,7 @@ kaws_zone_id = \"{}\"
                 }).collect::<Vec<String>>().join(", "),
                 self.kubernetes_version,
                 self.zone_id,
-            ));
+            )?;
         });
 
         Ok(None)

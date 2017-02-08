@@ -21,14 +21,14 @@ impl<'a> Repository<'a> {
     }
 
     pub fn create(&self) -> KawsResult {
-        try!(create_dir_all(format!("{}/clusters", self.name)));
-        try!(create_dir_all(format!("{}/terraform", self.name)));
+        create_dir_all(format!("{}/clusters", self.name))?;
+        create_dir_all(format!("{}/terraform", self.name))?;
 
-        let mut gitignore = try!(File::create(format!("{}/.gitignore", self.name)));
-        try!(writeln!(&mut gitignore, ".terraform"));
+        let mut gitignore = File::create(format!("{}/.gitignore", self.name))?;
+        writeln!(&mut gitignore, ".terraform")?;
 
-        let mut main_tf = try!(File::create(format!("{}/terraform/kaws.tf", self.name)));
-        try!(write!(
+        let mut main_tf = File::create(format!("{}/terraform/kaws.tf", self.name))?;
+        write!(
             &mut main_tf,
 r#"module "kaws" {{
     source = "{}"
@@ -139,7 +139,7 @@ variable "kaws_zone_id" {{
 }}
 "#,
             self.terraform_source,
-        ));
+        )?;
 
         Ok(Some(format!("New repository \"{}\" created!", self.name)))
     }

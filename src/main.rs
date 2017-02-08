@@ -72,7 +72,7 @@ fn execute_cli() -> KawsResult {
 
     match app_matches.subcommand() {
         ("admin", Some(admin_matches)) => {
-            try!(ensure_dependencies());
+            ensure_dependencies()?;
 
             match admin_matches.subcommand() {
                 ("create", Some(matches)) => Admin::new(matches).create(),
@@ -86,7 +86,7 @@ fn execute_cli() -> KawsResult {
             }
         },
         ("cluster", Some(cluster_matches)) => {
-            try!(ensure_dependencies());
+            ensure_dependencies()?;
 
             match cluster_matches.subcommand() {
                 ("apply", Some(matches)) => Terraform::new(matches).apply(),
@@ -104,7 +104,7 @@ fn execute_cli() -> KawsResult {
             }
         },
         ("init", Some(matches)) => {
-            try!(ensure_dependencies());
+            ensure_dependencies()?;
 
             Repository::new(matches).create()
         }

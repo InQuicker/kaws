@@ -32,7 +32,7 @@ impl<'a> Admin<'a> {
 
     pub fn create(&mut self) -> KawsResult {
         log_wrap!("Creating directory for the new administrator's credentials", {
-            try!(create_dir_all(format!("clusters/{}", self.cluster)));
+            create_dir_all(format!("clusters/{}", self.cluster))?;
         });
 
         let (csr, key) = CertificateSigningRequest::generate(self.admin, self.groups.as_ref())?;
@@ -59,39 +59,39 @@ impl<'a> Admin<'a> {
     }
 
     pub fn install(&mut self) -> KawsResult {
-        let domain = try!(self.domain()).expect(
+        let domain = self.domain()?.expect(
             "Terraform should have had a value for the domain output"
         );
 
         log_wrap!("Configuring kubectl", {
             // set cluster
-            try!(execute_child_process("kubectl", &[
+            execute_child_process("kubectl", &[
                 "config",
                 "set-cluster",
                 &format!("kaws-{}", self.cluster),
                 &format!("--server=https://kubernetes.{}", &domain),
                 &format!("--certificate-authority=clusters/{}/k8s-ca.pem", self.cluster),
                 "--embed-certs=true",
-            ]));
+            ])?;
 
             // set credentials
-            try!(execute_child_process("kubectl", &[
+            execute_child_process("kubectl", &[
                 "config",
                 "set-credentials",
                 &format!("kaws-{}-{}", self.cluster, self.admin),
                 &format!("--client-certificate=clusters/{}/{}.pem", self.cluster, self.admin),
                 &format!("--client-key=clusters/{}/{}-key.pem", self.cluster, self.admin),
                 "--embed-certs=true",
-            ]));
+            ])?;
 
             // set context
-            try!(execute_child_process("kubectl", &[
+            execute_child_process("kubectl", &[
                 "config",
                 "set-context",
                 &format!("kaws-{}", self.cluster),
                 &format!("--cluster=kaws-{}", self.cluster),
                 &format!("--user=kaws-{}-{}", self.cluster, self.admin),
-            ]));
+            ])?;
         });
 
         Ok(Some(format!(
@@ -106,7 +106,7 @@ impl<'a> Admin<'a> {
     }
 
     pub fn sign(&mut self) -> KawsResult {
-        let region = try!(self.region()).expect(
+        let region = self.region()?.expect(
             "Terraform should have had a value for the region output"
         );
 
@@ -149,9 +149,9 @@ impl<'a> Admin<'a> {
     }
 
     fn output(&self, output_name: &str) -> KawsResult {
-        let output = try!(
-            Command::new("kaws").args(&["cluster", "output", self.cluster, output_name]).output()
-        );
+        let output = Command::new("kaws")
+            .args(&["cluster", "output", self.cluster, output_name])
+            .output()?;
 
         Ok(Some(String::from_utf8_lossy(&output.stdout).trim_right().to_string()))
     }

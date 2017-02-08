@@ -50,10 +50,10 @@ impl<'a> Encryptor<'a, ChainProvider, HyperClient> {
 
         let mut encoded_data = String::new();
 
-        try!(src.read_to_string(&mut encoded_data));
+        src.read_to_string(&mut encoded_data)?;
 
-        let encrypted_data = try!(encoded_data.from_base64());
-        let decrypted_data = try!(self.decrypt(encrypted_data));
+        let encrypted_data = encoded_data.from_base64()?;
+        let decrypted_data = self.decrypt(encrypted_data)?;
 
         match decrypted_data.plaintext {
             Some(plaintext) => return Ok(plaintext),
