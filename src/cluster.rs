@@ -402,25 +402,41 @@ kaws_zone_id = \"{}\"
 
     fn create_pki_stubs(&self) -> KawsResult {
         let paths = [
+            // etcd ca
             &self.cluster.etcd_ca_cert_path(),
+            &self.cluster.etcd_encrypted_ca_key_path(),
+
+            // etcd server
             &self.cluster.etcd_server_cert_path(),
             &self.cluster.etcd_encrypted_server_key_path(),
+
+            // etcd clients
             &self.cluster.etcd_client_cert_path(),
             &self.cluster.etcd_encrypted_client_key_path(),
 
+            // etcd peer ca
             &self.cluster.etcd_peer_ca_cert_path(),
+            &self.cluster.etcd_peer_encrypted_ca_key_path(),
+
+            // etcd peers
             &self.cluster.etcd_peer_cert_path(),
             &self.cluster.etcd_peer_encrypted_key_path(),
 
+            // k8s ca
             &self.cluster.k8s_ca_cert_path(),
+            &self.cluster.k8s_encrypted_ca_key_path(),
+
+            // k8s masters
             &self.cluster.k8s_master_cert_path(),
             &self.cluster.k8s_encrypted_master_key_path(),
+
+            // k8s nodes
             &self.cluster.k8s_node_cert_path(),
             &self.cluster.k8s_encrypted_node_key_path(),
         ];
 
         for path in paths.iter() {
-            try!(File::create(path));
+            File::create(path)?;
         }
 
         Ok(None)
