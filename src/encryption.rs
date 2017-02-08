@@ -45,9 +45,8 @@ impl<'a> Encryptor<'a, ChainProvider, HyperClient> {
         }
     }
 
-    pub fn decrypt_file_to_file<'b>(&mut self, source: &'b str, destination: &'b str)
-    -> KawsResult {
-        let mut src = try!(File::open(source));
+    pub fn decrypt_file(&mut self, source: &str) -> Result<Vec<u8>, KawsError> {
+        let mut src = File::open(source)?;
 
         let mut encoded_data = String::new();
 
@@ -56,16 +55,10 @@ impl<'a> Encryptor<'a, ChainProvider, HyperClient> {
         let encrypted_data = try!(encoded_data.from_base64());
         let decrypted_data = try!(self.decrypt(encrypted_data));
 
-        let mut dst = try!(File::create(destination));
-
         match decrypted_data.plaintext {
-            Some(ref plaintext) => try!(dst.write_all(plaintext)),
+            Some(plaintext) => return Ok(plaintext),
             None => return Err(KawsError::new("No plaintext was returned from KMS".to_owned())),
         }
-
-        self.decrypted_files.push(destination.to_owned());
-
-        Ok(None)
     }
 
     pub fn encrypt_and_write_file(&mut self, data: &[u8], file_path: &str) -> KawsResult {
@@ -80,32 +73,6 @@ impl<'a> Encryptor<'a, ChainProvider, HyperClient> {
             }
             None => return Err(KawsError::new("No ciphertext was returned from KMS".to_owned())),
         }
-
-        Ok(None)
-    }
-
-    pub fn encrypt_file_to_file<'b>(&mut self, source: &'b str, destination: &'b str)
-    -> KawsResult {
-        let mut src = try!(File::open(source));
-
-        let mut contents = vec![];
-
-        try!(src.read_to_end(&mut contents));
-
-        let encrypted_data = try!(self.encrypt(contents));
-
-        let mut dst = try!(File::create(destination));
-
-        match encrypted_data.ciphertext_blob {
-            Some(ref ciphertext_blob) => {
-                let encoded_data = ciphertext_blob.to_base64(STANDARD);
-
-                try!(dst.write_all(encoded_data.as_bytes()));
-            }
-            None => return Err(KawsError::new("No ciphertext was returned from KMS".to_owned())),
-        }
-
-        self.decrypted_files.push(source.to_owned());
 
         Ok(None)
     }

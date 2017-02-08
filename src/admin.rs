@@ -7,6 +7,7 @@ use rusoto::ChainProvider;
 use aws::credentials_provider;
 use encryption::Encryptor;
 use error::KawsResult;
+use pki::{CertificateAuthority, CertificateSigningRequest};
 use process::execute_child_process;
 
 pub struct Admin<'a> {
@@ -30,53 +31,26 @@ impl<'a> Admin<'a> {
     }
 
     pub fn create(&mut self) -> KawsResult {
-        let admin_key_path = format!(
-            "clusters/{}/{}-key.pem",
-            self.cluster,
-            self.admin,
-        );
+        log_wrap!("Creating directory for the new administrator's credentials", {
+            try!(create_dir_all(format!("clusters/{}", self.cluster)));
+        });
 
-        let admin_csr_path = format!(
+        let (csr, key) = CertificateSigningRequest::generate(self.admin, self.groups.as_ref())?;
+
+        let csr_path = format!(
             "clusters/{}/{}-csr.pem",
             self.cluster,
             self.admin,
         );
 
-        log_wrap!("Creating directory for the new administrator's credentials", {
-            try!(create_dir_all(format!("clusters/{}", self.cluster)));
-        });
+        let key_path = format!(
+            "clusters/{}/{}-key.pem",
+            self.cluster,
+            self.admin,
+        );
 
-        // create private key
-        log_wrap!("Creating Kubernetes admin private key", {
-            try!(execute_child_process("openssl", &[
-                "genrsa",
-                "-out",
-                &admin_key_path,
-                "2048",
-            ]));
-        });
-
-        // create CSR
-        let mut subject = format!("/CN={}", self.admin);
-
-        if self.groups.is_some() {
-            for group in self.groups.as_ref().unwrap() {
-                subject.push_str(&format!("/O={}", group));
-            }
-        }
-
-        log_wrap!("Creating Kubernetes admin certificate signing request", {
-            try!(execute_child_process("openssl", &[
-                "req",
-                "-new",
-                "-key",
-                &admin_key_path,
-                "-out",
-                &admin_csr_path,
-                "-subj",
-                &subject,
-            ]));
-        });
+        csr.write_to_file(&csr_path)?;
+        key.write_to_file_unencrypted(&key_path)?;
 
         Ok(Some(format!(
             "Certificate signing request created! Commit changes to Git and ask an\n\
@@ -96,7 +70,7 @@ impl<'a> Admin<'a> {
                 "set-cluster",
                 &format!("kaws-{}", self.cluster),
                 &format!("--server=https://kubernetes.{}", &domain),
-                &format!("--certificate-authority=clusters/{}/ca.pem", self.cluster),
+                &format!("--certificate-authority=clusters/{}/k8s-ca.pem", self.cluster),
                 "--embed-certs=true",
             ]));
 
@@ -139,36 +113,24 @@ impl<'a> Admin<'a> {
         let admin_csr_path = format!("clusters/{}/{}-csr.pem", self.cluster, self.admin);
         let admin_cert_path = format!("clusters/{}/{}.pem", self.cluster, self.admin);
         let ca_cert_path = format!("clusters/{}/ca.pem", self.cluster);
-        let ca_key_path = format!("clusters/{}/ca-key.pem", self.cluster);
         let encrypted_ca_key_path = format!("clusters/{}/ca-key-encrypted.base64", self.cluster);
 
         let mut encryptor = Encryptor::new(
             self.aws_credentials_provider.clone(),
-            try!(region.parse()),
+            region.parse()?,
             None,
         );
 
-        // decrypt CA key
-        try!(encryptor.decrypt_file_to_file(&encrypted_ca_key_path, &ca_key_path));
+        let ca = CertificateAuthority::from_files(
+            &mut encryptor,
+            &ca_cert_path,
+            &encrypted_ca_key_path,
+        )?;
+        let csr = CertificateSigningRequest::from_file(&admin_csr_path)?;
 
-        // generate admin cert
-        log_wrap!("Creating Kubernetes admin certificate", {
-            try!(execute_child_process("openssl", &[
-                "x509",
-                "-req",
-                "-in",
-                &admin_csr_path,
-                "-CA",
-                &ca_cert_path,
-                "-CAkey",
-                &ca_key_path,
-                "-CAcreateserial",
-                "-out",
-                &admin_cert_path,
-                "-days",
-                "365",
-            ]));
-        });
+        let cert = ca.sign(&csr)?;
+
+        cert.write_to_file(&admin_cert_path)?;
 
         Ok(Some(format!(
             "Client certificate for administrator \"{}\" created for cluster \"{}\"!\n\

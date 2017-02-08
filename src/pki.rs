@@ -1,10 +1,10 @@
 use std::fs::File;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::process::{Command, Stdio};
 
 use hyper::Client;
 use rusoto::ChainProvider;
-use serde_json::from_slice;
+use serde_json::{Value, from_slice, to_vec};
 use tempdir::TempDir;
 
 use encryption::Encryptor;
@@ -39,6 +39,14 @@ struct CfsslGenkeyResponse {
 }
 
 impl Certificate {
+    pub fn from_file(path: &str) -> Result<Self, KawsError> {
+        let mut file = File::open(path)?;
+        let mut bytes = Vec::new();
+        file.read_to_end(&mut bytes)?;
+
+        Ok(Certificate(bytes))
+    }
+
     pub fn write_to_file(&self, file_path: &str) -> KawsResult {
         let mut file = File::create(file_path)?;
         file.write_all(self.as_bytes())?;
@@ -58,6 +66,20 @@ impl From<Vec<u8>> for Certificate {
 }
 
 impl CertificateAuthority {
+    pub fn from_files(
+        encryptor: &mut Encryptor<ChainProvider, Client>,
+        cert_path: &str,
+        key_path: &str,
+    ) -> Result<Self, KawsError> {
+        let cert = Certificate::from_file(cert_path)?;
+        let key = PrivateKey::from_file(encryptor, key_path)?;
+
+        Ok(CertificateAuthority {
+            cert: cert,
+            key: key,
+        })
+    }
+
     pub fn generate(common_name: &str) -> Result<Self, KawsError> {
         let mut command = Command::new("cfssl");
 
@@ -260,8 +282,37 @@ impl From<CfsslGencertResponse> for CertificateAuthority {
 }
 
 impl CertificateSigningRequest {
-    pub fn generate(common_name: &str)
+    pub fn from_file(file_path: &str) -> Result<Self, KawsError> {
+        let mut file = File::open(file_path)?;
+        let mut bytes = Vec::new();
+        file.read_to_end(&mut bytes)?;
+
+        Ok(CertificateSigningRequest(bytes))
+    }
+
+    pub fn generate(common_name: &str, groups: Option<&Vec<&str>>)
     -> Result<(CertificateSigningRequest, PrivateKey), KawsError> {
+        let mut csr_config = json!({
+            "CN": common_name,
+            "key": {
+                "algo": "rsa",
+                "size": 2048,
+            },
+            "names": [],
+        });
+
+        if let Some(groups) = groups {
+            let mut names = csr_config
+                    .get_mut("names")
+                    .expect("csr_config should have a names field")
+                    .as_array_mut()
+                    .expect("names should be an array");
+
+            for group in groups {
+                names.push(Value::String(group.to_string()));
+            }
+        }
+
         let mut command = Command::new("cfssl");
 
         command.args(&[
@@ -277,12 +328,7 @@ impl CertificateSigningRequest {
 
         match child.stdin.as_mut() {
             Some(stdin) => {
-                stdin.write_all(
-                    format!(
-                        r#"{{"CN":"{}","key":{{"algo":"rsa","size":2048}}}}}}"#,
-                        common_name
-                    ).as_bytes(),
-                )?;
+                stdin.write_all(&to_vec(&csr_config)?)?;
             }
             None => {
                 return Err(
@@ -302,6 +348,14 @@ impl CertificateSigningRequest {
         }
     }
 
+    pub fn write_to_file(&self, file_path: &str) -> KawsResult {
+        let mut file = File::create(file_path)?;
+
+        file.write_all(self.as_bytes())?;
+
+        Ok(None)
+    }
+
     pub fn as_bytes(&self) -> &[u8] {
         &self.0
     }
@@ -314,6 +368,13 @@ impl From<Vec<u8>> for CertificateSigningRequest {
 }
 
 impl PrivateKey {
+    pub fn from_file(encryptor: &mut Encryptor<ChainProvider, Client>, path: &str)
+    -> Result<Self, KawsError> {
+        let bytes = encryptor.decrypt_file(path)?;
+
+        Ok(PrivateKey(bytes))
+    }
+
     pub fn as_bytes(&self) -> &[u8] {
         &self.0
     }
@@ -324,6 +385,14 @@ impl PrivateKey {
         file_path: &str,
     ) -> KawsResult {
         encryptor.encrypt_and_write_file(self.as_bytes(), file_path)?;
+
+        Ok(None)
+    }
+
+    pub fn write_to_file_unencrypted(&self, file_path: &str) -> KawsResult {
+        let mut file = File::create(file_path)?;
+
+        file.write_all(self.as_bytes())?;
 
         Ok(None)
     }
