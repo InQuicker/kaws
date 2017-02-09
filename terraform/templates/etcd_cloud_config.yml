@@ -2,6 +2,13 @@
 
 ---
 coreos:
+  locksmith:
+    etcd_endpoints: https://10.0.1.4:2380,https://10.0.1.5:2380,https://10.0.1.6:2380
+    etcd_cafile: /etc/etcd2/ssl/etcd-ca.pem
+    etcd_certfile: /etc/etcd2/ssl/etcd-client.pem
+    etcd_keyfile: /etc/etcd2/ssl/etcd-client-key.pem
+  update:
+    reboot_strategy: etcd-lock
   etcd2:
     name: ${name}
     data_dir: /var/lib/etcd2/data
@@ -79,8 +86,6 @@ coreos:
 ssh_authorized_keys: [${ssh_public_keys}]
 write_files:
   - path: /opt/kaws/format-etcd-ebs.sh
-    permissions: "0755"
-    owner: root
     content: |
       #!/bin/bash -e
       test -b /dev/disk/by-label/ETCD
@@ -91,12 +96,10 @@ write_files:
         /usr/sbin/wipefs /dev/xvdf
         /usr/sbin/mkfs.ext4 -L ETCD /dev/xvdf
       fi
-  - path: "/opt/kaws/decrypt-pki"
-    owner: "root"
-    permissions: "0700"
+  - path: /opt/kaws/decrypt-pki
     content: |
       #!/bin/bash -e
-      for file in $(find /etc/etcd2/ssl/*.base64);do
+      for file in $(find /etc/etcd2/ssl/*.base64); do
         rkt run \
           --insecure-options image \
           --volumes etc-etcd2-ssl,kind=host,source=/etc/etcd2/ssl \
@@ -104,7 +107,7 @@ write_files:
           --stage1-from-dir stage1-fly.aci \
           docker://quay.io/coreos/awscli \
           -- \
-          aws --region ${region} kms decrypt --ciphertext-blob fileb://$file --output text --query Plaintext | base64 --decode > ${file/-encrypted.base64/.pem}
+          aws --region $${region} kms decrypt --ciphertext-blob fileb://$file --output text --query Plaintext | base64 --decode > ${file/-encrypted.base64/.pem}
       done
   - path: /etc/etcd2/ssl/etcd-ca.pem
     content: ${etcd_ca_cert}

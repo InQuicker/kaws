@@ -1,20 +1,20 @@
 #cloud-config
 
 coreos:
-  etcd2:
-    proxy: on
-    initial_cluster: etcd_01=http://10.0.1.4:2380,etcd_02=http://10.0.1.5:2380,etcd_03=http://10.0.1.6:2380
-    listen-client-urls: http://127.0.0.1:2379
+  locksmith:
+    etcd_endpoints: https://10.0.1.4:2380,https://10.0.1.5:2380,https://10.0.1.6:2380
+    etcd_cafile: /etc/etcd2/ssl/etcd-ca.pem
+    etcd_certfile: /etc/etcd2/ssl/etcd-client.pem
+    etcd_keyfile: /etc/etcd2/ssl/etcd-client-key.pem
+  update:
+    reboot_strategy: etcd-lock
   flannel:
-    etcd_endpoints: http://127.0.0.1:2379
+    etcd_endpoints: https://10.0.1.4:2380,https://10.0.1.5:2380,https://10.0.1.6:2380
+    etcd_cafile: /etc/etcd2/ssl/etcd-ca.pem
+    etcd_certfile: /etc/etcd2/ssl/etcd-client.pem
+    etcd_keyfile: /etc/etcd2/ssl/etcd-client-key.pem
     interface: $private_ipv4
-  fleet:
-    etcd-servers: http://127.0.0.1:2379
-    metadata: etcd=proxy,kubernetes=node
-    public-ip: $private_ipv4
   units:
-    - name: etcd2.service
-      command: start
     - name: docker.service
       command: start
       drop-ins:
@@ -29,40 +29,11 @@ coreos:
             Environment=DOCKER_OPTS='--log-driver=journald'
     - name: flanneld.service
       command: start
-    - name: fleet.service
-      command: start
-    - name: kaws-agent.service
-      command: start
-      content: |
-        [Unit]
-        Description=kaws agent
-        Requires=etcd2.service
-        After=etcd2.service
-        [Service]
-        TimeoutStartSec=0
-        ExecStartPre=/bin/bash -c 'until curl -sf "http://127.0.0.1:2379/v2/keys/kaws"; do sleep 5; done'
-        ExecStart=/usr/bin/rkt --insecure-options image run \
-          --volume etc-kubernetes,kind=host,source=/etc/kubernetes \
-          --volume etc-resolve-conf,kind=host,source=/etc/resolv.conf \
-          --mount volume=etc-kubernetes,target=/etc/kubernetes \
-          --mount volume=etc-resolve-conf,target=/etc/resolv.conf \
-          --stage1-from-dir stage1-fly.aci \
-          docker://inquicker/kaws-agent \
-          -- \
-          run \
-          --region ${region} \
-          --role node
-        KillMode=mixed
-        Restart=always
-        [Install]
-        WantedBy=multi-user.target
     - name: kubelet.service
       command: start
       content: |
         [Unit]
         Description=Kubernetes Kubelet
-        Requires=kaws-agent.service
-        After=kaws-agent.service
         [Service]
         Environment=KUBELET_VERSION=v${version}
         Environment=KUBELET_ACI=docker://gcr.io/google_containers/hyperkube
@@ -70,7 +41,6 @@ coreos:
         ExecStart=/usr/lib/coreos/kubelet-wrapper \
           --allow-privileged=true \
           --api-servers=https://${master_ip}:443 \
-          --client-ca-file=/etc/kubernetes/ssl/ca.pem \
           --cloud-provider=aws \
           --cluster-dns=10.3.0.10 \
           --cluster-domain=cluster.local \
@@ -78,48 +48,14 @@ coreos:
           --kubeconfig=/etc/kubernetes/node-kubeconfig.yml \
           --logtostderr=true \
           --pod-manifest-path=/etc/kubernetes/manifests \
-          --register-node=true \
           --tls-cert-file=/etc/kubernetes/ssl/node.pem \
           --tls-private-key-file=/etc/kubernetes/ssl/node-key.pem
         Restart=always
         RestartSec=10
         [Install]
         WantedBy=multi-user.target
-    - name: restart-kube-components@.path
-      content: |
-        [Unit]
-        Description=Restart Kubernetes system components if %f changes
-        [Path]
-        PathChanged=%f
-        Unit=restart-kube-components.service
-    - name: restart-kube-components@etc-kubernetes-ssl-ca.pem.path
-      enable: true
-      command: start
-    - name: restart-kube-components@etc-kubernetes-ssl-node.pem.path
-      enable: true
-      command: start
-    - name: restart-kube-components@etc-kubernetes-ssl-node\x2dkey.pem.path
-      enable: true
-      command: start
-    - name: restart-kube-components.service
-      content: |
-        [Unit]
-        Description=Restart Kubernetes system components
-        [Service]
-        Type=oneshot
-        ExecStart=/opt/bin/restart-kube-components.sh
 ssh_authorized_keys: [${ssh_public_keys}]
 write_files:
-  - path: /opt/bin/restart-kube-components.sh
-    permissions: "0755"
-    owner: root
-    content: |
-      #!/usr/bin/bash -ex
-      cid=$(docker ps -q -f label=io.kubernetes.container.name=kube-proxy)
-      if [ -n "$cid" ]; then
-        docker kill $cid
-      fi
-      systemctl restart kubelet
   - path: /etc/kubernetes/manifests/kube-proxy.yml
     content: |
       apiVersion: v1
@@ -130,36 +66,36 @@ write_files:
       spec:
         hostNetwork: true
         containers:
-        - name: kube-proxy
-          image: gcr.io/google_containers/hyperkube:v${version}
-          command:
-          - /hyperkube
-          - proxy
-          - --healthz-bind-address=0.0.0.0
-          - --kubeconfig=/etc/kubernetes/node-kubeconfig.yml
-          - --master=https://${master_ip}:443
-          - --proxy-mode=iptables
-          securityContext:
-            privileged: true
-          volumeMounts:
-            - mountPath: /etc/ssl/certs
-              name: "ssl-certs"
-            - mountPath: /etc/kubernetes/node-kubeconfig.yml
-              name: "kubeconfig"
-              readOnly: true
-            - mountPath: /etc/kubernetes/ssl
-              name: "etc-kube-ssl"
-              readOnly: true
+          - name: kube-proxy
+            image: gcr.io/google_containers/hyperkube:v${version}
+            command:
+              - /hyperkube
+              - proxy
+              - --healthz-bind-address=0.0.0.0
+              - --kubeconfig=/etc/kubernetes/node-kubeconfig.yml
+              - --master=https://${master_ip}:443
+              - --proxy-mode=iptables
+            securityContext:
+              privileged: true
+            volumeMounts:
+              - mountPath: /etc/ssl/certs
+                name: ssl-certs
+              - mountPath: /etc/kubernetes/node-kubeconfig.yml
+                name: kubeconfig
+                readOnly: true
+              - mountPath: /etc/kubernetes/ssl
+                name: etc-kube-ssl
+                readOnly: true
         volumes:
-          - name: "ssl-certs"
+          - name: ssl-certs
             hostPath:
-              path: "/usr/share/ca-certificates"
-          - name: "kubeconfig"
+              path: /usr/share/ca-certificates
+          - name: kubeconfig
             hostPath:
-              path: "/etc/kubernetes/node-kubeconfig.yml"
-          - name: "etc-kube-ssl"
+              path: /etc/kubernetes/node-kubeconfig.yml
+          - name: etc-kube-ssl
             hostPath:
-              path: "/etc/kubernetes/ssl"
+              path: /etc/kubernetes/ssl
   - path: /etc/kubernetes/node-kubeconfig.yml
     content: |
       apiVersion: v1
@@ -179,15 +115,28 @@ write_files:
           user:
             client-certificate: /etc/kubernetes/ssl/node.pem
             client-key: /etc/kubernetes/ssl/node-key.pem
+  - path: /opt/kaws/decrypt-pki
+    content: |
+      #!/bin/bash -e
+      for file in $(find /etc/etcd2/ssl/*.base64 /etc/kubernetes/ssl/*.base64); do
+        rkt run \
+          --insecure-options image \
+          --volumes etc-etcd2-ssl,kind=host,source=/etc/etcd2/ssl \
+          --mount volume=etcd-etcd2-ssl,target=/etc/etcd2/ssl \
+          --stage1-from-dir stage1-fly.aci \
+          docker://quay.io/coreos/awscli \
+          -- \
+          aws --region $${region} kms decrypt --ciphertext-blob fileb://$file --output text --query Plaintext | base64 --decode > ${file/-encrypted.base64/.pem}
+      done
+  - path: /etc/etcd2/ssl/etcd-ca.pem
+    content: ${etcd_ca_cert}
+  - path: /etc/etcd2/ssl/etcd-client.pem
+    content: ${etcd_client_cert}
+  - path: /etc/etcd2/ssl/etcd-client-key-encrypted.base64
+    content: ${etcd_client_key}
   - path: /etc/kubernetes/ssl/ca.pem
-    permissions: "0644"
-    owner: "root"
-    content: ""
+    content: ${k8s_ca_cert}
   - path: /etc/kubernetes/ssl/node.pem
-    permissions: "0644"
-    owner: "root"
-    content: ""
+    content: ${k8s_node_cert}
   - path: /etc/kubernetes/ssl/node-key.pem
-    permissions: "0600"
-    owner: "root"
-    content: ""
+    content: ${k8s_node_key}

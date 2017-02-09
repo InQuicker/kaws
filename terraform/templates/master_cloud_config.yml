@@ -1,17 +1,19 @@
 #cloud-config
 
 coreos:
-  etcd2:
-    proxy: on
-    initial_cluster: etcd_01=http://10.0.1.4:2380,etcd_02=http://10.0.1.5:2380,etcd_03=http://10.0.1.6:2380
-    listen-client-urls: http://127.0.0.1:2379
+  locksmith:
+    etcd_endpoints: https://10.0.1.4:2380,https://10.0.1.5:2380,https://10.0.1.6:2380
+    etcd_cafile: /etc/etcd2/ssl/etcd-ca.pem
+    etcd_certfile: /etc/etcd2/ssl/etcd-client.pem
+    etcd_keyfile: /etc/etcd2/ssl/etcd-client-key.pem
+  update:
+    reboot_strategy: etcd-lock
   flannel:
-    etcd_endpoints: http://127.0.0.1:2379
+    etcd_endpoints: https://10.0.1.4:2380,https://10.0.1.5:2380,https://10.0.1.6:2380
+    etcd_cafile: /etc/etcd2/ssl/etcd-ca.pem
+    etcd_certfile: /etc/etcd2/ssl/etcd-client.pem
+    etcd_keyfile: /etc/etcd2/ssl/etcd-client-key.pem
     interface: $private_ipv4
-  fleet:
-    etcd-servers: http://127.0.0.1:2379
-    metadata: etcd=proxy,kubernetes=master
-    public-ip: $private_ipv4
   units:
     - name: docker.service
       command: start
@@ -25,51 +27,22 @@ coreos:
           content: |
             [Service]
             Environment=DOCKER_OPTS='--log-driver=journald'
-    - name: etcd2.service
-      command: start
     - name: flanneld.service
       command: start
       drop-ins:
         - name: 50-network-config.conf
           content: |
-            [Unit]
-            Requires=etcd2.service
             [Service]
-            ExecStartPre=-/usr/bin/etcdctl mk /coreos.com/network/config "{\"Network\":\"10.2.0.0/16\"}"
-    - name: fleet.service
-      command: start
-    - name: kaws-agent.service
-      command: start
-      content: |
-        [Unit]
-        Description=kaws agent
-        Requires=etcd2.service
-        After=etcd2.service
-        [Service]
-        TimeoutStartSec=0
-        ExecStartPre=/bin/bash -c 'until curl -sf "http://127.0.0.1:2379/v2/keys/kaws"; do sleep 5; done'
-        ExecStart=/usr/bin/rkt --insecure-options image run \
-          --volume etc-kubernetes,kind=host,source=/etc/kubernetes \
-          --volume etc-resolve-conf,kind=host,source=/etc/resolv.conf \
-          --mount volume=etc-kubernetes,target=/etc/kubernetes \
-          --mount volume=etc-resolve-conf,target=/etc/resolv.conf \
-          --stage1-from-dir stage1-fly.aci \
-          docker://inquicker/kaws-agent \
-          -- \
-          run \
-          --region ${region} \
-          --role master
-        KillMode=mixed
-        Restart=always
-        [Install]
-        WantedBy=multi-user.target
+            Environment=ETCDCTL_CA_FILE=/etc/etcd2/ssl/etcd-ca.pem
+            Environment=ETCDCTL_CERT_FILE=/etc/etcd2/ssl/etcd-client.pem
+            Environment=ETCDCTL_KEY_FILE=/etc/etcd2/ssl/etcd-client-key.pem
+            Environment=ETCDCTL_ENDPOINT=https://10.0.1.4:2380,https://10.0.1.5:2380,https://10.0.1.6:2380
+            ExecStartPre=/usr/bin/etcdctl set /coreos.com/network/config "{\"Network\":\"10.2.0.0/16\"}"
     - name: kubelet.service
       command: start
       content: |
         [Unit]
         Description=Kubernetes Kubelet
-        Requires=kaws-agent.service
-        After=kaws-agent.service
         [Service]
         Environment=KUBELET_VERSION=v${version}
         Environment=KUBELET_ACI=docker://gcr.io/google_containers/hyperkube
@@ -77,7 +50,6 @@ coreos:
         ExecStart=/usr/lib/coreos/kubelet-wrapper \
           --allow-privileged=true \
           --api-servers=http://127.0.0.1:8080 \
-          --client-ca-file=/etc/kubernetes/ssl/ca.pem \
           --cloud-provider=aws \
           --cluster-dns=10.3.0.10 \
           --cluster-domain=cluster.local \
@@ -89,48 +61,9 @@ coreos:
         RestartSec=10
         [Install]
         WantedBy=multi-user.target
-    - name: restart-kube-components@.path
-      content: |
-        [Unit]
-        Description=Restart Kubernetes system components if %f changes
-        [Path]
-        PathChanged=%f
-        Unit=restart-kube-components.service
-    - name: restart-kube-components@etc-kubernetes-ssl-ca.pem.path
-      enable: true
-      command: start
-    - name: restart-kube-components@etc-kubernetes-ssl-master.pem.path
-      enable: true
-      command: start
-    - name: restart-kube-components@etc-kubernetes-ssl-master\x2dkey.pem.path
-      enable: true
-      command: start
-    - name: restart-kube-components.service
-      content: |
-        [Unit]
-        Description=Restart Kubernetes system components
-        [Service]
-        Type=oneshot
-        ExecStart=/opt/bin/restart-kube-components.sh
 ssh_authorized_keys: [${ssh_public_keys}]
 write_files:
-  - path: /opt/bin/restart-kube-components.sh
-    permissions: "0755"
-    owner: root
-    content: |
-      #!/usr/bin/bash -ex
-      cid=$(docker ps -q -f label=io.kubernetes.container.name=kube-apiserver)
-      if [ -n "$cid" ]; then
-        docker kill $cid
-      fi
-      cid=$(docker ps -q -f label=io.kubernetes.container.name=kube-controller-manager)
-      if [ -n "$cid" ]; then
-        docker kill $cid
-      fi
-      systemctl restart kubelet
   - path: /etc/kubernetes/manifests/kube-apiserver.yml
-    permissions: "0644"
-    owner: root
     content: |
       apiVersion: v1
       kind: Pod
@@ -140,53 +73,54 @@ write_files:
       spec:
         hostNetwork: true
         containers:
-        - name: kube-apiserver
-          image: gcr.io/google_containers/hyperkube:v${version}
-          command:
-          - /hyperkube
-          - apiserver
-          - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota
-          - --advertise-address=$private_ipv4
-          - --allow-privileged=true
-          - --anonymous-auth=false
-          - --authorization-mode=RBAC
-          - --authorization-rbac-super-user=${rbac_super_user}
-          - --bind-address=0.0.0.0
-          - --client-ca-file=/etc/kubernetes/ssl/ca.pem
-          - --cloud-provider=aws
-          - --etcd-servers=http://127.0.0.1:2379
-          - --external-hostname=https://kubernetes.${domain}
-          - --insecure-bind-address=0.0.0.0
-          - --runtime-config=batch/v2alpha1=true,rbac.authorization.k8s.io/v1alpha1=true
-          - --secure-port=443
-          - --service-account-key-file=/etc/kubernetes/ssl/master-key.pem
-          - --service-cluster-ip-range=10.3.0.1/24
-          - --tls-cert-file=/etc/kubernetes/ssl/master.pem
-          - --tls-private-key-file=/etc/kubernetes/ssl/master-key.pem
-          ports:
-          - containerPort: 443
-            hostPort: 443
-            name: https
-          - containerPort: 8080
-            hostPort: 8080
-            name: local
-          volumeMounts:
-          - mountPath: /etc/kubernetes/ssl
-            name: ssl-certs-kubernetes
-            readOnly: true
-          - mountPath: /etc/ssl/certs
-            name: ssl-certs-host
-            readOnly: true
+          - name: kube-apiserver
+            image: gcr.io/google_containers/hyperkube:v${version}
+            command:
+              - /hyperkube
+              - apiserver
+              - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota
+              - --advertise-address=$private_ipv4
+              - --allow-privileged=true
+              - --anonymous-auth=false
+              - --authorization-mode=RBAC
+              - --authorization-rbac-super-user=${rbac_super_user}
+              - --bind-address=0.0.0.0
+              - --client-ca-file=/etc/kubernetes/ssl/ca.pem
+              - --cloud-provider=aws
+              - --etcd-cafile=/etc/etcd2/ssl/etcd-ca.pem
+              - --etcd-certfile=/etc/etcd2/ssl/etcd-client.pem
+              - --etcd-keyfile=/etc/etcd2/ssl/etcd-client-key.pem
+              - --etcd-servers=https://10.0.1.4:2379,https://10.0.1.5:2379,https://10.0.1.6:2379
+              - --external-hostname=https://kubernetes.${domain}
+              - --insecure-bind-address=0.0.0.0
+              - --runtime-config=batch/v2alpha1=true,rbac.authorization.k8s.io/v1alpha1=true
+              - --secure-port=443
+              - --service-account-key-file=/etc/kubernetes/ssl/master-key.pem
+              - --service-cluster-ip-range=10.3.0.1/24
+              - --tls-cert-file=/etc/kubernetes/ssl/master.pem
+              - --tls-private-key-file=/etc/kubernetes/ssl/master-key.pem
+            ports:
+              - containerPort: 443
+                hostPort: 443
+                name: https
+              - containerPort: 8080
+                hostPort: 8080
+                name: local
+            volumeMounts:
+              - mountPath: /etc/kubernetes/ssl
+                name: ssl-certs-kubernetes
+                readOnly: true
+              - mountPath: /etc/ssl/certs
+                name: ssl-certs-host
+                readOnly: true
         volumes:
-        - hostPath:
-            path: /etc/kubernetes/ssl
-          name: ssl-certs-kubernetes
-        - hostPath:
-            path: /usr/share/ca-certificates
-          name: ssl-certs-host
+          - hostPath:
+              path: /etc/kubernetes/ssl
+            name: ssl-certs-kubernetes
+          - hostPath:
+              path: /usr/share/ca-certificates
+            name: ssl-certs-host
   - path: /etc/kubernetes/manifests/kube-proxy.yml
-    permissions: "0644"
-    owner: root
     content: |
       apiVersion: v1
       kind: Pod
@@ -196,38 +130,24 @@ write_files:
       spec:
         hostNetwork: true
         containers:
-        - name: kube-proxy
-          image: gcr.io/google_containers/hyperkube:v${version}
-          command:
-          - /hyperkube
-          - proxy
-          - --master=http://127.0.0.1:8080
-          - --proxy-mode=iptables
-          securityContext:
-            privileged: true
-          volumeMounts:
-          - mountPath: /etc/ssl/certs
-            name: ssl-certs-host
-            readOnly: true
+          - name: kube-proxy
+            image: gcr.io/google_containers/hyperkube:v${version}
+            command:
+              - /hyperkube
+              - proxy
+              - --master=http://127.0.0.1:8080
+              - --proxy-mode=iptables
+            securityContext:
+              privileged: true
+            volumeMounts:
+              - mountPath: /etc/ssl/certs
+                name: ssl-certs-host
+                readOnly: true
         volumes:
-        - hostPath:
-            path: /usr/share/ca-certificates
-          name: ssl-certs-host
-  - path: /etc/kubernetes/ssl/ca.pem
-    permissions: "0644"
-    owner: "root"
-    content: ""
-  - path: /etc/kubernetes/ssl/master.pem
-    permissions: "0644"
-    owner: "root"
-    content: ""
-  - path: /etc/kubernetes/ssl/master-key.pem
-    permissions: "0600"
-    owner: "root"
-    content: ""
+          - hostPath:
+              path: /usr/share/ca-certificates
+            name: ssl-certs-host
   - path: /etc/kubernetes/manifests/kube-controller-manager.yml
-    permissions: "0644"
-    owner: root
     content: |
       apiVersion: v1
       kind: Pod
@@ -236,41 +156,42 @@ write_files:
         namespace: kube-system
       spec:
         containers:
-        - name: kube-controller-manager
-          image: gcr.io/google_containers/hyperkube:v${version}
-          command:
-          - /hyperkube
-          - controller-manager
-          - --cloud-provider=aws
-          - --leader-elect=true
-          - --master=http://127.0.0.1:8080
-          - --root-ca-file=/etc/kubernetes/ssl/ca.pem
-          - --service-account-private-key-file=/etc/kubernetes/ssl/master-key.pem
-          livenessProbe:
-            httpGet:
-              host: 127.0.0.1
-              path: /healthz
-              port: 10252
-            initialDelaySeconds: 15
-            timeoutSeconds: 1
-          volumeMounts:
-          - mountPath: /etc/kubernetes/ssl
-            name: ssl-certs-kubernetes
-            readOnly: true
-          - mountPath: /etc/ssl/certs
-            name: ssl-certs-host
-            readOnly: true
+          - name: kube-controller-manager
+            image: gcr.io/google_containers/hyperkube:v${version}
+            command:
+              - /hyperkube
+              - controller-manager
+              - --cloud-provider=aws
+              - --leader-elect=true
+              - --master=http://127.0.0.1:8080
+              - --root-ca-file=/etc/kubernetes/ssl/ca.pem
+              - --service-account-private-key-file=/etc/kubernetes/ssl/master-key.pem
+            resources:
+              requests:
+                cpu: 200m
+            livenessProbe:
+              httpGet:
+                host: 127.0.0.1
+                path: /healthz
+                port: 10252
+              initialDelaySeconds: 15
+              timeoutSeconds: 1
+            volumeMounts:
+              - mountPath: /etc/kubernetes/ssl
+                name: ssl-certs-kubernetes
+                readOnly: true
+              - mountPath: /etc/ssl/certs
+                name: ssl-certs-host
+                readOnly: true
         hostNetwork: true
         volumes:
-        - hostPath:
-            path: /etc/kubernetes/ssl
-          name: ssl-certs-kubernetes
-        - hostPath:
-            path: /usr/share/ca-certificates
-          name: ssl-certs-host
+          - hostPath:
+              path: /etc/kubernetes/ssl
+            name: ssl-certs-kubernetes
+          - hostPath:
+              path: /usr/share/ca-certificates
+            name: ssl-certs-host
   - path: /etc/kubernetes/manifests/kube-scheduler.yml
-    permissions: "0644"
-    owner: root
     content: |
       apiVersion: v1
       kind: Pod
@@ -280,17 +201,45 @@ write_files:
       spec:
         hostNetwork: true
         containers:
-        - name: kube-scheduler
-          image: gcr.io/google_containers/hyperkube:v${version}
-          command:
-          - /hyperkube
-          - scheduler
-          - --master=http://127.0.0.1:8080
-          - --leader-elect=true
-          livenessProbe:
-            httpGet:
-              host: 127.0.0.1
-              path: /healthz
-              port: 10251
-            initialDelaySeconds: 15
-            timeoutSeconds: 1
+          - name: kube-scheduler
+            image: gcr.io/google_containers/hyperkube:v${version}
+            command:
+              - /hyperkube
+              - scheduler
+              - --master=http://127.0.0.1:8080
+              - --leader-elect=true
+            resources:
+              requests:
+                cpu: 100m
+            livenessProbe:
+              httpGet:
+                host: 127.0.0.1
+                path: /healthz
+                port: 10251
+              initialDelaySeconds: 15
+              timeoutSeconds: 15
+  - path: /opt/kaws/decrypt-pki
+    content: |
+      #!/bin/bash -e
+      for file in $(find /etc/etcd2/ssl/*.base64 /etc/kubernetes/ssl/*.base64); do
+        rkt run \
+          --insecure-options image \
+          --volumes etc-etcd2-ssl,kind=host,source=/etc/etcd2/ssl \
+          --mount volume=etcd-etcd2-ssl,target=/etc/etcd2/ssl \
+          --stage1-from-dir stage1-fly.aci \
+          docker://quay.io/coreos/awscli \
+          -- \
+          aws --region $${region} kms decrypt --ciphertext-blob fileb://$file --output text --query Plaintext | base64 --decode > ${file/-encrypted.base64/.pem}
+      done
+  - path: /etc/etcd2/ssl/etcd-ca.pem
+    content: ${etcd_ca_cert}
+  - path: /etc/etcd2/ssl/etcd-client.pem
+    content: ${etcd_client_cert}
+  - path: /etc/etcd2/ssl/etcd-client-key-encrypted.base64
+    content: ${etcd_client_key}
+  - path: /etc/kubernetes/ssl/ca.pem
+    content: ${k8s_ca_cert}
+  - path: /etc/kubernetes/ssl/master.pem
+    content: ${k8s_master_cert}
+  - path: /etc/kubernetes/ssl/master-key.pem
+    content: ${k8s_master_key}
