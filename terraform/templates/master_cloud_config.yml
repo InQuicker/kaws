@@ -229,7 +229,7 @@ write_files:
           --stage1-from-dir stage1-fly.aci \
           docker://quay.io/coreos/awscli \
           -- \
-          aws --region $${region} kms decrypt --ciphertext-blob fileb://$file --output text --query Plaintext | base64 --decode > ${file/-encrypted.base64/.pem}
+          aws --region $${region} kms decrypt --ciphertext-blob fileb://$file --output text --query Plaintext | base64 --decode > $${file/-encrypted.base64/.pem}
       done
   - path: /etc/etcd2/ssl/etcd-ca.pem
     content: ${etcd_ca_cert}
