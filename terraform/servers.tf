@@ -14,6 +14,7 @@ resource "aws_instance" "bastion" {
 }
 
 resource "aws_instance" "etcd_01" {
+  depends_on = ["null_resource.generate_pki"]
   ami = "${var.coreos_ami}"
   associate_public_ip_address = true
   availability_zone = "${var.availability_zone}"
@@ -30,6 +31,7 @@ resource "aws_instance" "etcd_01" {
 }
 
 resource "aws_instance" "etcd_02" {
+  depends_on = ["null_resource.generate_pki"]
   ami = "${var.coreos_ami}"
   associate_public_ip_address = true
   availability_zone = "${var.availability_zone}"
@@ -46,6 +48,7 @@ resource "aws_instance" "etcd_02" {
 }
 
 resource "aws_instance" "etcd_03" {
+  depends_on = ["null_resource.generate_pki"]
   ami = "${var.coreos_ami}"
   associate_public_ip_address = true
   availability_zone = "${var.availability_zone}"

@@ -1,3 +1,69 @@
+data "aws_iam_policy_document" "assume_role_policy" {
+  statement {
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+  }
+}
+
+data "aws_iam_policy_document" "k8s_master" {
+  statement {
+    actions = ["ec2:*"]
+    resources = ["*"]
+  }
+
+  statement {
+    actions = ["elasticloadbalancing:*"]
+    resources = ["*"]
+  }
+
+  statement {
+    actions = [
+      "ecr:GetAuthorizationToken",
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:GetDownloadUrlForLayer",
+      "ecr:GetRepositoryPolicy",
+      "ecr:DescribeRepositories",
+      "ecr:ListImages",
+      "ecr:BatchGetImage",
+    ]
+    resources = ["*"]
+  }
+}
+
+data "aws_iam_policy_document" "k8s_node" {
+  statement {
+    actions = ["ec2:Describe*"]
+    resources = ["*"]
+  }
+
+  statement {
+    actions = ["ec2:AttachVolume*"]
+    resources = ["*"]
+  }
+
+  statement {
+    actions = ["ec2:DetachVolume*"]
+    resources = ["*"]
+  }
+
+  statement {
+    actions = [
+      "ecr:GetAuthorizationToken",
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:GetDownloadUrlForLayer",
+      "ecr:GetRepositoryPolicy",
+      "ecr:DescribeRepositories",
+      "ecr:ListImages",
+      "ecr:BatchGetImage",
+    ]
+    resources = ["*"]
+  }
+}
+
 data "aws_iam_policy_document" "kms_key" {
   statement {
     actions = [
@@ -61,9 +127,9 @@ data "aws_iam_policy_document" "kms_key" {
         "${
           concat(
             formatlist(
-              "arn:aws:iam::%s:role/kaws-k8s-%s",
+              "arn:aws:iam::%s:role/kaws-%s",
               var.account_id,
-              list("master-${var.cluster}", "node-${var.cluster}")
+              list("etcd-${var.cluster}", "k8s-master-${var.cluster}", "k8s-node-${var.cluster}")
             ),
             formatlist("arn:aws:iam::%s:user/%s", var.account_id, var.iam_users)
           )
@@ -103,6 +169,11 @@ data "aws_iam_policy_document" "kms_key" {
   }
 }
 
+resource "aws_iam_instance_profile" "etcd" {
+  name = "kaws-etcd-${var.cluster}"
+  roles = ["${aws_iam_role.etcd.name}"]
+}
+
 resource "aws_iam_instance_profile" "k8s_master" {
   name = "kaws-k8s-master-${var.cluster}"
   roles = ["${aws_iam_role.k8s_master.name}"]
@@ -113,115 +184,31 @@ resource "aws_iam_instance_profile" "k8s_node" {
   roles = ["${aws_iam_role.k8s_node.name}"]
 }
 
+resource "aws_iam_role" "etcd" {
+  name = "kaws-etcd-${var.cluster}"
+  assume_role_policy = "${data.aws_iam_policy_document.assume_role_policy.json}"
+}
+
 resource "aws_iam_role" "k8s_master" {
   name = "kaws-k8s-master-${var.cluster}"
-  assume_role_policy = <<EOS
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Service": "ec2.amazonaws.com"
-      },
-      "Action": "sts:AssumeRole"
-    }
-  ]
-}
-EOS
+  assume_role_policy = "${data.aws_iam_policy_document.assume_role_policy.json}"
 }
 
 resource "aws_iam_role" "k8s_node" {
   name = "kaws-k8s-node-${var.cluster}"
-  assume_role_policy = <<EOS
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Service": "ec2.amazonaws.com"
-      },
-      "Action": "sts:AssumeRole"
-    }
-  ]
-}
-EOS
+  assume_role_policy = "${data.aws_iam_policy_document.assume_role_policy.json}"
 }
 
 resource "aws_iam_role_policy" "k8s_master" {
   name = "kaws-k8s-master-${var.cluster}"
   role = "${aws_iam_role.k8s_master.id}"
-  policy = <<EOS
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": ["ec2:*"],
-      "Resource": ["*"]
-    },
-    {
-      "Effect": "Allow",
-      "Action": ["elasticloadbalancing:*"],
-      "Resource": ["*"]
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ecr:GetAuthorizationToken",
-        "ecr:BatchCheckLayerAvailability",
-        "ecr:GetDownloadUrlForLayer",
-        "ecr:GetRepositoryPolicy",
-        "ecr:DescribeRepositories",
-        "ecr:ListImages",
-        "ecr:BatchGetImage"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
-EOS
+  policy = "${data.aws_iam_policy_document.k8s_master.json}"
 }
 
 resource "aws_iam_role_policy" "k8s_node" {
   name = "kaws-k8s-node-${var.cluster}"
   role = "${aws_iam_role.k8s_node.id}"
-  policy = <<EOS
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": "ec2:Describe*",
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": "ec2:AttachVolume",
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": "ec2:DetachVolume",
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ecr:GetAuthorizationToken",
-        "ecr:BatchCheckLayerAvailability",
-        "ecr:GetDownloadUrlForLayer",
-        "ecr:GetRepositoryPolicy",
-        "ecr:DescribeRepositories",
-        "ecr:ListImages",
-        "ecr:BatchGetImage"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
-EOS
+  policy = "${data.aws_iam_policy_document.k8s_node.json}"
 }
 
 resource "aws_kms_key" "pki" {
