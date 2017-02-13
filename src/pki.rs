@@ -23,19 +23,19 @@ pub struct PrivateKey(Vec<u8>);
 
 #[derive(Deserialize)]
 struct CfsslGencertResponse {
-    cert: Vec<u8>,
-    key: Vec<u8>,
+    cert: String,
+    key: String,
 }
 
 #[derive(Deserialize)]
 struct CfsslSignResponse {
-    cert: Vec<u8>,
+    cert: String,
 }
 
 #[derive(Deserialize)]
 struct CfsslGenkeyResponse {
-    csr: Vec<u8>,
-    key: Vec<u8>,
+    csr: String,
+    key: String,
 }
 
 impl Certificate {
@@ -59,9 +59,9 @@ impl Certificate {
     }
 }
 
-impl From<Vec<u8>> for Certificate {
-    fn from(vec: Vec<u8>) -> Self {
-        Certificate(vec)
+impl From<String> for Certificate {
+    fn from(string: String) -> Self {
+        Certificate(string.into_bytes())
     }
 }
 
@@ -97,12 +97,15 @@ impl CertificateAuthority {
 
         match child.stdin.as_mut() {
             Some(stdin) => {
-                stdin.write_all(
-                    format!(
-                        r#"{{"CN":"{}","key":{{"algo":"rsa","size":2048}}}}}}"#,
-                        common_name
-                    ).as_bytes()
-                )?;
+                let csr_config = json!({
+                    "CN": common_name,
+                    "key": {
+                        "algo": "rsa",
+                        "size": 2048,
+                    },
+                });
+
+                stdin.write_all(&to_vec(&csr_config)?)?;
             }
             None => {
                 return Err(
@@ -118,7 +121,13 @@ impl CertificateAuthority {
 
             Ok(raw.into())
         } else {
-            Err(KawsError::new("Execution of `cfssl genkey` failed.".to_owned()))
+            Err(
+                KawsError::with_std_streams(
+                    "Execution of `cfssl genkey` failed.".to_owned(),
+                    String::from_utf8_lossy(&output.stdout).to_string(),
+                    String::from_utf8_lossy(&output.stderr).to_string(),
+                )
+            )
         }
     }
 
@@ -154,12 +163,15 @@ impl CertificateAuthority {
 
         match child.stdin.as_mut() {
             Some(stdin) => {
-                stdin.write_all(
-                    format!(
-                        r#"{{"CN":"{}","key":{{"algo":"rsa","size":2048}}}}}}"#,
-                        common_name
-                    ).as_bytes()
-                )?;
+                let csr_config = json!({
+                    "CN": common_name,
+                    "key": {
+                        "algo": "rsa",
+                        "size": 2048,
+                    },
+                });
+
+                stdin.write_all(&to_vec(&csr_config)?)?;
             }
             None => {
                 return Err(
@@ -175,7 +187,13 @@ impl CertificateAuthority {
 
             Ok((raw.cert.into(), raw.key.into()))
         } else {
-            Err(KawsError::new("Execution of `cfssl gencert` failed.".to_owned()))
+            Err(
+                KawsError::with_std_streams(
+                    "Execution of `cfssl gencert` failed.".to_owned(),
+                    String::from_utf8_lossy(&output.stdout).to_string(),
+                    String::from_utf8_lossy(&output.stderr).to_string(),
+                )
+            )
         };
 
         tempdir.close()?;
@@ -221,7 +239,13 @@ impl CertificateAuthority {
 
             Ok(response.cert.into())
         } else {
-            Err(KawsError::new("Execution of `cfssl gencert` failed.".to_owned()))
+            Err(
+                KawsError::with_std_streams(
+                    "Execution of `cfssl cert` failed.".to_owned(),
+                    String::from_utf8_lossy(&output.stdout).to_string(),
+                    String::from_utf8_lossy(&output.stderr).to_string(),
+                )
+            )
         };
 
         tempdir.close()?;
@@ -342,9 +366,15 @@ impl CertificateSigningRequest {
         if output.status.success() {
             let raw: CfsslGenkeyResponse = from_slice(&output.stdout)?;
 
-            Ok((CertificateSigningRequest(raw.csr), PrivateKey(raw.key)))
+            Ok((CertificateSigningRequest(raw.csr.into_bytes()), PrivateKey(raw.key.into_bytes())))
         } else {
-            Err(KawsError::new("Execution of `cfssl genkey` failed.".to_owned()))
+            Err(
+                KawsError::with_std_streams(
+                    "Execution of `cfssl genkey` failed.".to_owned(),
+                    String::from_utf8_lossy(&output.stdout).to_string(),
+                    String::from_utf8_lossy(&output.stderr).to_string(),
+                )
+            )
         }
     }
 
@@ -361,9 +391,9 @@ impl CertificateSigningRequest {
     }
 }
 
-impl From<Vec<u8>> for CertificateSigningRequest {
-    fn from(vec: Vec<u8>) -> Self {
-        CertificateSigningRequest(vec)
+impl From<String> for CertificateSigningRequest {
+    fn from(string: String) -> Self {
+        CertificateSigningRequest(string.into_bytes())
     }
 }
 
@@ -398,8 +428,8 @@ impl PrivateKey {
     }
 }
 
-impl From<Vec<u8>> for PrivateKey {
-    fn from(vec: Vec<u8>) -> Self {
-        PrivateKey(vec)
+impl From<String> for PrivateKey {
+    fn from(string: String) -> Self {
+        PrivateKey(string.into_bytes())
     }
 }

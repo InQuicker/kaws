@@ -35,7 +35,7 @@ mod terraform;
 
 use std::process::exit;
 
-use ansi_term::Colour::Green;
+use ansi_term::Colour::{Green, Red};
 
 use admin::Admin;
 use cluster::{ExistingCluster, NewCluster};
@@ -56,7 +56,9 @@ fn main() {
             }
         },
         Err(error) => {
-            println!("Error:\n{}", error);
+            let error_output = format!("Error:\n{}", error);
+
+            println!("{}", Red.paint(error_output));
 
             failed = true;
         },
