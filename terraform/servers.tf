@@ -1,7 +1,7 @@
 resource "aws_instance" "bastion" {
   ami = "${var.coreos_ami}"
   associate_public_ip_address = true
-  depends_on = ["aws_instance.etcd_01", "aws_instance.etcd_02", "aws_instance.etcd_03"]
+  iam_instance_profile = "${aws_iam_instance_profile.bastion.name}"
   instance_type = "t2.micro"
   subnet_id = "${aws_subnet.public.id}"
   user_data = "${replace("${data.template_file.user_data.rendered}", "__FILE__", "bastion_cloud_config.yml")}"
@@ -17,6 +17,7 @@ resource "aws_instance" "etcd_01" {
   ami = "${var.coreos_ami}"
   associate_public_ip_address = true
   availability_zone = "${var.availability_zone}"
+  iam_instance_profile = "${aws_iam_instance_profile.etcd.name}"
   instance_type = "${var.instance_size}"
   private_ip = "10.0.1.4"
   subnet_id = "${aws_subnet.public.id}"
@@ -34,6 +35,7 @@ resource "aws_instance" "etcd_02" {
   ami = "${var.coreos_ami}"
   associate_public_ip_address = true
   availability_zone = "${var.availability_zone}"
+  iam_instance_profile = "${aws_iam_instance_profile.etcd.name}"
   instance_type = "${var.instance_size}"
   private_ip = "10.0.1.5"
   subnet_id = "${aws_subnet.public.id}"
@@ -51,6 +53,7 @@ resource "aws_instance" "etcd_03" {
   ami = "${var.coreos_ami}"
   associate_public_ip_address = true
   availability_zone = "${var.availability_zone}"
+  iam_instance_profile = "${aws_iam_instance_profile.etcd.name}"
   instance_type = "${var.instance_size}"
   private_ip = "10.0.1.6"
   subnet_id = "${aws_subnet.public.id}"
