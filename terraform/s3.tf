@@ -3,7 +3,7 @@ resource "aws_s3_bucket" "cloud_config" {
 
   tags {
     Name = "kaws-${var.account_id}-${var.cluster}"
-    Cluster = "${var.cluster}"
+    KubernetesCluster = "${var.cluster}"
   }
 }
 
