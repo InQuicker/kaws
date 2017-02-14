@@ -9,7 +9,34 @@ data "aws_iam_policy_document" "assume_role_policy" {
   }
 }
 
+data "aws_iam_policy_document" "bastion" {
+  statement {
+    actions = ["s3:GetObject"]
+    resources = [
+      "arn:aws:s3:::${aws_s3_bucket.cloud_config.id}/${aws_s3_bucket_object.bastion_cloud_config.id}",
+    ]
+  }
+}
+
+data "aws_iam_policy_document" "etcd" {
+  statement {
+    actions = ["s3:GetObject"]
+    resources = [
+      "arn:aws:s3:::${aws_s3_bucket.cloud_config.id}/${aws_s3_bucket_object.etcd_01_cloud_config.id}",
+      "arn:aws:s3:::${aws_s3_bucket.cloud_config.id}/${aws_s3_bucket_object.etcd_02_cloud_config.id}",
+      "arn:aws:s3:::${aws_s3_bucket.cloud_config.id}/${aws_s3_bucket_object.etcd_03_cloud_config.id}",
+    ]
+  }
+}
+
 data "aws_iam_policy_document" "k8s_master" {
+  statement {
+    actions = ["s3:GetObject"]
+    resources = [
+      "arn:aws:s3:::${aws_s3_bucket.cloud_config.id}/${aws_s3_bucket_object.master_cloud_config.id}",
+    ]
+  }
+
   statement {
     actions = ["ec2:*"]
     resources = ["*"]
@@ -35,6 +62,13 @@ data "aws_iam_policy_document" "k8s_master" {
 }
 
 data "aws_iam_policy_document" "k8s_node" {
+  statement {
+    actions = ["s3:GetObject"]
+    resources = [
+      "arn:aws:s3:::${aws_s3_bucket.cloud_config.id}/${aws_s3_bucket_object.node_cloud_config.id}",
+    ]
+  }
+
   statement {
     actions = ["ec2:Describe*"]
     resources = ["*"]
@@ -169,6 +203,11 @@ data "aws_iam_policy_document" "kms_key" {
   }
 }
 
+resource "aws_iam_instance_profile" "bastion" {
+  name = "kaws-bastion-${var.cluster}"
+  roles = ["${aws_iam_role.bastion.name}"]
+}
+
 resource "aws_iam_instance_profile" "etcd" {
   name = "kaws-etcd-${var.cluster}"
   roles = ["${aws_iam_role.etcd.name}"]
@@ -184,6 +223,11 @@ resource "aws_iam_instance_profile" "k8s_node" {
   roles = ["${aws_iam_role.k8s_node.name}"]
 }
 
+resource "aws_iam_role" "bastion" {
+  name = "kaws-bastion-${var.cluster}"
+  assume_role_policy = "${data.aws_iam_policy_document.assume_role_policy.json}"
+}
+
 resource "aws_iam_role" "etcd" {
   name = "kaws-etcd-${var.cluster}"
   assume_role_policy = "${data.aws_iam_policy_document.assume_role_policy.json}"
@@ -197,6 +241,18 @@ resource "aws_iam_role" "k8s_master" {
 resource "aws_iam_role" "k8s_node" {
   name = "kaws-k8s-node-${var.cluster}"
   assume_role_policy = "${data.aws_iam_policy_document.assume_role_policy.json}"
+}
+
+resource "aws_iam_role_policy" "bastion" {
+  name = "kaws-bastion-${var.cluster}"
+  role = "${aws_iam_role.bastion.id}"
+  policy = "${data.aws_iam_policy_document.bastion.json}"
+}
+
+resource "aws_iam_role_policy" "etcd" {
+  name = "kaws-etcd-${var.cluster}"
+  role = "${aws_iam_role.etcd.id}"
+  policy = "${data.aws_iam_policy_document.etcd.json}"
 }
 
 resource "aws_iam_role_policy" "k8s_master" {

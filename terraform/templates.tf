@@ -1,3 +1,21 @@
+data template_file "user_data" {
+  depends_on = [
+    "aws_s3_bucket_object.bastion_cloud_config",
+    "aws_s3_bucket_object.etcd_01_cloud_config",
+    "aws_s3_bucket_object.etcd_02_cloud_config",
+    "aws_s3_bucket_object.etcd_03_cloud_config",
+    "aws_s3_bucket_object.master_cloud_config",
+    "aws_s3_bucket_object.node_cloud_config",
+  ]
+
+  template = "${file("${path.module}/templates/user_data.sh")}"
+
+  vars {
+    s3_uri = "s3://${aws_s3_bucket.cloud_config.id}"
+    region = "${var.region}"
+  }
+}
+
 data "template_file" "bastion_cloud_config" {
   template = "${file("${path.module}/templates/bastion_cloud_config.yml")}"
 
@@ -7,6 +25,8 @@ data "template_file" "bastion_cloud_config" {
 }
 
 data "template_file" "etcd_01_cloud_config" {
+  depends_on = ["null_resource.generate_pki"]
+
   template = "${file("${path.module}/templates/etcd_cloud_config.yml")}"
 
   vars {
@@ -23,6 +43,8 @@ data "template_file" "etcd_01_cloud_config" {
 }
 
 data "template_file" "etcd_02_cloud_config" {
+  depends_on = ["null_resource.generate_pki"]
+
   template = "${file("${path.module}/templates/etcd_cloud_config.yml")}"
 
   vars {
@@ -39,6 +61,8 @@ data "template_file" "etcd_02_cloud_config" {
 }
 
 data "template_file" "etcd_03_cloud_config" {
+  depends_on = ["null_resource.generate_pki"]
+
   template = "${file("${path.module}/templates/etcd_cloud_config.yml")}"
 
   vars {
@@ -55,6 +79,8 @@ data "template_file" "etcd_03_cloud_config" {
 }
 
 data "template_file" "master_cloud_config" {
+  depends_on = ["null_resource.generate_pki"]
+
   template = "${file("${path.module}/templates/master_cloud_config.yml")}"
 
   vars {
@@ -74,6 +100,8 @@ data "template_file" "master_cloud_config" {
 }
 
 data "template_file" "node_cloud_config" {
+  depends_on = ["null_resource.generate_pki"]
+
   template = "${file("${path.module}/templates/node_cloud_config.yml")}"
 
   vars {

@@ -4,7 +4,7 @@ resource "aws_instance" "bastion" {
   depends_on = ["aws_instance.etcd_01", "aws_instance.etcd_02", "aws_instance.etcd_03"]
   instance_type = "t2.micro"
   subnet_id = "${aws_subnet.public.id}"
-  user_data = "${data.template_file.bastion_cloud_config.rendered}"
+  user_data = "${replace("${data.template_file.user_data.rendered}", "__FILE__", "bastion_cloud_config.yml")}"
   vpc_security_group_ids = ["${aws_security_group.bastion.id}"]
 
   tags {
@@ -14,14 +14,13 @@ resource "aws_instance" "bastion" {
 }
 
 resource "aws_instance" "etcd_01" {
-  depends_on = ["null_resource.generate_pki"]
   ami = "${var.coreos_ami}"
   associate_public_ip_address = true
   availability_zone = "${var.availability_zone}"
   instance_type = "${var.instance_size}"
   private_ip = "10.0.1.4"
   subnet_id = "${aws_subnet.public.id}"
-  user_data = "${data.template_file.etcd_01_cloud_config.rendered}"
+  user_data = "${replace("${data.template_file.user_data.rendered}", "__FILE__", "etcd_01_cloud_config.yml")}"
   vpc_security_group_ids = ["${aws_security_group.etcd.id}"]
 
   tags {
@@ -38,7 +37,7 @@ resource "aws_instance" "etcd_02" {
   instance_type = "${var.instance_size}"
   private_ip = "10.0.1.5"
   subnet_id = "${aws_subnet.public.id}"
-  user_data = "${data.template_file.etcd_02_cloud_config.rendered}"
+  user_data = "${replace("${data.template_file.user_data.rendered}", "__FILE__", "etcd_02_cloud_config.yml")}"
   vpc_security_group_ids = ["${aws_security_group.etcd.id}"]
 
   tags {
@@ -55,7 +54,7 @@ resource "aws_instance" "etcd_03" {
   instance_type = "${var.instance_size}"
   private_ip = "10.0.1.6"
   subnet_id = "${aws_subnet.public.id}"
-  user_data = "${data.template_file.etcd_03_cloud_config.rendered}"
+  user_data = "${replace("${data.template_file.user_data.rendered}", "__FILE__", "etcd_03_cloud_config.yml")}"
   vpc_security_group_ids = ["${aws_security_group.etcd.id}"]
 
   tags {
@@ -71,7 +70,7 @@ resource "aws_launch_configuration" "k8s_masters" {
   instance_type = "${var.instance_size}"
   name_prefix = "kaws-k8s-masters-${var.cluster}-"
   security_groups = ["${aws_security_group.kubernetes.id}"]
-  user_data = "${data.template_file.master_cloud_config.rendered}"
+  user_data = "${replace("${data.template_file.user_data.rendered}", "__FILE__", "master_cloud_config.yml")}"
 
   lifecycle {
     create_before_destroy = true
@@ -123,7 +122,7 @@ resource "aws_launch_configuration" "k8s_nodes" {
   instance_type = "${var.instance_size}"
   name_prefix = "kaws-k8s-nodes-${var.cluster}-"
   security_groups = ["${aws_security_group.kubernetes.id}"]
-  user_data = "${data.template_file.node_cloud_config.rendered}"
+  user_data = "${replace("${data.template_file.user_data.rendered}", "__FILE__", "node_cloud_config.yml")}"
 
   lifecycle {
     create_before_destroy = true
