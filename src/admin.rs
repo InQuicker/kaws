@@ -112,8 +112,8 @@ impl<'a> Admin<'a> {
 
         let admin_csr_path = format!("clusters/{}/{}-csr.pem", self.cluster, self.admin);
         let admin_cert_path = format!("clusters/{}/{}.pem", self.cluster, self.admin);
-        let ca_cert_path = format!("clusters/{}/ca.pem", self.cluster);
-        let encrypted_ca_key_path = format!("clusters/{}/ca-key-encrypted.base64", self.cluster);
+        let ca_cert_path = format!("clusters/{}/k8s-ca.pem", self.cluster);
+        let encrypted_ca_key_path = format!("clusters/{}/k8s-ca-key-encrypted.base64", self.cluster);
 
         let mut encryptor = Encryptor::new(
             self.aws_credentials_provider.clone(),
