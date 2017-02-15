@@ -30,6 +30,11 @@ coreos:
     - name: flanneld.service
       command: start
       drop-ins:
+        - name: 20-wait-tls.service
+          content: |
+            [Unit]
+            Requires=decrypt-pki.service
+            After=decrypt-pki.service
         - name: 50-network-config.conf
           content: |
             [Service]
@@ -40,6 +45,12 @@ coreos:
             ExecStartPre=/usr/bin/etcdctl set /coreos.com/network/config "{\"Network\":\"10.2.0.0/16\"}"
     - name: kubelet.service
       command: start
+      drop-ins:
+        - name: 20-wait-docker.service
+          content: |
+            [Unit]
+            Requires=docker.service
+            After=docker.service
       content: |
         [Unit]
         Description=Kubernetes Kubelet
@@ -61,6 +72,15 @@ coreos:
         RestartSec=10
         [Install]
         WantedBy=multi-user.target
+    - name: decrypt-pki.service
+      command: start
+      content: |
+        [Unit]
+        Description=Decrypt etcd and k8s PKI using KMS
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=/usr/bin/bash /opt/kaws/decrypt-pki.sh
 ssh_authorized_keys: [${ssh_public_keys}]
 write_files:
   - path: /etc/kubernetes/manifests/kube-apiserver.yml
@@ -218,7 +238,7 @@ write_files:
                 port: 10251
               initialDelaySeconds: 15
               timeoutSeconds: 15
-  - path: /opt/kaws/decrypt-pki
+  - path: /opt/kaws/decrypt-pki.sh
     content: |
       #!/bin/bash -e
       for file in $(find /etc/etcd2/ssl/*.binary /etc/kubernetes/ssl/*.binary); do

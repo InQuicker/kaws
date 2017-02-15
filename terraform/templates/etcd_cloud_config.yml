@@ -75,14 +75,14 @@ coreos:
         ExecStart=/usr/bin/mkdir -p /var/lib/etcd2/data
         ExecStart=/usr/bin/chown -R etcd:etcd /var/lib/etcd2/data
     - name: decrypt-pki.service
+      command: start
       content: |
         [Unit]
         Description=Decrypt etcd PKI using KMS
-        Before=etcd2.service
         [Service]
         Type=oneshot
         RemainAfterExit=yes
-        ExecStart=/opt/kaws/decrypt-pki
+        ExecStart=/usr/bin/bash /opt/kaws/decrypt-pki.sh
 ssh_authorized_keys: [${ssh_public_keys}]
 write_files:
   - path: /opt/kaws/format-etcd-ebs.sh
@@ -96,7 +96,7 @@ write_files:
         /usr/sbin/wipefs /dev/xvdf
         /usr/sbin/mkfs.ext4 -L ETCD /dev/xvdf
       fi
-  - path: /opt/kaws/decrypt-pki
+  - path: /opt/kaws/decrypt-pki.sh
     content: |
       #!/bin/bash -e
       for file in $(find /etc/etcd2/ssl/*.binary); do
