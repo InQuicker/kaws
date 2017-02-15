@@ -99,25 +99,29 @@ write_files:
   - path: /opt/kaws/decrypt-pki
     content: |
       #!/bin/bash -e
-      for file in $(find /etc/etcd2/ssl/*.base64); do
+      for file in $(find /etc/etcd2/ssl/*.binary); do
         rkt run \
-          --insecure-options image \
-          --volumes etc-etcd2-ssl,kind=host,source=/etc/etcd2/ssl \
-          --mount volume=etcd-etcd2-ssl,target=/etc/etcd2/ssl \
-          --stage1-from-dir stage1-fly.aci \
-          docker://quay.io/coreos/awscli \
+          --net=host \
+          --volume=dns,kind=host,source=/etc/resolv.conf,readOnly=true \
+          --mount=volume=dns,target=/etc/resolv.conf  \
+          --volume=pki,kind=host,source=/etc/etcd2/ssl \
+          --mount=volume=pki,target=/etc/etcd2/ssl \
+          --trust-keys-from-https \
+          quay.io/coreos/awscli \
           -- \
-          aws --region $${region} kms decrypt --ciphertext-blob fileb://$file --output text --query Plaintext | base64 --decode > $${file/-encrypted.base64/.pem}
+          aws --region ${region} kms decrypt --ciphertext-blob fileb://$file --output text --query Plaintext | base64 -d > $${file/-encrypted.binary/.pem}
       done
   - path: /etc/etcd2/ssl/etcd-ca.pem
-    content: ${etcd_ca_cert}
+    content: "${etcd_ca_cert}"
   - path: /etc/etcd2/ssl/etcd-server.pem
-    content: ${etcd_server_cert}
-  - path: /etc/etcd2/ssl/etcd-server-key-encrypted.base64
-    content: ${etcd_server_key}
+    content: "${etcd_server_cert}"
+  - path: /etc/etcd2/ssl/etcd-server-key-encrypted.binary
+    encoding: "base64"
+    content: "${etcd_server_key}"
   - path: /etc/etcd2/ssl/etcd-peer-ca.pem
-    content: ${etcd_peer_ca_cert}
+    content: "${etcd_peer_ca_cert}"
   - path: /etc/etcd2/ssl/etcd-peer.pem
-    content: ${etcd_peer_cert}
-  - path: /etc/etcd2/ssl/etcd-peer-key-encrypted.base64
-    content: ${etcd_peer_key}
+    content: "${etcd_peer_cert}"
+  - path: /etc/etcd2/ssl/etcd-peer-key-encrypted.binary
+    encoding: "base64"
+    content: "${etcd_peer_key}"

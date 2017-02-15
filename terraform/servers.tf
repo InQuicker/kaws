@@ -1,4 +1,5 @@
 resource "aws_instance" "bastion" {
+  key_name = "jimmy"
   ami = "${var.coreos_ami}"
   associate_public_ip_address = true
   iam_instance_profile = "${aws_iam_instance_profile.bastion.name}"
@@ -14,6 +15,7 @@ resource "aws_instance" "bastion" {
 }
 
 resource "aws_instance" "etcd_01" {
+  key_name = "jimmy"
   ami = "${var.coreos_ami}"
   associate_public_ip_address = true
   availability_zone = "${var.availability_zone}"
@@ -31,6 +33,7 @@ resource "aws_instance" "etcd_01" {
 }
 
 resource "aws_instance" "etcd_02" {
+  key_name = "jimmy"
   depends_on = ["null_resource.generate_pki"]
   ami = "${var.coreos_ami}"
   associate_public_ip_address = true
@@ -49,6 +52,7 @@ resource "aws_instance" "etcd_02" {
 }
 
 resource "aws_instance" "etcd_03" {
+  key_name = "jimmy"
   depends_on = ["null_resource.generate_pki"]
   ami = "${var.coreos_ami}"
   associate_public_ip_address = true
@@ -67,6 +71,7 @@ resource "aws_instance" "etcd_03" {
 }
 
 resource "aws_launch_configuration" "k8s_masters" {
+  key_name = "jimmy"
   associate_public_ip_address = true
   iam_instance_profile = "${aws_iam_instance_profile.k8s_master.name}"
   image_id = "${var.coreos_ami}"
@@ -119,6 +124,7 @@ resource "aws_autoscaling_group" "k8s_masters" {
 }
 
 resource "aws_launch_configuration" "k8s_nodes" {
+  key_name = "jimmy"
   associate_public_ip_address = true
   iam_instance_profile = "${aws_iam_instance_profile.k8s_node.name}"
   image_id = "${var.coreos_ami}"
