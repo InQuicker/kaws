@@ -1,3 +1,7 @@
 #cloud-config
 
+---
+coreos:
+  update:
+    reboot_strategy: reboot
 ssh_authorized_keys: [${ssh_public_keys}]
