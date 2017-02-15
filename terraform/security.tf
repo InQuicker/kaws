@@ -160,10 +160,10 @@ data "aws_iam_policy_document" "kms_key" {
       identifiers = [
         "${
           concat(
-            formatlist(
-              "arn:aws:iam::%s:role/kaws-%s",
-              var.account_id,
-              list("etcd-${var.cluster}", "k8s-master-${var.cluster}", "k8s-node-${var.cluster}")
+            list(
+              aws_iam_role.etcd.arn,
+              aws_iam_role.k8s_master.arn,
+              aws_iam_role.k8s_node.arn,
             ),
             formatlist("arn:aws:iam::%s:user/%s", var.account_id, var.iam_users)
           )
