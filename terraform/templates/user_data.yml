@@ -2,7 +2,7 @@
 
 coreos:
   units:
-    - name: real-cloud-config
+    - name: real-cloud-config.service
       command: start
       content: |
         [Unit]
