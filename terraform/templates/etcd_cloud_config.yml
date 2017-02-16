@@ -40,6 +40,14 @@ coreos:
             [Unit]
             Requires=decrypt-pki.service
             After=decrypt-pki.service
+    - name: docker.service
+      command: start
+      drop-ins:
+        - name: 50-opts.conf
+          content: |
+            [Service]
+            Environment=DOCKER_OPTS='--log-driver=journald'
+      command: start
     - name: format-etcd-ebs.service
       command: start
       content: |
@@ -100,16 +108,12 @@ write_files:
     content: |
       #!/bin/bash -e
       for file in $(find /etc/etcd2/ssl/*.binary); do
-        rkt run \
-          --net=host \
-          --volume=dns,kind=host,source=/etc/resolv.conf,readOnly=true \
-          --mount=volume=dns,target=/etc/resolv.conf  \
-          --volume=pki,kind=host,source=/etc/etcd2/ssl \
-          --mount=volume=pki,target=/etc/etcd2/ssl \
-          --trust-keys-from-https \
+        docker run \
+          --net host \
+          --rm \
+          -v /etc/etcd2/ssl:/etc/etcd2/ssl \
           quay.io/coreos/awscli \
-          -- \
-          aws --region ${region} kms decrypt --ciphertext-blob fileb://$file --output text --query Plaintext | base64 -d > $${file/-encrypted.binary/.pem}
+          aws --region ${region} kms decrypt --ciphertext-blob fileb://$file --output text --query Plaintext | base64 --decode > $${file/-encrypted.binary/.pem}
       done
   - path: /etc/etcd2/ssl/etcd-ca.pem
     content: "${etcd_ca_cert}"
