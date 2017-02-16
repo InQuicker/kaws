@@ -243,8 +243,9 @@ write_files:
           --mount=volume=k8s-pki,target=/etc/kubernetes/ssl \
           --trust-keys-from-https \
            quay.io/coreos/awscli \
+           --exec=/bin/bash \
            -- \
-           "/bin/bash -c 'aws --region ${region} kms decrypt --ciphertext-blob fileb://$file --output text --query Plaintext | base64 -d > $${file/-encrypted.binary/.pem}'"
+           -c "aws --region ${region} kms decrypt --ciphertext-blob fileb://$file --output text --query Plaintext | base64 -d > $${file/-encrypted.binary/.pem}"
       done
   - path: /etc/etcd2/ssl/etcd-ca.pem
     encoding: "base64"
