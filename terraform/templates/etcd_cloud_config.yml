@@ -37,7 +37,7 @@ coreos:
             After=create-etcd2-data-dir.service
         - name: 20-wait-tls.conf
           content: |
-            [Unit]
+            [Service]
             ExecStartPre=/usr/bin/bash /opt/kaws/decrypt-pki.sh
     - name: docker.service
       command: start

@@ -32,7 +32,7 @@ coreos:
       drop-ins:
         - name: 20-wait-tls.conf
           content: |
-            [Unit]
+            [Service]
             ExecStartPre=/usr/bin/bash /opt/kaws/decrypt-pki.sh
     - name: kubelet.service
       command: start
