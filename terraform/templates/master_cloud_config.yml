@@ -30,7 +30,7 @@ coreos:
     - name: flanneld.service
       command: start
       drop-ins:
-        - name: 20-wait-tls.service
+        - name: 20-wait-tls.conf
           content: |
             [Unit]
             ExecStartPre=/usr/bin/bash /opt/kaws/decrypt-pki.sh
@@ -45,7 +45,7 @@ coreos:
     - name: kubelet.service
       command: start
       drop-ins:
-        - name: 20-wait-docker.service
+        - name: 20-wait-docker.conf
           content: |
             [Unit]
             Requires=docker.service

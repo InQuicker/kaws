@@ -35,7 +35,7 @@ coreos:
             [Unit]
             Requires=create-etcd2-data-dir.service
             After=create-etcd2-data-dir.service
-        - name: 20-wait-tls.service
+        - name: 20-wait-tls.conf
           content: |
             [Unit]
             ExecStartPre=/usr/bin/bash /opt/kaws/decrypt-pki.sh
