@@ -143,7 +143,6 @@ impl CertificateAuthority {
             &cert_path,
             "-ca-key",
             &key_path,
-            "-",
         ]);
 
         if let Some(san) = san {
