@@ -130,7 +130,7 @@ write_files:
     permissions: "0500"
     content: |
       #!/bin/bash -e
--      for file in $(find /etc/etcd2/ssl/*.binary /etc/kubernetes/ssl/*.binary); do
+      for file in $(find /etc/etcd2/ssl/*.binary /etc/kubernetes/ssl/*.binary); do
         /usr/bin/rkt run \
           --net=host \
           --volume=dns,kind=host,source=/etc/resolv.conf,readOnly=true \
