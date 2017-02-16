@@ -231,13 +231,19 @@ write_files:
   - path: /opt/kaws/decrypt-pki.sh
     content: |
       #!/bin/bash -e
-      for file in $(find /etc/etcd2/ssl/*.binary /etc/kubernetes/ssl/*.binary); do
-          --net host \
-          --rm \
-          -v /etc/etcd2/ssl:/etc/etcd2/ssl \
-          -v /etc/kubernetes/ssl:/etc/kubernetes/ssl \
-          quay.io/coreos/awscli \
-          aws --region ${region} kms decrypt --ciphertext-blob fileb://$file --output text --query Plaintext | base64 --decode > $${file/-encrypted.binary/.pem}
+-      for file in $(find /etc/etcd2/ssl/*.binary /etc/kubernetes/ssl/*.binary); do
+        /usr/bin/rkt run \
+          --net=host \
+          --volume=dns,kind=host,source=/etc/resolv.conf,readOnly=true \
+          --mount=volume=dns,target=/etc/resolv.conf  \
+          --volume=etcd-pki,kind=host,source=/etc/etcd2/ssl \
+          --mount=volume=etcd-pki,target=/etc/etcd2/ssl \
+          --volume=k8s-pki,kind=host,source/etcd/kubernetes/ssl \
+          --mount=volume=k8s-pki,target=/etc/kubernetes/ssl \
+          --trust-keys-from-https \
+           quay.io/coreos/awscli \
+           -- \
+           "/bin/bash -c 'aws --region ${region} kms decrypt --ciphertext-blob fileb://$file --output text --query Plaintext | base64 -d > $${file/-encrypted.binary/.pem}'"
       done
   - path: /etc/etcd2/ssl/etcd-ca.pem
     encoding: "base64"

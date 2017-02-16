@@ -98,12 +98,16 @@ write_files:
     content: |
       #!/bin/bash -e
       for file in $(find /etc/etcd2/ssl/*.binary); do
-        docker run \
-          --net host \
-          --rm \
-          -v /etc/etcd2/ssl:/etc/etcd2/ssl \
-          quay.io/coreos/awscli \
-          aws --region ${region} kms decrypt --ciphertext-blob fileb://$file --output text --query Plaintext | base64 --decode > $${file/-encrypted.binary/.pem}
+        /usr/bin/rkt run \
+          --net=host \
+          --volume=dns,kind=host,source=/etc/resolv.conf,readOnly=true \
+          --mount=volume=dns,target=/etc/resolv.conf  \
+          --volume=pki,kind=host,source=/etc/etcd2/ssl \
+          --mount=volume=pki,target=/etc/etcd2/ssl \
+          --trust-keys-from-https \
+           quay.io/coreos/awscli \
+           -- \
+           "/bin/bash -c 'aws --region ${region} kms decrypt --ciphertext-blob fileb://$file --output text --query Plaintext | base64 -d > $${file/-encrypted.binary/.pem}'"
       done
   - path: /etc/etcd2/ssl/etcd-ca.pem
     encoding: "base64"
