@@ -8,7 +8,7 @@ data template_file "user_data" {
     "aws_s3_bucket_object.node_cloud_config",
   ]
 
-  template = "${file("${path.module}/templates/user_data.sh")}"
+  template = "${file("${path.module}/templates/user_data.yml")}"
 
   vars {
     s3_uri = "s3://${aws_s3_bucket.cloud_config.id}"

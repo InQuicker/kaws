@@ -1,0 +1,27 @@
+#cloud-config
+
+coreos:
+  units:
+    - name: real-cloud-config
+      command: start
+      content: |
+        [Unit]
+        Description=Real cloud-config
+        [Service]
+        ExecStartPre=/usr/bin/rkt run \
+          --net=host \
+          --volume=dns,kind=host,source=/etc/resolv.conf,readOnly=true \
+          --mount=volume=dns,target=/etc/resolv.conf  \
+          --volume=awsenv,kind=host,source=/var/run/coreos,readOnly=false \
+          --mount=volume=awsenv,target=/var/run/coreos \
+          --trust-keys-from-https \
+          quay.io/coreos/awscli \
+          -- \
+          aws s3 --region ${region} cp ${s3_uri}/__FILE__ /var/run/coreos/cloud_config.yml
+        ExecStart=/usr/bin/coreos-cloudinit --from-file /var/run/coreos/cloud_config.yml
+write_files:
+  - path: /etc/environment
+    permissions: 0644
+    content: |
+      COREOS_PUBLIC_IPV4=$public_ipv4
+      COREOS_PRIVATE_IPV4=$private_ipv4
