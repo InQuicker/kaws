@@ -33,7 +33,7 @@ coreos:
         - name: 20-wait-tls.conf
           content: |
             [Service]
-            ExecStartPre=/usr/bin/bash /opt/kaws/decrypt-pki.sh
+            ExecStartPre=/opt/kaws/decrypt-pki
     - name: kubelet.service
       command: start
       drop-ins:
@@ -126,7 +126,8 @@ write_files:
           user:
             client-certificate: /etc/kubernetes/ssl/node.pem
             client-key: /etc/kubernetes/ssl/node-key.pem
-  - path: /opt/kaws/decrypt-pki.sh
+  - path: /opt/kaws/decrypt-pki
+    permissions: "0700"
     content: |
       #!/bin/bash -e
 -      for file in $(find /etc/etcd2/ssl/*.binary /etc/kubernetes/ssl/*.binary); do

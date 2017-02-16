@@ -38,7 +38,7 @@ coreos:
         - name: 20-wait-tls.conf
           content: |
             [Service]
-            ExecStartPre=/usr/bin/bash /opt/kaws/decrypt-pki.sh
+            ExecStartPre=/opt/kaws/decrypt-pki
     - name: docker.service
       command: start
       drop-ins:
@@ -94,7 +94,8 @@ write_files:
         /usr/sbin/wipefs /dev/xvdf
         /usr/sbin/mkfs.ext4 -L ETCD /dev/xvdf
       fi
-  - path: /opt/kaws/decrypt-pki.sh
+  - path: /opt/kaws/decrypt-pki
+    permissions: "0700"
     content: |
       #!/bin/bash -e
       for file in $(find /etc/etcd2/ssl/*.binary); do

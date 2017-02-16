@@ -33,7 +33,7 @@ coreos:
         - name: 20-wait-tls.conf
           content: |
             [Service]
-            ExecStartPre=/usr/bin/bash /opt/kaws/decrypt-pki.sh
+            ExecStartPre=/opt/kaws/decrypt-pki
         - name: 50-network-config.conf
           content: |
             [Service]
@@ -228,7 +228,8 @@ write_files:
                 port: 10251
               initialDelaySeconds: 15
               timeoutSeconds: 15
-  - path: /opt/kaws/decrypt-pki.sh
+  - path: /opt/kaws/decrypt-pki
+    permissions: "0700"
     content: |
       #!/bin/bash -e
 -      for file in $(find /etc/etcd2/ssl/*.binary /etc/kubernetes/ssl/*.binary); do
