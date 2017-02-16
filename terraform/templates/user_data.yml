@@ -8,6 +8,7 @@ coreos:
         [Unit]
         Description=Real cloud-config
         [Service]
+        EnvironmentFile=/etc/environment
         ExecStartPre=/usr/bin/rkt run \
           --net=host \
           --volume=dns,kind=host,source=/etc/resolv.conf,readOnly=true \
