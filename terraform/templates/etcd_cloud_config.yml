@@ -37,8 +37,9 @@ coreos:
             After=create-etcd2-data-dir.service
         - name: 20-wait-tls.conf
           content: |
-            [Service]
-            ExecStartPre=/opt/kaws/decrypt-pki
+            [Unit]
+            Requires=decrypt-pki.service
+            After=decrypt-pki.service
     - name: docker.service
       command: start
       drop-ins:
@@ -81,6 +82,16 @@ coreos:
         RemainAfterExit=yes
         ExecStart=/usr/bin/mkdir -p /var/lib/etcd2/data
         ExecStart=/usr/bin/chown -R etcd:etcd /var/lib/etcd2/data
+    - name: decrypt-pki.service
+      command: start
+      content: |
+        [Unit]
+        Description=Decrypt TLS assets
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStartPre=/opt/kaws/decrypt-pki
+        ExecStart=/usr/bin/echo TLS assets decrypted
 ssh_authorized_keys: [${ssh_public_keys}]
 write_files:
   - path: /opt/kaws/format-etcd-ebs.sh
@@ -96,7 +107,6 @@ write_files:
       fi
   - path: /opt/kaws/decrypt-pki
     permissions: "0500"
-    owner: "etcd"
     content: |
       #!/bin/bash -e
       for file in $(find /etc/etcd2/ssl/*.binary); do
