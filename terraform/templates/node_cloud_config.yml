@@ -148,15 +148,19 @@ write_files:
           aws --region ${region} kms decrypt --ciphertext-blob fileb://$file --output text --query Plaintext | base64 --decode > $${file/-encrypted.binary/.pem}
       done
   - path: /etc/etcd2/ssl/etcd-ca.pem
+    encoding: "base64"
     content: "${etcd_ca_cert}"
   - path: /etc/etcd2/ssl/etcd-client.pem
+    encoding: "base64"
     content: "${etcd_client_cert}"
   - path: /etc/etcd2/ssl/etcd-client-key-encrypted.binary
     encoding: "base64"
     content: "${etcd_client_key}"
   - path: /etc/kubernetes/ssl/ca.pem
+    encoding: "base64"
     content: "${k8s_ca_cert}"
   - path: /etc/kubernetes/ssl/node.pem
+    encoding: "base64"
     content: "${k8s_node_cert}"
   - path: /etc/kubernetes/ssl/node-key-encrypted.binary
     encoding: "base64"
