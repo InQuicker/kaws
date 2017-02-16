@@ -33,8 +33,7 @@ coreos:
         - name: 20-wait-tls.service
           content: |
             [Unit]
-            Requires=decrypt-pki.service
-            After=decrypt-pki.service
+            ExecStartPre=/usr/bin/bash /opt/kaws/decrypt-pki.sh
     - name: kubelet.service
       command: start
       drop-ins:
@@ -66,15 +65,6 @@ coreos:
         RestartSec=10
         [Install]
         WantedBy=multi-user.target
-    - name: decrypt-pki.service
-      command: start
-      content: |
-        [Unit]
-        Description=Decrypt etcd and k8s PKI using KMS
-        [Service]
-        Type=oneshot
-        RemainAfterExit=yes
-        ExecStart=/usr/bin/bash /opt/kaws/decrypt-pki.sh
 ssh_authorized_keys: [${ssh_public_keys}]
 write_files:
   - path: /etc/kubernetes/manifests/kube-proxy.yml

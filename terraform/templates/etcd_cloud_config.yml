@@ -38,8 +38,7 @@ coreos:
         - name: 20-wait-tls.service
           content: |
             [Unit]
-            Requires=decrypt-pki.service
-            After=decrypt-pki.service
+            ExecStartPre=/usr/bin/bash /opt/kaws/decrypt-pki.sh
     - name: docker.service
       command: start
       drop-ins:
@@ -82,15 +81,6 @@ coreos:
         RemainAfterExit=yes
         ExecStart=/usr/bin/mkdir -p /var/lib/etcd2/data
         ExecStart=/usr/bin/chown -R etcd:etcd /var/lib/etcd2/data
-    - name: decrypt-pki.service
-      command: start
-      content: |
-        [Unit]
-        Description=Decrypt etcd PKI using KMS
-        [Service]
-        Type=oneshot
-        RemainAfterExit=yes
-        ExecStart=/usr/bin/bash /opt/kaws/decrypt-pki.sh
 ssh_authorized_keys: [${ssh_public_keys}]
 write_files:
   - path: /opt/kaws/format-etcd-ebs.sh
