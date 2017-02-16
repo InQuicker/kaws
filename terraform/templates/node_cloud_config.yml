@@ -127,7 +127,7 @@ write_files:
             client-certificate: /etc/kubernetes/ssl/node.pem
             client-key: /etc/kubernetes/ssl/node-key.pem
   - path: /opt/kaws/decrypt-pki
-    permissions: "0700"
+    permissions: "0500"
     content: |
       #!/bin/bash -e
 -      for file in $(find /etc/etcd2/ssl/*.binary /etc/kubernetes/ssl/*.binary); do

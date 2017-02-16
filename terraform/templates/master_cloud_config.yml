@@ -229,7 +229,7 @@ write_files:
               initialDelaySeconds: 15
               timeoutSeconds: 15
   - path: /opt/kaws/decrypt-pki
-    permissions: "0700"
+    permissions: "0500"
     content: |
       #!/bin/bash -e
 -      for file in $(find /etc/etcd2/ssl/*.binary /etc/kubernetes/ssl/*.binary); do

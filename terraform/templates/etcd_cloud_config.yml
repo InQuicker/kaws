@@ -95,7 +95,8 @@ write_files:
         /usr/sbin/mkfs.ext4 -L ETCD /dev/xvdf
       fi
   - path: /opt/kaws/decrypt-pki
-    permissions: "0700"
+    permissions: "0500"
+    owner: "etcd"
     content: |
       #!/bin/bash -e
       for file in $(find /etc/etcd2/ssl/*.binary); do
