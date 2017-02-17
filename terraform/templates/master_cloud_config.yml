@@ -118,6 +118,9 @@ write_files:
                 hostPort: 8080
                 name: local
             volumeMounts:
+              - mountPath: /etc/etcd2/ssl
+                name: ssl-certs-etcd
+                readOnly: true
               - mountPath: /etc/kubernetes/ssl
                 name: ssl-certs-kubernetes
                 readOnly: true
@@ -125,6 +128,9 @@ write_files:
                 name: ssl-certs-host
                 readOnly: true
         volumes:
+          - hostPath:
+              path: /etc/etcd2/ssl
+            name: ssl-certs-etcd
           - hostPath:
               path: /etc/kubernetes/ssl
             name: ssl-certs-kubernetes
