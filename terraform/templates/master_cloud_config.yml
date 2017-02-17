@@ -2,7 +2,7 @@
 
 coreos:
   locksmith:
-    etcd_endpoints: https://10.0.1.4:2379,https://10.0.1.5:2379,https://10.0.1.6:2379
+    endpoint: https://10.0.1.4:2379,https://10.0.1.5:2379,https://10.0.1.6:2379
     etcd_cafile: /etc/etcd2/ssl/etcd-ca.pem
     etcd_certfile: /etc/etcd2/ssl/etcd-client.pem
     etcd_keyfile: /etc/etcd2/ssl/etcd-client-key.pem
