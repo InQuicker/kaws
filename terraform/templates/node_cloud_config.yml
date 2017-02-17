@@ -22,7 +22,7 @@ coreos:
           content: |
             [Unit]
             Requires=flanneld.service
-            AFter=flanneld.service
+            After=flanneld.service
         - name: 50-opts.conf
           content: |
             [Service]
