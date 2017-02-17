@@ -50,9 +50,9 @@ coreos:
         [Unit]
         Description=Kubernetes Kubelet
         [Service]
-        Environment=KUBELET_VERSION=v${version}
-        Environment=KUBELET_ACI=docker://gcr.io/google_containers/hyperkube
-        Environment="RKT_OPTS=--volume resolv,kind=host,source=/etc/resolv.conf --mount volume=resolv,target=/etc/resolv.conf --insecure-options=image"
+        Environment=KUBELET_IMAGE_TAG=v${version}
+        Environment=KUBELET_IMAGE_URL=docker://gcr.io/google_containers/hyperkube
+        Environment="RKT_RUN_ARGS=--volume resolv,kind=host,source=/etc/resolv.conf --mount volume=resolv,target=/etc/resolv.conf --insecure-options=image"
         ExecStart=/usr/lib/coreos/kubelet-wrapper \
           --allow-privileged=true \
           --api-servers=https://${master_ip}:443 \
