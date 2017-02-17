@@ -37,6 +37,7 @@ coreos:
         - name: 50-network-config.conf
           content: |
             [Service]
+            Environment=ETCD_SSL_DIR=/etc/etcd2/ssl
             Environment=ETCDCTL_CA_FILE=/etc/etcd2/ssl/etcd-ca.pem
             Environment=ETCDCTL_CERT_FILE=/etc/etcd2/ssl/etcd-client.pem
             Environment=ETCDCTL_KEY_FILE=/etc/etcd2/ssl/etcd-client-key.pem

@@ -34,6 +34,10 @@ coreos:
           content: |
             [Service]
             ExecStartPre=/opt/kaws/decrypt-pki
+        - name: 50-network-config.conf
+          content: |
+            [Service]
+            Environment=ETCD_SSL_DIR=/etc/etcd2/ssl
     - name: kubelet.service
       command: start
       drop-ins:
