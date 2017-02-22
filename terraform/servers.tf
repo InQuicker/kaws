@@ -34,7 +34,6 @@ resource "aws_instance" "etcd_01" {
 
 resource "aws_instance" "etcd_02" {
   key_name = "jimmy"
-  depends_on = ["null_resource.generate_pki"]
   ami = "${var.coreos_ami}"
   associate_public_ip_address = true
   availability_zone = "${var.availability_zone}"
@@ -53,7 +52,6 @@ resource "aws_instance" "etcd_02" {
 
 resource "aws_instance" "etcd_03" {
   key_name = "jimmy"
-  depends_on = ["null_resource.generate_pki"]
   ami = "${var.coreos_ami}"
   associate_public_ip_address = true
   availability_zone = "${var.availability_zone}"
@@ -91,12 +89,6 @@ resource "aws_launch_configuration" "k8s_masters" {
 }
 
 resource "aws_autoscaling_group" "k8s_masters" {
-  depends_on = [
-    "aws_instance.etcd_01",
-    "aws_instance.etcd_02",
-    "aws_instance.etcd_03",
-    "aws_internet_gateway.outgoing",
-  ]
   health_check_grace_period = 300
   health_check_type = "ELB"
   launch_configuration = "${aws_launch_configuration.k8s_masters.name}"
@@ -144,7 +136,6 @@ resource "aws_launch_configuration" "k8s_nodes" {
 }
 
 resource "aws_autoscaling_group" "k8s_nodes" {
-  depends_on = ["aws_autoscaling_group.k8s_masters", "aws_internet_gateway.outgoing"]
   health_check_grace_period = 300
   health_check_type = "ELB"
   launch_configuration = "${aws_launch_configuration.k8s_nodes.name}"

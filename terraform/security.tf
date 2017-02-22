@@ -268,9 +268,12 @@ resource "aws_iam_role_policy" "k8s_node" {
 }
 
 resource "aws_kms_key" "pki" {
-  depends_on = ["aws_iam_role.k8s_master", "aws_iam_role.k8s_node"]
   description = "kaws ${var.cluster} etcd and k8s PKI"
   policy = "${data.aws_iam_policy_document.kms_key.json}"
+
+  provisioner "local-exec" {
+    command = "kaws cluster genpki ${var.cluster} --domain ${var.domain} --kms-key ${aws_kms_key.pki.key_id} --region ${var.region}"
+  }
 }
 
 resource "aws_kms_alias" "pki" {
