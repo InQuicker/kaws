@@ -1,4 +1,4 @@
-TAG = 0.6.0
+TAG = 0.6.1
 
 all: dist
 
