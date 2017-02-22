@@ -15,7 +15,7 @@ impl<'a> Repository<'a> {
         Repository {
             name: matches.value_of("name").expect("clap should have required name"),
             terraform_source: matches.value_of("terraform-source").unwrap_or(
-                concat!("github.com/InQuicker/kaws//terraform?ref=v", env!("CARGO_PKG_VERSION")),
+                concat!("github.com/InQuicker/kaws//terraform?ref=", env!("CARGO_PKG_VERSION")),
             ),
         }
     }
