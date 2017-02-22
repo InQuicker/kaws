@@ -34,7 +34,7 @@ FLAGS:
     -V, --version    Prints version information
 
 OPTIONS:
-    -g, --group <group>    A Kubernetes groups this user belongs to; this option can be specified more than once
+    -g, --group <group>...    A Kubernetes groups this user belongs to; this option can be specified more than once
 
 ARGS:
     <cluster>    The cluster the new administrator should be able to access
@@ -43,8 +43,8 @@ ARGS:
 
 Creates the following files:
 
-* clusters/CLUSTER/NAME-key.pem: The admin's private key
-* clusters/CLUSTER/NAME-csr.pem: The certificate signing request
+* clusters/CLUSTER/NAME-key.pem: The admin's unencrypted private key
+* clusters/CLUSTER/NAME-csr.pem: The admin's certificate signing request
 
 Generated files are only valid for the specified cluster.
 The private key should not be checked into Git.
@@ -68,9 +68,9 @@ ARGS:
 
 The following files are expected by this command:
 
-* clusters/CLUSTER/ca.pem: The CA certificate
-* clusters/CLUSTER/NAME.pem: The client certificate
-* clusters/CLUSTER/NAME-key.pem: The admin's private key
+* clusters/CLUSTER/k8s-ca.pem: The k8s CA certificate
+* clusters/CLUSTER/NAME.pem: The admin's client certificate
+* clusters/CLUSTER/NAME-key.pem: The admin's unencrypted private key
 
 ### sign
 
@@ -78,19 +78,19 @@ The following files are expected by this command:
 
 ```
 USAGE:
-    kaws admin sign [FLAGS] <cluster> <name>
+    kaws admin install <cluster> <name>
 
 FLAGS:
     -h, --help       Prints help information
     -V, --version    Prints version information
 
 ARGS:
-    <cluster>    The name of the cluster the certificate will be valid for
-    <name>       The new administrator's name
+    <cluster>    The cluster to configure
+    <name>       The name of the administrator whose credentials are being installed
 ```
 
 The following files are expected by this command:
 
-* clusters/CLUSTER/ca.pem: The CA certificate
-* clusters/CLUSTER/ca-key-encrypted.base64: The KMS-encrypted CA private key
+* clusters/CLUSTER/k8s-ca.pem: The CA certificate
+* clusters/CLUSTER/k8s-ca-key-encrypted.base64: The KMS-encrypted CA private key
 * clusters/CLUSTER/NAME-csr.pem: The requesting administrator's CSR

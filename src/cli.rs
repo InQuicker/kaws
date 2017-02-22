@@ -47,9 +47,9 @@ fn admin_create<'a, 'b>() -> App<'a, 'b> {
         )
         .after_help(
             "\nCreates the following files:\n\n\
-            * clusters/CLUSTER/NAME-key.pem: The admin's private key\n\
-            * clusters/CLUSTER/NAME-csr.pem: The certificate signing request\n\n\
-            Generated files are only valid for the specified cluster."
+            * clusters/CLUSTER/NAME-key.pem: The admin's unencrypted private key\n\
+            * clusters/CLUSTER/NAME-csr.pem: The admin's certificate signing request\n\n\
+            Generated files are only valid for the specified cluster. The private key should not be checked into Git."
         )
 }
 
@@ -66,13 +66,13 @@ fn admin_install<'a, 'b>() -> App<'a, 'b> {
             Arg::with_name("name")
                 .index(2)
                 .required(true)
-                .help("The new administrator's name")
+                .help("The name of the administrator whose credentials are being installed")
         )
         .after_help(
             "\nThe following files are expected by this command:\n\n\
-            * clusters/CLUSTER/ca.pem: The CA certificate\n\
-            * clusters/CLUSTER/NAME.pem: The client certificate\n\
-            * clusters/CLUSTER/NAME-key.pem: The admin's private key"
+            * clusters/CLUSTER/k8s-ca.pem: The k8s CA certificate\n\
+            * clusters/CLUSTER/NAME.pem: The admin's client certificate\n\
+            * clusters/CLUSTER/NAME-key.pem: The admin's unencrypted private key"
         )
 }
 
@@ -93,8 +93,8 @@ fn admin_sign<'a, 'b>() -> App<'a, 'b> {
         )
         .after_help(
             "\nThe following files are expected by this command:\n\n\
-            * clusters/CLUSTER/ca.pem: The CA certificate\n\
-            * clusters/CLUSTER/ca-key-encrypted.base64: The KMS-encrypted CA private key\n\
+            * clusters/CLUSTER/k8s-ca.pem: The CA certificate\n\
+            * clusters/CLUSTER/k8s-ca-key-encrypted.base64: The KMS-encrypted CA private key\n\
             * clusters/CLUSTER/NAME-csr.pem: The requesting administrator's CSR"
         )
 }
