@@ -11,11 +11,33 @@ Specifically, kaws creates Kubernetes clusters in AWS using [CoreOS](https://cor
 
 kaws has not yet reached version 1.0, and is not recommended for production usage until it has.
 In accordance with [Semantic Versioning](http://semver.org/), while kaws is < 1.0, backwards incompatible changes may occur.
-Major expected changes include using rkt as the container runtime for Kubernetes.
 See the [issues](https://github.com/InQuicker/kaws/issues) for details.
+
+The CoreOS and Kubernetes teams have plans for Kubernetes to be "self-hosting" in the future.
+If and when this vision is complete, there won't need to be such tight coupling between infrastructure provisioning and Kubernetes tooling.
+At that point, kaws (and likely kube-aws, see the next section) may be retired.
+See [Self-Hosted Kubernetes](https://coreos.com/blog/self-hosted-kubernetes.html) and [bootkube](https://github.com/kubernetes-incubator/bootkube) for more information.
 
 **kaws has not been reviewed by security professionals.**
 For information about the threat model of kaws, see the [security](docs/concepts/security.md) document.
+
+## Similar tools
+
+When kaws was originally created, none of the following tools existed, which is why we chose to develop it.
+Since then, these tools have been released publicly.
+They are each developed by larger teams and with broader use cases in mind.
+kaws is still used by InQuicker because it works the best with our particular configuration.
+However, you should consider these other tools instead, if they fit your needs:
+
+* [kube-aws](https://github.com/coreos/kube-aws) from CoreOS.
+  This is the most similar to kaws, but does not use Terraform.
+* [kops](https://github.com/kubernetes/kops) from Kubernetes.
+  Supports exporting configuration to Terraform format, but is not built around a Terraform-based infrastructure.
+  Does not default to CoreOS servers.
+  Unclear what the relationship is with kubeadm, since both projects are under the Kubernetes organization.
+* [kubeadm](https://kubernetes.io/docs/getting-started-guides/kubeadm/) from Kubernetes.
+  An alpha-status tool included with the Kubernetes distribution itself.
+  Does not handle the infrastructure Kubernetes is running on.
 
 ## Synopsis
 
@@ -45,22 +67,22 @@ Start by creating a new repository with the `init` command.
 
 ## Supported platforms
 
-At this time, kaws has only been developed for and tested on OS X. Support for Linux is planned.
+At this time, kaws has only been developed for and tested on macOS.
 
 ## Installing dependencies
 
 kaws requires the following other programs to be available on your system:
 
 * [Terraform](https://terraform.io/), version 0.8 or greater
-* [OpenSSL](https://www.openssl.org/)
+* [cfssl](https://github.com/cloudflare/cfssl)
 * [kubectl](http://kubernetes.io/), version 1.5 or greater
 
-### OS X
+### macOS
 
 All the dependencies can be installed with [Homebrew](http://brew.sh/):
 
 ```
-brew install terraform openssl kubernetes-cli
+brew install terraform cfssl kubernetes-cli
 ```
 
 ## Installing kaws
