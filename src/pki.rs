@@ -4,7 +4,7 @@ use std::process::{Command, Stdio};
 
 use hyper::Client;
 use rusoto::ChainProvider;
-use serde_json::{Value, from_slice, to_vec};
+use serde_json::{from_slice, to_vec};
 use tempdir::TempDir;
 
 use encryption::Encryptor;
@@ -332,7 +332,11 @@ impl CertificateSigningRequest {
                     .expect("names should be an array");
 
             for group in groups {
-                names.push(Value::String(group.to_string()));
+                names.push(
+                    json!({
+                        "O": group,
+                    })
+                );
             }
         }
 
