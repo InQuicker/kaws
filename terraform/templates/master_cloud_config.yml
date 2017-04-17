@@ -74,6 +74,21 @@ coreos:
         WantedBy=multi-user.target
 ssh_authorized_keys: [${ssh_public_keys}]
 write_files:
+  - path: /etc/kubernetes/manifests/kaws-rbac.yml
+    content: |
+      apiVersion: rbac.authorization.k8s.io/v1beta1
+      kind: RoleBinding
+      metadata:
+        name: kaws:kube-system
+        namespace: kube-system
+      subjects:
+        - kind: ServiceAccount
+          name: default
+          namespace: kube-system
+      roleRef:
+        kind: ClusterRole
+        name: cluster-admin
+        apiGroup: rbac.authorization.k8s.io
   - path: /etc/kubernetes/manifests/kube-apiserver.yml
     content: |
       apiVersion: v1
@@ -89,12 +104,11 @@ write_files:
             command:
               - /hyperkube
               - apiserver
-              - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota
+              - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,ResourceQuota,DefaultTolerationSeconds
               - --advertise-address=$private_ipv4
               - --allow-privileged=true
               - --anonymous-auth=false
               - --authorization-mode=RBAC
-              - --authorization-rbac-super-user=${rbac_super_user}
               - --bind-address=0.0.0.0
               - --client-ca-file=/etc/kubernetes/ssl/ca.pem
               - --cloud-provider=aws
@@ -104,7 +118,7 @@ write_files:
               - --etcd-servers=https://10.0.1.4:2379,https://10.0.1.5:2379,https://10.0.1.6:2379
               - --external-hostname=https://kubernetes.${domain}
               - --insecure-bind-address=0.0.0.0
-              - --runtime-config=batch/v2alpha1=true,rbac.authorization.k8s.io/v1alpha1=true
+              - --runtime-config=batch/v2alpha1=true
               - --secure-port=443
               - --service-account-key-file=/etc/kubernetes/ssl/master-key.pem
               - --service-cluster-ip-range=10.3.0.1/24
