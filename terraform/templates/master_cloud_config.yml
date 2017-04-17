@@ -122,6 +122,8 @@ write_files:
               - --secure-port=443
               - --service-account-key-file=/etc/kubernetes/ssl/master-key.pem
               - --service-cluster-ip-range=10.3.0.1/24
+              - --storage-backend=etcd2
+              - --storage-media-type=application/json
               - --tls-cert-file=/etc/kubernetes/ssl/master.pem
               - --tls-private-key-file=/etc/kubernetes/ssl/master-key.pem
             ports:
