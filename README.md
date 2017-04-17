@@ -75,6 +75,10 @@ kaws requires the following other programs to be available on your system:
 
 * [Terraform](https://terraform.io/), version 0.8 or greater
 * [cfssl](https://github.com/cloudflare/cfssl)
+  **Important**: cfssl must be built with Go 1.8+.
+  If you have Go 1.8+ installed, you can install cfssl with `go get -u github.com/cloudflare/cfssl`.
+  Make sure `$GOPATH/bin` is in your PATH.
+  See https://github.com/InQuicker/kaws/issues/12.
 * [kubectl](http://kubernetes.io/), version 1.5 or greater
 
 ### macOS
