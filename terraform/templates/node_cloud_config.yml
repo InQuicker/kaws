@@ -80,6 +80,7 @@ write_files:
         namespace: kube-system
       spec:
         hostNetwork: true
+        serviceAccountName: kaws:kube-proxy
         containers:
           - name: kube-proxy
             image: gcr.io/google_containers/hyperkube:v${version}

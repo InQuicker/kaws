@@ -76,18 +76,65 @@ ssh_authorized_keys: [${ssh_public_keys}]
 write_files:
   - path: /etc/kubernetes/manifests/kaws-rbac.yml
     content: |
+      ---
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: kaws:kube-controller-manager
+        namespace: kube-system
+      ---
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: kaws:kube-proxy
+        namespace: kube-system
+      ---
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: kaws:kube-scheduler
+        namespace: kube-system
+      ---
       apiVersion: rbac.authorization.k8s.io/v1beta1
       kind: RoleBinding
       metadata:
-        name: kaws:kube-system
+        name: kaws:kube-controller-manager
         namespace: kube-system
       subjects:
         - kind: ServiceAccount
-          name: default
+          name: kaws:kube-controller-manager
           namespace: kube-system
       roleRef:
         kind: ClusterRole
-        name: cluster-admin
+        name: system:kube-controller-manager
+        apiGroup: rbac.authorization.k8s.io
+      ---
+      apiVersion: rbac.authorization.k8s.io/v1beta1
+      kind: RoleBinding
+      metadata:
+        name: kaws:kube-proxy
+        namespace: kube-system
+      subjects:
+        - kind: ServiceAccount
+          name: kaws:kube-proxy
+          namespace: kube-system
+      roleRef:
+        kind: ClusterRole
+        name: system:node-proxier
+        apiGroup: rbac.authorization.k8s.io
+      ---
+      apiVersion: rbac.authorization.k8s.io/v1beta1
+      kind: RoleBinding
+      metadata:
+        name: kaws:kube-scheduler
+        namespace: kube-system
+      subjects:
+        - kind: ServiceAccount
+          name: kaws:kube-scheduler
+          namespace: kube-system
+      roleRef:
+        kind: ClusterRole
+        name: system:kube-scheduler
         apiGroup: rbac.authorization.k8s.io
   - path: /etc/kubernetes/manifests/kube-apiserver.yml
     content: |
@@ -162,6 +209,7 @@ write_files:
         namespace: kube-system
       spec:
         hostNetwork: true
+        serviceAccountName: kaws:kube-proxy
         containers:
           - name: kube-proxy
             image: gcr.io/google_containers/hyperkube:v${version}
@@ -188,6 +236,8 @@ write_files:
         name: kube-controller-manager
         namespace: kube-system
       spec:
+        hostNetwork: true
+        serviceAccountName: kaws:kube-controller-manager
         containers:
           - name: kube-controller-manager
             image: gcr.io/google_containers/hyperkube:v${version}
@@ -216,7 +266,6 @@ write_files:
               - mountPath: /etc/ssl/certs
                 name: ssl-certs-host
                 readOnly: true
-        hostNetwork: true
         volumes:
           - hostPath:
               path: /etc/kubernetes/ssl
@@ -233,6 +282,7 @@ write_files:
         namespace: kube-system
       spec:
         hostNetwork: true
+        serviceAccountName: kaws:kube-scheduler
         containers:
           - name: kube-scheduler
             image: gcr.io/google_containers/hyperkube:v${version}
