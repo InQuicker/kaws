@@ -87,7 +87,6 @@ data "template_file" "master_cloud_config" {
     k8s_master_cert = "${base64encode(file("clusters/${var.cluster}/k8s-master.pem"))}",
     k8s_master_key = "${file("clusters/${var.cluster}/k8s-master-key-encrypted.base64")}",
     kms_key_id = "${aws_kms_key.pki.key_id}"
-    rbac_super_user = "${var.rbac_super_user}"
     region = "${var.region}"
     ssh_public_keys = "${join(", ", var.ssh_keys)}"
     version = "${var.version}"

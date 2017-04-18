@@ -48,10 +48,6 @@ variable "propagating_vgws" {
   type = "list"
 }
 
-variable "rbac_super_user" {
-  description = "The Kubernetes username of an administrator who will set up initial RBAC policies."
-}
-
 variable "region" {
   description = "The AWS Region where the cluster will live, e.g. `us-east-1`"
 }

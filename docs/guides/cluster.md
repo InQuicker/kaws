@@ -9,52 +9,8 @@ The process of creating a cluster involves the following steps:
 3.  Create the initial files for the new cluster with the [kaws cluster init](../references/cluster.md#init) command.
 4.  Optional: Use the [kaws cluster plan](../references/cluster.md#plan) command to display the Terraform plan and see what AWS resources will be created.
 5.  Run [kaws cluster apply](../references/cluster.md#apply) to apply the Terraform plan, creating the cluster. This will take several minutes.
-6.  [Create an administrator](admin.md) with a name matching the name specified by the `--rbac-super-user` option to `kaws cluster init`.
-7.  Using the newly created administrator's credentials, create RBAC resources that will allow Kubernetes components to communicate with the Kubernetes API.
-    The following resources will work for this purpose, though you may want to use something more specifically tailored for your purposes:
 
-    ``` yaml
-    ---
-    kind: "ClusterRole"
-    apiVersion: "rbac.authorization.k8s.io/v1alpha1"
-    metadata:
-      name: "kube-system-components"
-    rules:
-      - apiGroups:
-          - "*"
-        resources:
-          - "*"
-        verbs:
-          - "*"
-      - nonResourceURLs:
-          - "*"
-        verbs:
-          - "*"
-    ---
-    kind: "ClusterRoleBinding"
-    apiVersion: "rbac.authorization.k8s.io/v1alpha1"
-    metadata:
-      name: "kube-system-components"
-    subjects:
-      - kind: "User"
-        name: "kaws-k8s-master-CLUSTER"
-      - kind: "User"
-        name: "kaws-k8s-master-CLUSTER"
-      - kind: "ServiceAccount"
-        name: "default"
-        namespace: "default"
-      - kind: "ServiceAccount"
-        name: "default"
-        namespace: "kube-system"
-    roleRef:
-      kind: "ClusterRole"
-      apiGroup: "rbac.authorization.k8s.io"
-      name: "kube-system-components"
-    ```
-
-    Replace "CLUSTER" with the name of the cluster you provided to `kaws cluster init`.
-    Create the resources with `kubectl create -f FILE` where FILE is the path to a file with the above contents.
-    Once these RBAC resources have been created, the Kubernetes nodes will be able to register themselves with the Kubernetes API, and will then show up in the output of `kubectl get nodes`.
+You can then move on to [creating an administrator](admin.md) and using the cluster.
 
 ## Destroying a cluster
 

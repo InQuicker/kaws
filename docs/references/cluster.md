@@ -99,7 +99,7 @@ This command is executed by a Terraform provisioner during `kaws cluster apply` 
 
 ```
 USAGE:
-    kaws cluster init <cluster> --aws-account-id <aws-account-id> --ami <ami> --availability-zone <availability-zone> --domain <domain> --masters-max-size <masters-max-size> --masters-min-size <masters-min-size> --nodes-max-size <nodes-max-size> --nodes-min-size <nodes-min-size> --rbac-super-user <rbac-super-user> --region <region> --iam-user <iam-user>... --instance-size <size> --ssh-key <ssh-key> --kubernetes-version <k8s-version> --zone-id <zone-id>
+    kaws cluster init <cluster> --aws-account-id <aws-account-id> --ami <ami> --availability-zone <availability-zone> --domain <domain> --masters-max-size <masters-max-size> --masters-min-size <masters-min-size> --nodes-max-size <nodes-max-size> --nodes-min-size <nodes-min-size> --region <region> --iam-user <iam-user>... --instance-size <size> --ssh-key <ssh-key> --kubernetes-version <k8s-version> --zone-id <zone-id>
 
 FLAGS:
     -h, --help       Prints help information
@@ -116,7 +116,6 @@ OPTIONS:
         --masters-min-size <masters-min-size>      The minimum number of EC2 instances the Kubernetes masters may autoscale to
         --nodes-max-size <nodes-max-size>          The maximum number of EC2 instances the Kubernetes nodes may autoscale to
         --nodes-min-size <nodes-min-size>          The minimum number of EC2 instances the Kubernetes nodes may autoscale to
-        --rbac-super-user <rbac-super-user>        The Kubernetes username of an administrator who will set up initial RBAC policies, e.g. "jimmy"
     -r, --region <region>                          AWS Region to create the resources in, e.g. "us-east-1"
     -s, --instance-size <size>                     EC2 instance size to use for all instances, e.g. "m3.medium"
     -K, --ssh-key <ssh-key>...                     SSH public key to add to ~/.ssh/authorized_keys on each server; this option can be specified more than once

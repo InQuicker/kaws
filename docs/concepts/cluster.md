@@ -19,3 +19,4 @@ Each Kubernetes cluster created by kaws:
 * Accepts external traffic to Kubernetes nodes only on port 80 and 443 (though you should use HSTS to redirect requests from 80 to 443)
 * Has a DNS record for the Kubernetes API at kubernetes.example.com, where example.com is a value set at cluster creation time
 * Has a DNS record for the bastion SSH server at bastion.example.com, where example.com is a value set at cluster creation time
+* Enables the `batch/v2alpha1` API for the CronJob resource.

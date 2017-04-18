@@ -34,7 +34,6 @@ pub struct NewCluster<'a> {
     masters_min_size: &'a str,
     nodes_max_size: &'a str,
     nodes_min_size: &'a str,
-    rbac_super_user: &'a str,
     ssh_keys: Vec<&'a str>,
     zone_id: &'a str,
 }
@@ -310,7 +309,6 @@ impl<'a> NewCluster<'a> {
             nodes_min_size: matches
                 .value_of("nodes-min-size")
                 .expect("missing nodes-min-size"),
-            rbac_super_user: matches.value_of("rbac-super-user").expect("missing rbac-super-user"),
             ssh_keys: matches.values_of("ssh-key").expect("missing ssh-keys").collect(),
             zone_id: matches.value_of("zone-id").expect("missing zone-id"),
         }
@@ -365,7 +363,6 @@ kaws_masters_min_size = \"{}\"
 kaws_nodes_max_size = \"{}\"
 kaws_nodes_min_size = \"{}\"
 kaws_propagating_vgws = []
-kaws_rbac_super_user = \"{}\"
 kaws_region = \"{}\"
 kaws_ssh_keys = [{}]
 kaws_version = \"{}\"
@@ -384,7 +381,6 @@ kaws_zone_id = \"{}\"
                 self.masters_min_size,
                 self.nodes_max_size,
                 self.nodes_min_size,
-                self.rbac_super_user,
                 self.cluster.region(),
                 self.ssh_keys.iter().map(|ssh_key| {
                     format!("\"{}\"", ssh_key)
