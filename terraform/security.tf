@@ -205,22 +205,22 @@ data "aws_iam_policy_document" "kms_key" {
 
 resource "aws_iam_instance_profile" "bastion" {
   name = "kaws-bastion-${var.cluster}"
-  roles = ["${aws_iam_role.bastion.name}"]
+  role = "${aws_iam_role.bastion.name}"
 }
 
 resource "aws_iam_instance_profile" "etcd" {
   name = "kaws-etcd-${var.cluster}"
-  roles = ["${aws_iam_role.etcd.name}"]
+  role = "${aws_iam_role.etcd.name}"
 }
 
 resource "aws_iam_instance_profile" "k8s_master" {
   name = "kaws-k8s-master-${var.cluster}"
-  roles = ["${aws_iam_role.k8s_master.name}"]
+  role = "${aws_iam_role.k8s_master.name}"
 }
 
 resource "aws_iam_instance_profile" "k8s_node" {
   name = "kaws-k8s-node-${var.cluster}"
-  roles = ["${aws_iam_role.k8s_node.name}"]
+  role = "${aws_iam_role.k8s_node.name}"
 }
 
 resource "aws_iam_role" "bastion" {
