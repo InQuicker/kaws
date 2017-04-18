@@ -161,10 +161,12 @@ impl<'a> ExistingCluster<'a> {
                 "10.0.1.5",
                 "10.0.1.6",
             ]),
+            None,
         )?;
 
         let (client_cert, client_key) = ca.generate_cert(
             &format!("kaws-etcd-client-{}", self.cluster.name),
+            None,
             None,
         )?;
 
@@ -207,6 +209,7 @@ impl<'a> ExistingCluster<'a> {
                 "10.0.1.5",
                 "10.0.1.6",
             ]),
+            None,
         )?;
 
         let mut encryptor = Encryptor::new(
@@ -243,11 +246,13 @@ impl<'a> ExistingCluster<'a> {
                 &format!("kubernetes.{}", self.domain),
                 "10.3.0.1",
             ]),
+            None,
         )?;
 
         let (node_cert, node_key) = ca.generate_cert(
             &format!("kaws-k8s-node-{}", self.cluster.name),
             None,
+            Some(&["system:nodes"]),
         )?;
 
         let mut encryptor = Encryptor::new(

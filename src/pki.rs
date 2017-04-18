@@ -131,8 +131,33 @@ impl CertificateAuthority {
         }
     }
 
-    pub fn generate_cert(&self, common_name: &str, san: Option<&[&str]>)
+    pub fn generate_cert(&self, common_name: &str, san: Option<&[&str]>, groups: Option<&[&str]>)
     -> Result<(Certificate, PrivateKey), KawsError> {
+        let mut csr_config = json!({
+            "CN": common_name,
+            "key": {
+                "algo": "rsa",
+                "size": 2048,
+            },
+            "names": [],
+        });
+
+        if let Some(groups) = groups {
+            let mut names = csr_config
+                    .get_mut("names")
+                    .expect("csr_config should have a names field")
+                    .as_array_mut()
+                    .expect("names should be an array");
+
+            for group in groups {
+                names.push(
+                    json!({
+                        "O": group,
+                    })
+                );
+            }
+        }
+
         let (tempdir, cert_path, key_path) = self.temporary_write()?;
 
         let mut command = Command::new("cfssl");
@@ -162,14 +187,6 @@ impl CertificateAuthority {
 
         match child.stdin.as_mut() {
             Some(stdin) => {
-                let csr_config = json!({
-                    "CN": common_name,
-                    "key": {
-                        "algo": "rsa",
-                        "size": 2048,
-                    },
-                });
-
                 stdin.write_all(&to_vec(&csr_config)?)?;
             }
             None => {
