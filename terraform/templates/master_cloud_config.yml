@@ -67,7 +67,8 @@ coreos:
           --kubeconfig=/etc/kubernetes/master-kubeconfig.yml \
           --logtostderr=true \
           --pod-manifest-path=/etc/kubernetes/manifests \
-          --register-schedulable=false
+          --register-schedulable=false \
+          --require-kubeconfig=true
         Restart=always
         RestartSec=10
         [Install]
