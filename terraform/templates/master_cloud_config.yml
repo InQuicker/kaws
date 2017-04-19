@@ -81,19 +81,19 @@ write_files:
       apiVersion: v1
       kind: ServiceAccount
       metadata:
-        name: kaws:kube-controller-manager
+        name: kaws-kube-controller-manager
         namespace: kube-system
       ---
       apiVersion: v1
       kind: ServiceAccount
       metadata:
-        name: kaws:kube-proxy
+        name: kaws-kube-proxy
         namespace: kube-system
       ---
       apiVersion: v1
       kind: ServiceAccount
       metadata:
-        name: kaws:kube-scheduler
+        name: kaws-kube-scheduler
         namespace: kube-system
       ---
       apiVersion: rbac.authorization.k8s.io/v1beta1
@@ -103,7 +103,7 @@ write_files:
         namespace: kube-system
       subjects:
         - kind: ServiceAccount
-          name: kaws:kube-controller-manager
+          name: kaws-kube-controller-manager
           namespace: kube-system
       roleRef:
         kind: ClusterRole
@@ -117,7 +117,7 @@ write_files:
         namespace: kube-system
       subjects:
         - kind: ServiceAccount
-          name: kaws:kube-proxy
+          name: kaws-kube-proxy
           namespace: kube-system
       roleRef:
         kind: ClusterRole
@@ -131,7 +131,7 @@ write_files:
         namespace: kube-system
       subjects:
         - kind: ServiceAccount
-          name: kaws:kube-scheduler
+          name: kaws-kube-scheduler
           namespace: kube-system
       roleRef:
         kind: ClusterRole
@@ -210,7 +210,7 @@ write_files:
         namespace: kube-system
       spec:
         hostNetwork: true
-        serviceAccountName: kaws:kube-proxy
+        serviceAccountName: kaws-kube-proxy
         containers:
           - name: kube-proxy
             image: gcr.io/google_containers/hyperkube:v${version}
@@ -238,7 +238,7 @@ write_files:
         namespace: kube-system
       spec:
         hostNetwork: true
-        serviceAccountName: kaws:kube-controller-manager
+        serviceAccountName: kaws-kube-controller-manager
         containers:
           - name: kube-controller-manager
             image: gcr.io/google_containers/hyperkube:v${version}
@@ -284,7 +284,7 @@ write_files:
         namespace: kube-system
       spec:
         hostNetwork: true
-        serviceAccountName: kaws:kube-scheduler
+        serviceAccountName: kaws-kube-scheduler
         containers:
           - name: kube-scheduler
             image: gcr.io/google_containers/hyperkube:v${version}
