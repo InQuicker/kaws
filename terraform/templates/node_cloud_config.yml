@@ -59,7 +59,7 @@ coreos:
           --cluster-dns=10.3.0.10 \
           --cluster-domain=cluster.local \
           --hostname-override=$private_ipv4 \
-          --kubeconfig=/etc/kubernetes/node-kubeconfig.yml \
+          --kubeconfig=/etc/kubernetes/kubeconfig.yml \
           --logtostderr=true \
           --pod-manifest-path=/etc/kubernetes/manifests \
           --require-kubeconfig=true \
@@ -71,48 +71,7 @@ coreos:
         WantedBy=multi-user.target
 ssh_authorized_keys: [${ssh_public_keys}]
 write_files:
-  - path: /etc/kubernetes/manifests/kube-proxy.yml
-    content: |
-      apiVersion: v1
-      kind: Pod
-      metadata:
-        name: kube-proxy
-        namespace: kube-system
-      spec:
-        hostNetwork: true
-        serviceAccountName: kaws-kube-proxy
-        containers:
-          - name: kube-proxy
-            image: gcr.io/google_containers/hyperkube:v${version}
-            command:
-              - /hyperkube
-              - proxy
-              - --healthz-bind-address=0.0.0.0
-              - --kubeconfig=/etc/kubernetes/node-kubeconfig.yml
-              - --master=https://${master_ip}:443
-              - --proxy-mode=iptables
-            securityContext:
-              privileged: true
-            volumeMounts:
-              - mountPath: /etc/ssl/certs
-                name: ssl-certs
-              - mountPath: /etc/kubernetes/node-kubeconfig.yml
-                name: kubeconfig
-                readOnly: true
-              - mountPath: /etc/kubernetes/ssl
-                name: etc-kube-ssl
-                readOnly: true
-        volumes:
-          - name: ssl-certs
-            hostPath:
-              path: /usr/share/ca-certificates
-          - name: kubeconfig
-            hostPath:
-              path: /etc/kubernetes/node-kubeconfig.yml
-          - name: etc-kube-ssl
-            hostPath:
-              path: /etc/kubernetes/ssl
-  - path: /etc/kubernetes/node-kubeconfig.yml
+  - path: /etc/kubernetes/kubeconfig.yml
     content: |
       apiVersion: v1
       kind: Config
@@ -124,11 +83,11 @@ write_files:
       contexts:
         - context:
             cluster: local
-            user: node
-          name: node-context
-      current-context: node-context
+            user: local
+          name: local
+      current-context: local
       users:
-        - name: node
+        - name: local
           user:
             client-certificate: /etc/kubernetes/ssl/node.pem
             client-key: /etc/kubernetes/ssl/node-key.pem

@@ -64,7 +64,7 @@ coreos:
           --cluster-dns=10.3.0.10 \
           --cluster-domain=cluster.local \
           --hostname-override=$private_ipv4 \
-          --kubeconfig=/etc/kubernetes/master-kubeconfig.yml \
+          --kubeconfig=/etc/kubernetes/kubeconfig.yml \
           --logtostderr=true \
           --pod-manifest-path=/etc/kubernetes/manifests \
           --register-schedulable=false \
@@ -75,35 +75,43 @@ coreos:
         WantedBy=multi-user.target
 ssh_authorized_keys: [${ssh_public_keys}]
 write_files:
-  - path: /etc/kubernetes/manifests/kaws-rbac.yml
+  - path: /etc/kubernetes/manifests/rbac.yml
     content: |
       ---
       apiVersion: v1
       kind: ServiceAccount
       metadata:
-        name: kaws-kube-controller-manager
+        name: kube-controller-manager
         namespace: kube-system
+        annotations:
+          kaws.inquicker.com/managed: "true"
       ---
       apiVersion: v1
       kind: ServiceAccount
       metadata:
-        name: kaws-kube-proxy
+        name: kube-proxy
         namespace: kube-system
+        annotations:
+          kaws.inquicker.com/managed: "true"
       ---
       apiVersion: v1
       kind: ServiceAccount
       metadata:
-        name: kaws-kube-scheduler
+        name: kube-scheduler
         namespace: kube-system
+        annotations:
+          kaws.inquicker.com/managed: "true"
       ---
       apiVersion: rbac.authorization.k8s.io/v1beta1
       kind: RoleBinding
       metadata:
-        name: kaws:kube-controller-manager
+        name: kube-controller-manager
         namespace: kube-system
+        annotations:
+          kaws.inquicker.com/managed: "true"
       subjects:
         - kind: ServiceAccount
-          name: kaws-kube-controller-manager
+          name: kube-controller-manager
           namespace: kube-system
       roleRef:
         kind: ClusterRole
@@ -113,11 +121,13 @@ write_files:
       apiVersion: rbac.authorization.k8s.io/v1beta1
       kind: RoleBinding
       metadata:
-        name: kaws:kube-proxy
+        name: kube-proxy
         namespace: kube-system
+        annotations:
+          kaws.inquicker.com/managed: "true"
       subjects:
         - kind: ServiceAccount
-          name: kaws-kube-proxy
+          name: kube-proxy
           namespace: kube-system
       roleRef:
         kind: ClusterRole
@@ -127,11 +137,13 @@ write_files:
       apiVersion: rbac.authorization.k8s.io/v1beta1
       kind: RoleBinding
       metadata:
-        name: kaws:kube-scheduler
+        name: kube-scheduler
         namespace: kube-system
+        annotations:
+          kaws.inquicker.com/managed: "true"
       subjects:
         - kind: ServiceAccount
-          name: kaws-kube-scheduler
+          name: kube-scheduler
           namespace: kube-system
       roleRef:
         kind: ClusterRole
@@ -144,6 +156,8 @@ write_files:
       metadata:
         name: kube-apiserver
         namespace: kube-system
+        annotations:
+          kaws.inquicker.com/managed: "true"
       spec:
         hostNetwork: true
         containers:
@@ -203,42 +217,119 @@ write_files:
             name: ssl-certs-host
   - path: /etc/kubernetes/manifests/kube-proxy.yml
     content: |
+      ---
       apiVersion: v1
-      kind: Pod
+      kind: ConfigMap
       metadata:
         name: kube-proxy
         namespace: kube-system
+        annotations:
+          kaws.inquicker.com/managed: "true"
+      data:
+        kubeconfig.yml: |
+          apiVersion: v1
+          kind: Config
+          clusters:
+            - cluster:
+                certificate-authority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                server: https://${master_ip}:443
+              name: local
+          contexts:
+            - context:
+                cluster: local
+                user: local
+              name: local
+          current-context: local
+          users:
+            - name: local
+              user:
+                tokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+      ---
+      apiVersion: extensions/v1beta1
+      kind: DaemonSet
+      metadata:
+        name: kube-proxy
+        namespace: kube-system
+        annotations:
+          kaws.inquicker.com/managed: "true"
       spec:
-        hostNetwork: true
-        serviceAccountName: kaws-kube-proxy
-        containers:
-          - name: kube-proxy
-            image: gcr.io/google_containers/hyperkube:v${version}
-            command:
-              - /hyperkube
-              - proxy
-              - --master=http://127.0.0.1:8080
-              - --proxy-mode=iptables
-            securityContext:
-              privileged: true
-            volumeMounts:
-              - mountPath: /etc/ssl/certs
+        selector:
+          matchLabels:
+            kaws-app: kube-proxy
+        template:
+          metadata:
+            labels:
+              kaws-app: kube-proxy
+            annotations:
+              kaws.inquicker.com/managed: "true"
+          spec:
+            hostNetwork: true
+            serviceAccountName: kube-proxy
+            containers:
+              - name: kube-proxy
+                image: gcr.io/google_containers/hyperkube:v${version}
+                command:
+                  - /hyperkube
+                  - proxy
+                  - --healthz-bind-address=0.0.0.0
+                  - --kubeconfig=/etc/kubernetes/kubeconfig.yml
+                  - --proxy-mode=iptables
+                securityContext:
+                  privileged: true
+                volumeMounts:
+                  - mountPath: /etc/ssl/certs
+                    name: ssl-certs-host
+                    readOnly: true
+                  - mountPath: /etc/kubernetes
+                    name: kubeconfig
+                    readOnly: true
+            volumes:
+              - hostPath:
+                  path: /usr/share/ca-certificates
                 name: ssl-certs-host
-                readOnly: true
-        volumes:
-          - hostPath:
-              path: /usr/share/ca-certificates
-            name: ssl-certs-host
+              - configMap:
+                  name: kube-proxy
+                name: kubeconfig
   - path: /etc/kubernetes/manifests/kube-controller-manager.yml
     content: |
+      ---
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: kube-controller-manager
+        namespace: kube-system
+        annotations:
+          kaws.inquicker.com/managed: "true"
+      data:
+        kubeconfig.yml: |
+          apiVersion: v1
+          kind: Config
+          clusters:
+            - cluster:
+                certificate-authority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                server: http://127.0.0.1:8080
+              name: local
+          contexts:
+            - context:
+                cluster: local
+                user: local
+              name: local
+          current-context: local
+          users:
+            - name: local
+              user:
+                tokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+      ---
       apiVersion: v1
       kind: Pod
       metadata:
         name: kube-controller-manager
         namespace: kube-system
+        annotations:
+          kaws.inquicker.com/managed: "true"
       spec:
         hostNetwork: true
-        serviceAccountName: kaws-kube-controller-manager
+        serviceAccountName: kube-controller-manager
         containers:
           - name: kube-controller-manager
             image: gcr.io/google_containers/hyperkube:v${version}
@@ -246,8 +337,8 @@ write_files:
               - /hyperkube
               - controller-manager
               - --cloud-provider=aws
+              - --kubeconfig=/etc/kubernetes/config/kubeconfig.yml
               - --leader-elect=true
-              - --master=http://127.0.0.1:8080
               - --root-ca-file=/etc/kubernetes/ssl/ca.pem
               - --service-account-private-key-file=/etc/kubernetes/ssl/master-key.pem
               - --use-service-account-credentials=true
@@ -268,6 +359,9 @@ write_files:
               - mountPath: /etc/ssl/certs
                 name: ssl-certs-host
                 readOnly: true
+              - mountPath: /etc/kubernetes/config
+                name: kubeconfig
+                readOnly: true
         volumes:
           - hostPath:
               path: /etc/kubernetes/ssl
@@ -275,23 +369,56 @@ write_files:
           - hostPath:
               path: /usr/share/ca-certificates
             name: ssl-certs-host
+          - configMap:
+              name: kube-proxy
+            name: kubeconfig
   - path: /etc/kubernetes/manifests/kube-scheduler.yml
     content: |
+      ---
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: kube-scheduler
+        namespace: kube-system
+        annotations:
+          kaws.inquicker.com/managed: "true"
+      data:
+        kubeconfig.yml: |
+          apiVersion: v1
+          kind: Config
+          clusters:
+            - cluster:
+                certificate-authority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                server: http://127.0.0.1:8080
+              name: local
+          contexts:
+            - context:
+                cluster: local
+                user: local
+              name: local
+          current-context: local
+          users:
+            - name: local
+              user:
+                tokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+      ---
       apiVersion: v1
       kind: Pod
       metadata:
         name: kube-scheduler
         namespace: kube-system
+        annotations:
+          kaws.inquicker.com/managed: "true"
       spec:
         hostNetwork: true
-        serviceAccountName: kaws-kube-scheduler
+        serviceAccountName: kube-scheduler
         containers:
           - name: kube-scheduler
             image: gcr.io/google_containers/hyperkube:v${version}
             command:
               - /hyperkube
               - scheduler
-              - --master=http://127.0.0.1:8080
+              - --kubeconfig=/etc/kubernetes/kubeconfig.yml
               - --leader-elect=true
             resources:
               requests:
@@ -303,7 +430,15 @@ write_files:
                 port: 10251
               initialDelaySeconds: 15
               timeoutSeconds: 15
-  - path: /etc/kubernetes/master-kubeconfig.yml
+            volumeMounts:
+              - mountPath: /etc/kubernetes
+                name: kubeconfig
+                readOnly: true
+        volumes:
+          - configMap:
+              name: kube-proxy
+            name: kubeconfig
+  - path: /etc/kubernetes/kubeconfig.yml
     content: |
       apiVersion: v1
       kind: Config
@@ -314,11 +449,11 @@ write_files:
       contexts:
         - context:
             cluster: local
-            user: master
-          name: master-context
-      current-context: master-context
+            user: local
+          name: local
+      current-context: local
       users:
-        - name: master
+        - name: local
   - path: /opt/kaws/decrypt-pki
     permissions: "0500"
     content: |
