@@ -9,7 +9,7 @@ The process of creating a cluster involves the following steps:
 3.  Create the initial files for the new cluster with the [kaws cluster init](../references/cluster.md#init) command.
 4.  Optional: Use the [kaws cluster plan](../references/cluster.md#plan) command to display the Terraform plan and see what AWS resources will be created.
 5.  Run [kaws cluster apply](../references/cluster.md#apply) to apply the Terraform plan, creating the cluster. This will take several minutes.
-6.  [Creating an administrator](admin.md) who belongs to the `system:masters` group.
+6.  [Create an administrator](admin.md) who belongs to the `system:masters` group.
 7.  Run `kubectly apply -f rbac.yml` where `rbac.yml` is a file with the following contents:
 
     ``` yaml
