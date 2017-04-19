@@ -60,11 +60,11 @@ coreos:
         Environment="RKT_RUN_ARGS=--volume resolv,kind=host,source=/etc/resolv.conf --mount volume=resolv,target=/etc/resolv.conf --insecure-options=image"
         ExecStart=/usr/lib/coreos/kubelet-wrapper \
           --allow-privileged=true \
-          --api-servers=http://127.0.0.1:8080 \
           --cloud-provider=aws \
           --cluster-dns=10.3.0.10 \
           --cluster-domain=cluster.local \
           --hostname-override=$private_ipv4 \
+          --kubeconfig=/etc/kubernetes/master-kubeconfig.yml \
           --logtostderr=true \
           --pod-manifest-path=/etc/kubernetes/manifests \
           --register-schedulable=false
@@ -302,6 +302,22 @@ write_files:
                 port: 10251
               initialDelaySeconds: 15
               timeoutSeconds: 15
+  - path: /etc/kubernetes/master-kubeconfig.yml
+    content: |
+      apiVersion: v1
+      kind: Config
+      clusters:
+        - name: local
+          cluster:
+            server: http://127.0.0.1:8080
+      contexts:
+        - context:
+            cluster: local
+            user: master
+          name: master-context
+      current-context: master-context
+      users:
+        - name: master
   - path: /opt/kaws/decrypt-pki
     permissions: "0500"
     content: |

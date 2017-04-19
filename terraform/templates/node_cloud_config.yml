@@ -55,7 +55,6 @@ coreos:
         Environment="RKT_RUN_ARGS=--volume resolv,kind=host,source=/etc/resolv.conf --mount volume=resolv,target=/etc/resolv.conf --insecure-options=image"
         ExecStart=/usr/lib/coreos/kubelet-wrapper \
           --allow-privileged=true \
-          --api-servers=https://${master_ip}:443 \
           --cloud-provider=aws \
           --cluster-dns=10.3.0.10 \
           --cluster-domain=cluster.local \
@@ -120,6 +119,7 @@ write_files:
         - name: local
           cluster:
             certificate-authority: /etc/kubernetes/ssl/ca.pem
+            server: https://${master_ip}:443
       contexts:
         - context:
             cluster: local
