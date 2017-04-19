@@ -9,8 +9,30 @@ The process of creating a cluster involves the following steps:
 3.  Create the initial files for the new cluster with the [kaws cluster init](../references/cluster.md#init) command.
 4.  Optional: Use the [kaws cluster plan](../references/cluster.md#plan) command to display the Terraform plan and see what AWS resources will be created.
 5.  Run [kaws cluster apply](../references/cluster.md#apply) to apply the Terraform plan, creating the cluster. This will take several minutes.
+6.  [Creating an administrator](admin.md) who belongs to the `system:masters` group.
+7.  Run `kubectly apply -f rbac.yml` where `rbac.yml` is a file with the following contents:
 
-You can then move on to [creating an administrator](admin.md) and using the cluster.
+    ``` yaml
+    kind: "RoleBinding"
+    apiVersion: "rbac.authorization.k8s.io/v1beta1"
+    metadata:
+      name: "kube-system-serviceaccount-cluster-admin"
+      namespace: "kube-system"
+    subjects:
+      - kind: "ServiceAccount"
+        name: "default"
+        namespace: "kube-system"
+    roleRef:
+      kind: "ClusterRole"
+      apiGroup: "rbac.authorization.k8s.io"
+      name: "cluster-admin"
+    ```
+
+    This will grant full cluster access to all of the Kubernetes core components (as well as any other pods running in the kube-system namespace with the default service account.)
+    In the future, kaws will use more granular access control for the core components.
+
+    Once this role binding has been created, the Kubernetes nodes will be able to register themselves with the Kubernetes API, and will then show up in the output of `kubectl get nodes`.
+    The other kubernetes components will soon appear in the output of `kubectl get pods -n kube-system`.
 
 ## Destroying a cluster
 
