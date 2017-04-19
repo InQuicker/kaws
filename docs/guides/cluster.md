@@ -13,15 +13,16 @@ The process of creating a cluster involves the following steps:
 7.  Run `kubectly apply -f rbac.yml` where `rbac.yml` is a file with the following contents:
 
     ``` yaml
-    kind: "RoleBinding"
+    kind: "ClusterRoleBinding"
     apiVersion: "rbac.authorization.k8s.io/v1beta1"
     metadata:
-      name: "kube-system-serviceaccount-cluster-admin"
-      namespace: "kube-system"
+      name: "kaws-kube-system-components"
     subjects:
       - kind: "ServiceAccount"
         name: "default"
         namespace: "kube-system"
+      - kind: "Group"
+        name: "system:nodes"
     roleRef:
       kind: "ClusterRole"
       apiGroup: "rbac.authorization.k8s.io"
