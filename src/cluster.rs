@@ -16,9 +16,10 @@ pub struct Cluster<'a> {
 
 pub struct ExistingCluster<'a> {
     aws_credentials_provider: ChainProvider,
-    domain: &'a str,
     cluster: Cluster<'a>,
+    domain: Option<&'a str>,
     kms_master_key_id: &'a str,
+    subject: &'a str,
 }
 
 pub struct NewCluster<'a> {
@@ -138,69 +139,108 @@ impl<'a> ExistingCluster<'a> {
                 matches.value_of("cluster").expect("missing cluster name"),
                 matches.value_of("region").expect("missing region"),
             ),
-            domain: matches.value_of("domain").expect("missing domain"),
+            domain: matches.value_of("domain"),
             kms_master_key_id: matches.value_of("kms-key").expect("missing kms-key"),
+            subject: matches.value_of("subject").unwrap_or("ca"),
         }
     }
 
-    pub fn generate_pki(&mut self) -> KawsResult {
-        self.generate_etcd_pki(self.kms_master_key_id)?;
-        self.generate_etcd_peer_pki(self.kms_master_key_id)?;
-        self.generate_k8s_pki(self.kms_master_key_id)?;
+    pub fn generate_pki_all(&mut self) -> KawsResult {
+        self.generate_etcd_pki()?;
+        self.generate_etcd_peer_pki()?;
+        self.generate_kubernetes_pki()?;
 
         Ok(None)
     }
 
-    fn generate_etcd_pki(&self, kms_key_id: &str) -> KawsResult {
-        let ca = CertificateAuthority::generate(&format!("kaws-etcd-ca-{}", self.cluster.name))?;
-
-        let (server_cert, server_key) = ca.generate_cert(
-            &format!("kaws-etcd-server-{}", self.cluster.name),
-            Some(&[
-                "10.0.1.4",
-                "10.0.1.5",
-                "10.0.1.6",
-            ]),
-            None,
-        )?;
-
-        let (client_cert, client_key) = ca.generate_cert(
-            &format!("kaws-etcd-client-{}", self.cluster.name),
-            None,
-            None,
-        )?;
-
+    pub fn generate_etcd_pki(&self) -> KawsResult {
         let mut encryptor = Encryptor::new(
             self.aws_credentials_provider.clone(),
             self.cluster.region().parse()?,
-            Some(kms_key_id),
+            Some(self.kms_master_key_id),
         );
 
-        ca.write_to_files(
-            &mut encryptor,
-            &self.cluster.etcd_ca_cert_path(),
-            &self.cluster.etcd_encrypted_ca_key_path(),
-        )?;
+        let ca = if self.subject == "ca" {
+            let ca = CertificateAuthority::generate(
+                &format!("kaws-etcd-ca-{}", self.cluster.name)
+            )?;
 
-        server_cert.write_to_file(&self.cluster.etcd_server_cert_path())?;
-        server_key.write_to_file(
-            &mut encryptor,
-            &self.cluster.etcd_encrypted_server_key_path(),
-        )?;
+            ca.write_to_files(
+                &mut encryptor,
+                &self.cluster.etcd_ca_cert_path(),
+                &self.cluster.etcd_encrypted_ca_key_path(),
+            )?;
 
-        client_cert.write_to_file(&self.cluster.etcd_client_cert_path())?;
-        client_key.write_to_file(
-            &mut encryptor,
-            &self.cluster.etcd_encrypted_client_key_path(),
-        )?;
+            ca
+        } else {
+            CertificateAuthority::from_files(
+                &mut encryptor,
+                &self.cluster.etcd_ca_cert_path(),
+                &self.cluster.etcd_encrypted_ca_key_path(),
+            )?
+        };
+
+        if self.subject == "ca" || self.subject == "server" {
+            let (server_cert, server_key) = ca.generate_cert(
+                &format!("kaws-etcd-server-{}", self.cluster.name),
+                Some(&[
+                    "10.0.1.4",
+                    "10.0.1.5",
+                    "10.0.1.6",
+                ]),
+                None,
+            )?;
+
+            server_cert.write_to_file(&self.cluster.etcd_server_cert_path())?;
+            server_key.write_to_file(
+                &mut encryptor,
+                &self.cluster.etcd_encrypted_server_key_path(),
+            )?;
+        }
+
+        if self.subject == "ca" || self.subject == "client" {
+            let (client_cert, client_key) = ca.generate_cert(
+                &format!("kaws-etcd-client-{}", self.cluster.name),
+                None,
+                None,
+            )?;
+
+            client_cert.write_to_file(&self.cluster.etcd_client_cert_path())?;
+            client_key.write_to_file(
+                &mut encryptor,
+                &self.cluster.etcd_encrypted_client_key_path(),
+            )?;
+        }
 
         Ok(None)
     }
 
-    fn generate_etcd_peer_pki(&self, kms_key_id: &str) -> KawsResult {
-        let ca = CertificateAuthority::generate(
-            &format!("kaws-etcd-peer-ca-{}", self.cluster.name)
-        )?;
+    pub fn generate_etcd_peer_pki(&self) -> KawsResult {
+        let mut encryptor = Encryptor::new(
+            self.aws_credentials_provider.clone(),
+            self.cluster.region().parse()?,
+            Some(self.kms_master_key_id),
+        );
+
+        let ca = if self.subject == "ca" {
+            let ca = CertificateAuthority::generate(
+                &format!("kaws-etcd-peer-ca-{}", self.cluster.name)
+            )?;
+
+            ca.write_to_files(
+                &mut encryptor,
+                &self.cluster.etcd_peer_ca_cert_path(),
+                &self.cluster.etcd_peer_encrypted_ca_key_path(),
+            )?;
+
+            ca
+        } else {
+            CertificateAuthority::from_files(
+                &mut encryptor,
+                &self.cluster.etcd_peer_ca_cert_path(),
+                &self.cluster.etcd_peer_encrypted_ca_key_path(),
+            )?
+        };
 
         let (peer_cert, peer_key) = ca.generate_cert(
             &format!("kaws-etcd-peer-{}", self.cluster.name),
@@ -212,18 +252,6 @@ impl<'a> ExistingCluster<'a> {
             None,
         )?;
 
-        let mut encryptor = Encryptor::new(
-            self.aws_credentials_provider.clone(),
-            self.cluster.region().parse()?,
-            Some(kms_key_id),
-        );
-
-        ca.write_to_files(
-            &mut encryptor,
-            &self.cluster.etcd_peer_ca_cert_path(),
-            &self.cluster.etcd_peer_encrypted_ca_key_path(),
-        )?;
-
         peer_cert.write_to_file(&self.cluster.etcd_peer_cert_path())?;
         peer_key.write_to_file(
             &mut encryptor,
@@ -233,51 +261,67 @@ impl<'a> ExistingCluster<'a> {
         Ok(None)
     }
 
-    fn generate_k8s_pki(&self, kms_key_id: &str) -> KawsResult {
-        let ca = CertificateAuthority::generate(&format!("kaws-k8s-ca-{}", self.cluster.name))?;
-
-        let (master_cert, master_key) = ca.generate_cert(
-            &format!("kaws-k8s-master-{}", self.cluster.name),
-            Some(&[
-                "kubernetes",
-                "kubernetes.default",
-                "kubernetes.default.svc",
-                "kubernetes.default.svc.cluster.local",
-                &format!("kubernetes.{}", self.domain),
-                "10.3.0.1",
-            ]),
-            None,
-        )?;
-
-        let (node_cert, node_key) = ca.generate_cert(
-            &format!("kaws-k8s-node-{}", self.cluster.name),
-            None,
-            Some(&["system:nodes"]),
-        )?;
-
+    pub fn generate_kubernetes_pki(&self) -> KawsResult {
         let mut encryptor = Encryptor::new(
             self.aws_credentials_provider.clone(),
             self.cluster.region().parse()?,
-            Some(kms_key_id),
+            Some(self.kms_master_key_id),
         );
 
-        ca.write_to_files(
-            &mut encryptor,
-            &self.cluster.k8s_ca_cert_path(),
-            &self.cluster.k8s_encrypted_ca_key_path(),
-        )?;
+        let ca = if self.subject == "ca" {
+            let ca = CertificateAuthority::generate(
+                &format!("kaws-k8s-ca-{}", self.cluster.name)
+            )?;
 
-        master_cert.write_to_file(&self.cluster.k8s_master_cert_path())?;
-        master_key.write_to_file(
-            &mut encryptor,
-            &self.cluster.k8s_encrypted_master_key_path(),
-        )?;
+            ca.write_to_files(
+                &mut encryptor,
+                &self.cluster.k8s_ca_cert_path(),
+                &self.cluster.k8s_encrypted_ca_key_path(),
+            )?;
 
-        node_cert.write_to_file(&self.cluster.k8s_node_cert_path())?;
-        node_key.write_to_file(
-            &mut encryptor,
-            &self.cluster.k8s_encrypted_node_key_path(),
-        )?;
+            ca
+        } else {
+            CertificateAuthority::from_files(
+                &mut encryptor,
+                &self.cluster.k8s_ca_cert_path(),
+                &self.cluster.k8s_encrypted_ca_key_path(),
+            )?
+        };
+
+        if self.subject == "ca" || self.subject == "masters" {
+            let (master_cert, master_key) = ca.generate_cert(
+                &format!("kaws-k8s-master-{}", self.cluster.name),
+                Some(&[
+                    "kubernetes",
+                    "kubernetes.default",
+                    "kubernetes.default.svc",
+                    "kubernetes.default.svc.cluster.local",
+                    &format!("kubernetes.{}", self.domain.expect("missing domain")),
+                    "10.3.0.1",
+                ]),
+                None,
+            )?;
+
+            master_cert.write_to_file(&self.cluster.k8s_master_cert_path())?;
+            master_key.write_to_file(
+                &mut encryptor,
+                &self.cluster.k8s_encrypted_master_key_path(),
+            )?;
+        }
+
+        if self.subject == "ca" || self.subject == "nodes" {
+            let (node_cert, node_key) = ca.generate_cert(
+                &format!("kaws-k8s-node-{}", self.cluster.name),
+                None,
+                Some(&["system:nodes"]),
+            )?;
+
+            node_cert.write_to_file(&self.cluster.k8s_node_cert_path())?;
+            node_key.write_to_file(
+                &mut encryptor,
+                &self.cluster.k8s_encrypted_node_key_path(),
+            )?;
+        }
 
         Ok(None)
     }

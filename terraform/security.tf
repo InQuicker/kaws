@@ -272,7 +272,7 @@ resource "aws_kms_key" "pki" {
   policy = "${data.aws_iam_policy_document.kms_key.json}"
 
   provisioner "local-exec" {
-    command = "kaws cluster genpki ${var.cluster} --domain ${var.domain} --kms-key ${aws_kms_key.pki.key_id} --region ${var.region}"
+    command = "kaws cluster generate-pki all ${var.cluster} --domain ${var.domain} --kms-key ${aws_kms_key.pki.key_id} --region ${var.region}"
   }
 }
 

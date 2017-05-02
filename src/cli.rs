@@ -105,7 +105,7 @@ fn cluster<'a, 'b>() -> App<'a, 'b> {
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .subcommand(cluster_apply())
         .subcommand(cluster_destroy())
-        .subcommand(cluster_genpki())
+        .subcommand(cluster_generate_pki())
         .subcommand(cluster_init())
         .subcommand(cluster_output())
         .subcommand(cluster_plan())
@@ -306,14 +306,134 @@ fn cluster_init<'a, 'b>() -> App<'a, 'b> {
         )
 }
 
-fn cluster_genpki<'a, 'b>() -> App<'a, 'b> {
-    SubCommand::with_name("genpki")
-        .about("Generates public key infrastructure for the target cluster")
+fn cluster_generate_pki<'a, 'b>() -> App<'a, 'b> {
+    SubCommand::with_name("generate-pki")
+        .about("Generates public key infrastructure for a cluster")
+        .setting(AppSettings::SubcommandRequiredElseHelp)
+        .subcommand(cluster_generate_pki_all())
+        .subcommand(cluster_generate_pki_etcd())
+        .subcommand(cluster_generate_pki_etcd_peer())
+        .subcommand(cluster_generate_pki_kubernetes())
+}
+
+fn cluster_generate_pki_all<'a, 'b>() -> App<'a, 'b> {
+    SubCommand::with_name("all")
+        .about("Generates all necessary public key infrastructure for a new cluster")
         .arg(
             Arg::with_name("cluster")
                 .index(1)
                 .required(true)
-                .help("The cluster whose plan should be applied")
+                .help("The cluster to generate PKI assets for")
+        )
+        .arg(
+            Arg::with_name("domain")
+                .short("d")
+                .long("domain")
+                .takes_value(true)
+                .required(true)
+                .help("The base domain name for the cluster, e.g. \"example.com\"")
+        )
+        .arg(
+            Arg::with_name("kms-key")
+                .short("k")
+                .long("kms-key")
+                .takes_value(true)
+                .required(true)
+                .help("KMS customer master key ID, e.g. \"12345678-1234-1234-1234-123456789012\"")
+        )
+        .arg(
+            Arg::with_name("region")
+                .short("r")
+                .long("region")
+                .takes_value(true)
+                .required(true)
+                .help("AWS Region where the KMS key lives, e.g. \"us-east-1\"")
+        )
+}
+
+fn cluster_generate_pki_etcd<'a, 'b>() -> App<'a, 'b> {
+    SubCommand::with_name("etcd")
+        .about("Generates public key infrastructure for etcd's client API")
+        .arg(
+            Arg::with_name("cluster")
+                .index(1)
+                .required(true)
+                .help("The cluster to generate PKI assets for")
+        )
+        .arg(
+            Arg::with_name("subject")
+                .index(2)
+                .required(true)
+                .possible_values(&["ca", "client", "server"])
+                .help("The subject to generate PKI assets for")
+        )
+        .arg(
+            Arg::with_name("kms-key")
+                .short("k")
+                .long("kms-key")
+                .takes_value(true)
+                .required(true)
+                .help("KMS customer master key ID, e.g. \"12345678-1234-1234-1234-123456789012\"")
+        )
+        .arg(
+            Arg::with_name("region")
+                .short("r")
+                .long("region")
+                .takes_value(true)
+                .required(true)
+                .help("AWS Region where the KMS key lives, e.g. \"us-east-1\"")
+        )
+}
+
+fn cluster_generate_pki_etcd_peer<'a, 'b>() -> App<'a, 'b> {
+    SubCommand::with_name("etcd-peer")
+        .about("Generates public key infrastructure for etcd's peer API")
+        .arg(
+            Arg::with_name("cluster")
+                .index(1)
+                .required(true)
+                .help("The cluster to generate PKI assets for")
+        )
+        .arg(
+            Arg::with_name("subject")
+                .index(2)
+                .required(true)
+                .possible_values(&["ca", "peer"])
+                .help("The subject to generate PKI assets for")
+        )
+        .arg(
+            Arg::with_name("kms-key")
+                .short("k")
+                .long("kms-key")
+                .takes_value(true)
+                .required(true)
+                .help("KMS customer master key ID, e.g. \"12345678-1234-1234-1234-123456789012\"")
+        )
+        .arg(
+            Arg::with_name("region")
+                .short("r")
+                .long("region")
+                .takes_value(true)
+                .required(true)
+                .help("AWS Region where the KMS key lives, e.g. \"us-east-1\"")
+        )
+}
+
+fn cluster_generate_pki_kubernetes<'a, 'b>() -> App<'a, 'b> {
+    SubCommand::with_name("kubernetes")
+        .about("Generates public key infrastructure for Kubernetes")
+        .arg(
+            Arg::with_name("cluster")
+                .index(1)
+                .required(true)
+                .help("The cluster to generate PKI assets for")
+        )
+        .arg(
+            Arg::with_name("subject")
+                .index(2)
+                .required(true)
+                .possible_values(&["ca", "masters", "nodes"])
+                .help("The subject to generate PKI assets for")
         )
         .arg(
             Arg::with_name("domain")

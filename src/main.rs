@@ -94,7 +94,27 @@ fn execute_cli() -> KawsResult {
                 ("apply", Some(matches)) => Terraform::new(matches).apply(),
                 ("destroy", Some(matches)) => Terraform::new(matches).destroy(),
                 ("init", Some(matches)) => NewCluster::new(matches).init(),
-                ("genpki", Some(matches)) => ExistingCluster::new(matches).generate_pki(),
+                ("generate-pki", Some(generate_pki_matches)) => {
+                    match generate_pki_matches.subcommand() {
+                        ("all", Some(matches)) => {
+                            ExistingCluster::new(matches).generate_pki_all()
+                        }
+                        ("etcd", Some(matches)) => {
+                            ExistingCluster::new(matches).generate_etcd_pki()
+                        }
+                        ("etcd-peer", Some(matches)) => {
+                            ExistingCluster::new(matches).generate_etcd_peer_pki()
+                        }
+                        ("kubernetes", Some(matches)) => {
+                            ExistingCluster::new(matches).generate_kubernetes_pki()
+                        }
+                        _ => {
+                            println!("{}", generate_pki_matches.usage());
+
+                            Ok(None)
+                        }
+                    }
+                }
                 ("output", Some(matches)) => Terraform::new(matches).output(),
                 ("plan", Some(matches)) => Terraform::new(matches).plan(),
                 ("refresh", Some(matches)) => Terraform::new(matches).refresh(),
