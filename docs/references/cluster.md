@@ -6,21 +6,21 @@
 
 ```
 USAGE:
-    kaws cluster [FLAGS] [SUBCOMMAND]
+    kaws cluster [SUBCOMMAND]
 
 FLAGS:
     -h, --help       Prints help information
     -V, --version    Prints version information
 
 SUBCOMMANDS:
-    apply      Applies the Terraform plan to the target cluster
-    destroy    Destroys resources defined by the Terraform plan for the target cluster
-    genpki     Generates public key infrastructure for the target cluster
-    help       Prints this message or the help message of the given subcommand(s)
-    init       Initializes all the configuration files for a new cluster
-    output     Displays the Terraform outputs for the target cluster
-    plan       Displays the Terraform plan for the target cluster
-    refresh    Refreshes the Terraform state for the target cluster
+    apply           Applies the Terraform plan to the target cluster
+    destroy         Destroys resources defined by the Terraform plan for the target cluster
+    generate-pki    Generates public key infrastructure for a cluster
+    help            Prints this message or the help of the given subcommand(s)
+    init            Initializes all the configuration files for a new cluster
+    output          Displays the Terraform outputs for the target cluster
+    plan            Displays the Terraform plan for the target cluster
+    refresh         Refreshes the Terraform state for the target cluster
 ```
 
 ## Subcommands
@@ -71,27 +71,32 @@ ARGS:
 This command is a simple wrapper around `terraform destroy` that points at the right Terraform configuration and state files for the target cluster.
 Any arguments following a literal `--` will be passed directly as options to `terraform destroy`.
 
-### genpki
+### generate-pki
 
-`kaws cluster genpki` creates a certificate authority and certificates for the Kubernetes masters and nodes.
+`kaws cluster generate-pki` generates public key infrastructure for a cluster.
 
 ```
 USAGE:
-    kaws cluster genpki [FLAGS] <cluster> --kms-key <kms-key> --region <region>
+    kaws cluster generate-pki [SUBCOMMAND]
 
 FLAGS:
     -h, --help       Prints help information
     -V, --version    Prints version information
 
-OPTIONS:
-    -k, --kms-key <kms-key>    KMS customer master key ID, e.g. "12345678-1234-1234-1234-123456789012"
-    -r, --region <region>      AWS Region where the KMS key lives, e.g. "us-east-1"
-
-ARGS:
-    <cluster>    The cluster whose plan should be applied
+SUBCOMMANDS:
+    all           Generates all necessary public key infrastructure for a new cluster
+    etcd          Generates public key infrastructure for etcd's client API
+    etcd-peer     Generates public key infrastructure for etcd's peer API
+    help          Prints this message or the help of the given subcommand(s)
+    kubernetes    Generates public key infrastructure for Kubernetes
 ```
 
-This command is executed by a Terraform provisioner during `kaws cluster apply` and is not intended to be run directly by the user.
+These commands are used to generate (or regenerate) X.509 certificates required by etcd and the Kubernetes system components.
+Certificates are required for etcd's client API ("ca", "client", and "server"), etcd's peer API ("ca", "peer"), Kubernetes ("ca"), Kubernetes control plane components ("masters"), and kubelet on the Kubernetes nodes ("nodes").
+
+kaws's Terraform configuration will execute the "all" subcommand during initial cluster creation to set all of this up.
+The certificates generated in this process will eventually expire.
+Before they do, you can generate new ones using the various subcommands, and then re-running `kaws cluster apply`.
 
 ### init
 
