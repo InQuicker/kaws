@@ -1,5 +1,6 @@
 resource "aws_elb" "k8s_masters" {
   connection_draining = true
+  idle_timeout = 3600
   name = "kaws-k8s-masters-${var.cluster}"
   security_groups = ["${aws_security_group.balancers.id}"]
   subnets = ["${aws_subnet.public.id}"]
@@ -27,6 +28,7 @@ resource "aws_elb" "k8s_masters" {
 
 resource "aws_elb" "k8s_nodes" {
   connection_draining = true
+  idle_timeout = 3600
   name = "kaws-k8s-nodes-${var.cluster}"
   security_groups = ["${aws_security_group.balancers.id}"]
   subnets = ["${aws_subnet.public.id}"]
