@@ -418,8 +418,8 @@ resource "aws_security_group" "kubernetes" {
 
   # ELB health checks for nodes (kube-proxy /heatlhz)
   ingress {
-    from_port = 10249
-    to_port = 10249
+    from_port = 10256
+    to_port = 10256
     protocol = "tcp"
     security_groups = ["${aws_security_group.balancers.id}"]
   }
