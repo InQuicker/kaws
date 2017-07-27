@@ -3,7 +3,7 @@ use std::io::{Read, Write};
 use std::process::{Command, Stdio};
 
 use hyper::Client;
-use rusoto::ChainProvider;
+use rusoto_core::ChainProvider;
 use serde_json::{from_slice, to_vec};
 use tempdir::TempDir;
 

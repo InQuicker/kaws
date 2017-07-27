@@ -3,8 +3,8 @@ use std::fmt::{Debug, Display, Formatter};
 use std::fmt::Error as FmtError;
 use std::str::Utf8Error;
 
-use rusoto::ParseRegionError;
-use rusoto::kms::{DecryptError, EncryptError};
+use rusoto_core::ParseRegionError;
+use rusoto_kms::{DecryptError, EncryptError};
 use rustc_serialize::base64::FromBase64Error;
 use serde_json::Error as SerdeJsonError;
 

@@ -2,7 +2,7 @@ use std::fs::create_dir_all;
 use std::process::Command;
 
 use clap::ArgMatches;
-use rusoto::ChainProvider;
+use rusoto_core::ChainProvider;
 
 use aws::credentials_provider;
 use encryption::Encryptor;

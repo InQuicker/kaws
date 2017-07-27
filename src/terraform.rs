@@ -1,7 +1,7 @@
 use std::process::{Command, Stdio};
 
 use clap::ArgMatches;
-use rusoto::{ChainProvider, ProvideAwsCredentials};
+use rusoto_core::{ChainProvider, ProvideAwsCredentials};
 
 use aws::credentials_provider;
 use error::{KawsError, KawsResult};

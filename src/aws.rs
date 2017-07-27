@@ -1,4 +1,4 @@
-use rusoto::{ChainProvider, ProfileProvider};
+use rusoto_core::{ChainProvider, ProfileProvider};
 
 pub fn credentials_provider(path: Option<&str>, profile: Option<&str>) -> ChainProvider {
     let mut profile_provider = ProfileProvider::new().expect(

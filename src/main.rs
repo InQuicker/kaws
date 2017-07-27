@@ -4,7 +4,8 @@ extern crate clap;
 #[macro_use]
 extern crate log;
 extern crate hyper;
-extern crate rusoto;
+extern crate rusoto_core;
+extern crate rusoto_kms;
 extern crate rustc_serialize;
 extern crate serde;
 #[macro_use]

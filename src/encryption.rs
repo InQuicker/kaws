@@ -2,20 +2,21 @@ use std::fs::{File, remove_file};
 use std::io::{ErrorKind, Read, Write};
 
 use hyper::Client as HyperClient;
-use rusoto::{
+use rusoto_core::{
     ChainProvider,
     DispatchSignedRequest,
     ProvideAwsCredentials,
     Region,
     default_tls_client,
 };
-use rusoto::kms::{
+use rusoto_kms::{
     DecryptError,
     DecryptRequest,
     DecryptResponse,
     EncryptError,
     EncryptRequest,
     EncryptResponse,
+    Kms,
     KmsClient,
 };
 use rustc_serialize::base64::{FromBase64, STANDARD, ToBase64};
