@@ -79,7 +79,7 @@ kaws requires the following other programs to be available on your system:
   If you have Go 1.8+ installed, you can install cfssl with `go get -u github.com/cloudflare/cfssl`.
   Make sure `$GOPATH/bin` is in your PATH.
   See https://github.com/InQuicker/kaws/issues/12.
-* [kubectl](http://kubernetes.io/), version 1.5 or greater
+* [kubectl](http://kubernetes.io/), version 1.7 or greater
 
 ### macOS
 

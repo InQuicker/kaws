@@ -50,7 +50,7 @@ resource "aws_elb" "k8s_nodes" {
   health_check {
     healthy_threshold = 2
     interval = 30
-    target = "http:10249/healthz"
+    target = "http:10256/healthz"
     timeout = 3
     unhealthy_threshold = 2
   }
