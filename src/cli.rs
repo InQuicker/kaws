@@ -295,6 +295,19 @@ fn cluster_init<'a, 'b>() -> App<'a, 'b> {
                 .takes_value(true)
                 .required(true)
                 .help("Version of Kubernetes to use, e.g. \"1.0.0\"")
+                .validator(|version| {
+                    let version = version.as_str();
+
+                    if version.starts_with('v') {
+                        return Err("Kubernetes version should be specified without the leading 'v'".to_string());
+                    }
+
+                    if version >= "1.7" {
+                        return Ok(());
+                    } else {
+                        return Err("This version of kaws supports only Kubernetes 1.7.0 or greater".to_string());
+                    }
+                })
         )
         .arg(
             Arg::with_name("zone-id")
