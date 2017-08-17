@@ -27,7 +27,7 @@ impl<'a> Terraform<'a> {
     }
 
     pub fn apply(&mut self) -> KawsResult {
-        self.get()?;
+        self.init()?;
 
         let mut command = Command::new("terraform");
 
@@ -60,7 +60,7 @@ impl<'a> Terraform<'a> {
     }
 
     pub fn destroy(&mut self) -> KawsResult {
-        self.get()?;
+        self.init()?;
 
         let mut command = Command::new("terraform");
 
@@ -101,7 +101,7 @@ impl<'a> Terraform<'a> {
     }
 
     pub fn output(&mut self) -> KawsResult {
-        self.get()?;
+        self.init()?;
 
         let mut command = Command::new("terraform");
 
@@ -121,7 +121,7 @@ impl<'a> Terraform<'a> {
     }
 
     pub fn plan(&mut self) -> KawsResult {
-        self.get()?;
+        self.init()?;
 
         let mut command = Command::new("terraform");
 
@@ -154,7 +154,7 @@ impl<'a> Terraform<'a> {
     }
 
     pub fn refresh(&mut self) -> KawsResult {
-        self.get()?;
+        self.init()?;
 
         let mut command = Command::new("terraform");
 
@@ -186,16 +186,16 @@ impl<'a> Terraform<'a> {
         Ok(None)
     }
 
-    fn get(&self) -> KawsResult {
+    fn init(&self) -> KawsResult {
         let exit_status = Command::new("terraform").args(&[
-            "get",
+            "init",
             "terraform",
         ]).stdout(Stdio::null()).status()?;
 
         if exit_status.success() {
             Ok(None)
         } else {
-            Err(KawsError::new(format!("Failed to download Terraform module!")))
+            Err(KawsError::new("Failed to initialize Terraform!".to_string()))
         }
     }
 }
