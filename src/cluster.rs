@@ -25,6 +25,7 @@ pub struct ExistingCluster<'a> {
 pub struct NewCluster<'a> {
     availability_zone: &'a str,
     aws_account_id: &'a str,
+    cidr: &'a str,
     cluster: Cluster<'a>,
     coreos_ami: &'a str,
     domain: &'a str,
@@ -334,6 +335,7 @@ impl<'a> NewCluster<'a> {
                 .value_of("availability-zone")
                 .expect("missing availability-zone"),
             aws_account_id: matches.value_of("aws-account-id").expect("missing aws-account-id"),
+            cidr: matches.value_of("cidr").expect("missing cidr"),
             cluster: Cluster::new(
                 matches.value_of("cluster").expect("missing cluster name"),
                 matches.value_of("region").expect("missing region"),
@@ -402,6 +404,7 @@ impl<'a> NewCluster<'a> {
                 "\
 kaws_account_id = \"{}\"
 kaws_availability_zone = \"{}\"
+kaws_cidr = \"{}\"
 kaws_cluster = \"{}\"
 kaws_coreos_ami = \"{}\"
 kaws_domain = \"{}\"
@@ -419,6 +422,7 @@ kaws_zone_id = \"{}\"
 ",
                 self.aws_account_id,
                 self.availability_zone,
+                self.cidr,
                 self.cluster.name(),
                 self.coreos_ami,
                 self.domain,

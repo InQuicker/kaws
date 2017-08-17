@@ -1,5 +1,7 @@
 extern crate ansi_term;
+extern crate bitstring;
 extern crate env_logger;
+extern crate cidr;
 extern crate clap;
 #[macro_use]
 extern crate log;

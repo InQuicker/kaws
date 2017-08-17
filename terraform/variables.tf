@@ -3,7 +3,11 @@ variable "account_id" {
 }
 
 variable "availability_zone" {
-    description = "Availability Zone for etcd instances and EBS volumes, e.g. `us-east-1a`"
+  description = "Availability Zone for etcd instances and EBS volumes, e.g. `us-east-1a`"
+}
+
+variable "cidr" {
+  description = "IPv4 network range of the subnet where Kubernetes nodes will run, e.g. `10.0.2.0/24`"
 }
 
 variable "cluster" {

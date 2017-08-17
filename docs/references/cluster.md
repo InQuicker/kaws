@@ -104,7 +104,7 @@ Before they do, you can generate new ones using the various subcommands, and the
 
 ```
 USAGE:
-    kaws cluster init <cluster> --aws-account-id <aws-account-id> --ami <ami> --availability-zone <availability-zone> --domain <domain> --masters-max-size <masters-max-size> --masters-min-size <masters-min-size> --nodes-max-size <nodes-max-size> --nodes-min-size <nodes-min-size> --region <region> --iam-user <iam-user>... --instance-size <size> --ssh-key <ssh-key> --kubernetes-version <k8s-version> --zone-id <zone-id>
+    kaws cluster init <cluster> --ami <ami> --availability-zone <availability-zone> --aws-account-id <aws-account-id> --cidr <cidr> --domain <domain> --iam-user <iam-user>... --kubernetes-version <k8s-version> --masters-max-size <masters-max-size> --masters-min-size <masters-min-size> --nodes-max-size <nodes-max-size> --nodes-min-size <nodes-min-size> --region <region> --instance-size <size> --ssh-key <ssh-key>... --zone-id <zone-id>
 
 FLAGS:
     -h, --help       Prints help information
@@ -114,8 +114,9 @@ OPTIONS:
     -a, --ami <ami>                                EC2 AMI ID to use for all CoreOS instances, e.g. "ami-1234"
         --availability-zone <availability-zone>    Availability Zone for etcd instances and EBS volumes, e.g. "us-east-1a"
     -A, --aws-account-id <aws-account-id>          The numeric ID of the AWS account, e.g. "123456789012"
+    -C, --cidr <cidr>                              IPv4 network range of the subnet where Kubernetes nodes will run, e.g. "10.0.2.0/24"
     -d, --domain <domain>                          The base domain name for the cluster, e.g. "example.com"
-    -i, --iam-user <iam-user>                      An IAM user name who will have access to cluster PKI secrets, e.g. "alice"; this option can be specified more than once
+    -i, --iam-user <iam-user>...                   An IAM user name who will have access to cluster PKI secrets, e.g. "alice"; this option can be specified more than once
     -v, --kubernetes-version <k8s-version>         Version of Kubernetes to use, e.g. "1.0.0"
         --masters-max-size <masters-max-size>      The maximum number of EC2 instances the Kubernetes masters may autoscale to
         --masters-min-size <masters-min-size>      The minimum number of EC2 instances the Kubernetes masters may autoscale to

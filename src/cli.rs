@@ -1,3 +1,7 @@
+use std::cmp::Ordering;
+
+use bitstring::BitString;
+use cidr::Ipv4Cidr;
 use clap::{App, AppSettings, Arg, SubCommand};
 
 pub fn app<'a, 'b>() -> App<'a, 'b> {
@@ -207,6 +211,41 @@ fn cluster_init<'a, 'b>() -> App<'a, 'b> {
                 .takes_value(true)
                 .required(true)
                 .help("Availability Zone for etcd instances and EBS volumes, e.g. \"us-east-1a\"")
+        )
+        .arg(
+            Arg::with_name("cidr")
+                .short("C")
+                .long("cidr")
+                .takes_value(true)
+                .required(true)
+                .help("IPv4 network range of the subnet where Kubernetes nodes will run, e.g. \"10.0.2.0/24\"")
+                .validator(|cidr| {
+                    let cidr: Ipv4Cidr = match cidr.parse() {
+                        Ok(cidr) => cidr,
+                        Err(_) => return Err("Invalid CIDR provided.".to_string()),
+                    };
+
+                    let vpc_cidr: Ipv4Cidr = "10.0.0.0/16".parse().unwrap();
+                    let elb_cidr: Ipv4Cidr = "10.0.0.0/24".parse().unwrap();
+                    let etcd_cidr: Ipv4Cidr = "10.0.1.0/24".parse().unwrap();
+
+                    match cidr.subset_cmp(&vpc_cidr) {
+                        Some(Ordering::Less) => {}
+                        _ => return Err("Provided CIDR must be a subset of 10.0.0.0/16.".to_string()),
+                    }
+
+                    match cidr.subset_cmp(&elb_cidr) {
+                        Some(_) => return Err("Provided CIDR cannot overlap with 10.0.0.0/24, which is used for ELBs.".to_string()),
+                        None => {}
+                    }
+
+                    match cidr.subset_cmp(&etcd_cidr) {
+                        Some(_) => return Err("Provided CIDR cannot overlap with 10.0.1.0/24, which is used for etcd.".to_string()),
+                        None => {}
+                    }
+
+                    Ok(())
+                })
         )
         .arg(
             Arg::with_name("domain")
