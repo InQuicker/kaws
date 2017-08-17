@@ -14,8 +14,16 @@ output "kubernetes_nodes_elb_zone_id" {
   value = "${aws_elb.k8s_nodes.zone_id}"
 }
 
+output "kubernetes_route_table_id" {
+  value = "${aws_route_table.k8s.id}"
+}
+
 output "kubernetes_security_group_id" {
   value = "${aws_security_group.kubernetes.id}"
+}
+
+output "kubernetes_subnet_id" {
+  value = "${aws_subnet.k8s.id}"
 }
 
 output "main_route_table_id" {
@@ -28,14 +36,6 @@ output "pki_kms_key" {
 
 output "region" {
   value = "${var.region}"
-}
-
-output "public_route_table_id" {
-  value = "${aws_route_table.public.id}"
-}
-
-output "subnet_id" {
-  value = "${aws_subnet.public.id}"
 }
 
 output "vpc_id" {

@@ -3,7 +3,7 @@ resource "aws_instance" "bastion" {
   associate_public_ip_address = true
   iam_instance_profile = "${aws_iam_instance_profile.bastion.name}"
   instance_type = "t2.micro"
-  subnet_id = "${aws_subnet.public.id}"
+  subnet_id = "${aws_subnet.k8s.id}"
   user_data = "${replace("${data.template_file.user_data.rendered}", "__FILE__", "bastion_cloud_config.yml")}"
   vpc_security_group_ids = ["${aws_security_group.bastion.id}"]
 
@@ -20,7 +20,7 @@ resource "aws_instance" "etcd_01" {
   iam_instance_profile = "${aws_iam_instance_profile.etcd.name}"
   instance_type = "${var.instance_size}"
   private_ip = "10.0.1.4"
-  subnet_id = "${aws_subnet.public.id}"
+  subnet_id = "${aws_subnet.etcd.id}"
   user_data = "${replace("${data.template_file.user_data.rendered}", "__FILE__", "etcd_01_cloud_config.yml")}"
   vpc_security_group_ids = ["${aws_security_group.etcd.id}"]
 
@@ -37,7 +37,7 @@ resource "aws_instance" "etcd_02" {
   iam_instance_profile = "${aws_iam_instance_profile.etcd.name}"
   instance_type = "${var.instance_size}"
   private_ip = "10.0.1.5"
-  subnet_id = "${aws_subnet.public.id}"
+  subnet_id = "${aws_subnet.etcd.id}"
   user_data = "${replace("${data.template_file.user_data.rendered}", "__FILE__", "etcd_02_cloud_config.yml")}"
   vpc_security_group_ids = ["${aws_security_group.etcd.id}"]
 
@@ -54,7 +54,7 @@ resource "aws_instance" "etcd_03" {
   iam_instance_profile = "${aws_iam_instance_profile.etcd.name}"
   instance_type = "${var.instance_size}"
   private_ip = "10.0.1.6"
-  subnet_id = "${aws_subnet.public.id}"
+  subnet_id = "${aws_subnet.etcd.id}"
   user_data = "${replace("${data.template_file.user_data.rendered}", "__FILE__", "etcd_03_cloud_config.yml")}"
   vpc_security_group_ids = ["${aws_security_group.etcd.id}"]
 
@@ -91,7 +91,7 @@ resource "aws_autoscaling_group" "k8s_masters" {
   max_size = "${var.masters_max_size}"
   min_size = "${var.masters_min_size}"
   name = "kaws-k8s-masters-${var.cluster}"
-  vpc_zone_identifier = ["${aws_subnet.public.id}"]
+  vpc_zone_identifier = ["${aws_subnet.k8s.id}"]
 
   lifecycle {
     create_before_destroy = true
@@ -137,7 +137,7 @@ resource "aws_autoscaling_group" "k8s_nodes" {
   max_size = "${var.nodes_max_size}"
   min_size = "${var.nodes_min_size}"
   name = "kaws-k8s-nodes-${var.cluster}"
-  vpc_zone_identifier = ["${aws_subnet.public.id}"]
+  vpc_zone_identifier = ["${aws_subnet.k8s.id}"]
 
   lifecycle {
     create_before_destroy = true

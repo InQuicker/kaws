@@ -3,7 +3,7 @@ resource "aws_elb" "k8s_masters" {
   idle_timeout = 3600
   name = "kaws-k8s-masters-${var.cluster}"
   security_groups = ["${aws_security_group.balancers.id}"]
-  subnets = ["${aws_subnet.public.id}"]
+  subnets = ["${aws_subnet.balancers.id}"]
 
   listener {
     instance_port = 443
@@ -31,7 +31,7 @@ resource "aws_elb" "k8s_nodes" {
   idle_timeout = 3600
   name = "kaws-k8s-nodes-${var.cluster}"
   security_groups = ["${aws_security_group.balancers.id}"]
-  subnets = ["${aws_subnet.public.id}"]
+  subnets = ["${aws_subnet.balancers.id}"]
 
   listener {
     instance_port = 30000
